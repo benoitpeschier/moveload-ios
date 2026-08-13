@@ -7,10 +7,8 @@ import MoveLoadCore
 /// Reverse-engineered byte-for-byte against a real recording (2026-08-13),
 /// cross-checked against Movesense's own `sbem2json` tool's JSON output —
 /// see the format notes on each parsing step below. Movesense doesn't
-/// publish an official spec for this binary layout (only a general
-/// description; see `SBEMLogParser.swift`'s notes on the same topic for the
-/// on-device DataLogger's raw form, which this is NOT the same encoding
-/// as — this is what actually comes back over the GSP FETCH_LOG command).
+/// publish an official spec for this binary layout; this is specifically
+/// the encoding returned over the GSP FETCH_LOG command.
 enum MovesenseSBEMDecoder {
     enum FieldType {
         case uint8, uint16, uint32, int64, float32
@@ -81,10 +79,10 @@ enum MovesenseSBEMDecoder {
                 let ys = values["Samples.Array.MeasAcc.ArrayAcc.y"] ?? []
                 let zs = values["Samples.Array.MeasAcc.ArrayAcc.z"] ?? []
                 // Z carries the effort-correlated signal on this sensor's
-                // mounting — see MovesenseLogbookJSON's notes on the same
-                // 2026-08-06 observation. Variable name kept as `accelZ`
-                // for clarity here (unlike the JSON path, which keeps the
-                // legacy `accelX` name for domain-naming consistency).
+                // mounting (observed 2026-08-06). Variable name kept as
+                // `accelZ` for clarity here (unlike the JSON import path,
+                // which keeps the legacy `accelX` name for domain-naming
+                // consistency).
                 for z in zs { accelZ.append(max(0, z)) }
                 // One timestamp per *chunk* (not per sample) — these span
                 // real elapsed time, unlike interpolating within a chunk.

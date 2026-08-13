@@ -8,8 +8,7 @@ import MoveLoadCore
 /// `MovesenseSensorService.startLogging`), so recordings still have to be
 /// made in Showcase rather than MoveLoad itself.
 ///
-/// This is a different, app-specific export shape from the MDS Logbook JSON
-/// `MovesenseLogbookJSON` decodes. Confirmed against a real export
+/// Confirmed against a real export
 /// (2026-08-11): `{"data": [{"acc": {"Timestamp": <ms>, "ArrayAcc":
 /// [{"x":…,"y":…,"z":…}, …]}}]}` for acceleration, `{"data":
 /// [{"heartRate": {"average": <bpm>, "rrData": [<ms>]}}]}` for heart rate.
@@ -73,9 +72,8 @@ public enum MovesenseShowcaseJSON {
     }
 
     /// Showcase's heart-rate export has no per-sample timestamp, only an
-    /// implicit ordering — matches `MovesenseLogbookJSON`'s own convention
-    /// of treating the entry index as a one-second offset (an approximation,
-    /// not the true per-beat timing).
+    /// implicit ordering — treats the entry index as a one-second offset
+    /// (an approximation, not the true per-beat timing).
     public static func parseHeartRate(_ data: Data) throws -> [HRSample] {
         guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let entries = root["data"] as? [[String: Any]] else {

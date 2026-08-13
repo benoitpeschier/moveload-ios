@@ -12,20 +12,9 @@ let package = Package(
         .package(path: "../SensorKit")
     ],
     targets: [
-        .binaryTarget(name: "MDSBinary", path: "Vendor/MDS.xcframework"),
-        .target(
-            name: "CMDS",
-            dependencies: ["MDSBinary"],
-            path: "Sources/CMDS",
-            publicHeadersPath: "include"
-        ),
         .target(
             name: "MovesenseVendor",
-            dependencies: ["MoveLoadCore", "SensorKit", "CMDS"],
-            linkerSettings: [
-                .linkedLibrary("stdc++"),
-                .linkedLibrary("z")
-            ]
+            dependencies: ["MoveLoadCore", "SensorKit"]
         )
     ]
 )
