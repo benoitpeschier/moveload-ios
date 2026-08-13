@@ -216,8 +216,12 @@ public final class MovesenseSensorService: NSObject, SensorService {
         // GSP only exposes a whole-logbook erase (CLEAR_LOGBOOK), not a
         // per-entry delete — silently wiping every other stored session
         // just because one was downloaded would be a real data-loss risk,
-        // so this is deliberately a no-op for now. Use "Effacer la mémoire"
-        // (not yet built) if/when a real per-session clear is needed.
+        // so this is deliberately a no-op. Use eraseAllEntries() for the
+        // explicit, user-confirmed whole-logbook clear.
+    }
+
+    public func eraseAllEntries() async throws {
+        try await gsp.eraseMemory()
     }
 }
 

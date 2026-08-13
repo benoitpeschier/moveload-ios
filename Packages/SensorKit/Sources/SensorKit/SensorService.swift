@@ -15,6 +15,12 @@ public protocol SensorLogbookService: AnyObject {
     func listLogbookEntries() async throws -> [LogbookEntryInfo]
     func downloadEntry(_ entry: LogbookEntryInfo, progress: @escaping (Double) -> Void) async throws -> RawSessionData
     func deleteEntry(_ entry: LogbookEntryInfo) async throws
+
+    /// Erases the sensor's entire logbook at once. Some backends (the real
+    /// Movesense GSP protocol) have no way to delete a single entry — this
+    /// is the only deletion primitive available, so callers must warn about
+    /// any entries not yet downloaded before calling it.
+    func eraseAllEntries() async throws
 }
 
 /// The single boundary the Movesense SDK integration crosses. Everything else in

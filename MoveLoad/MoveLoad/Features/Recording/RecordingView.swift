@@ -15,6 +15,8 @@ struct RecordingView: View {
     @State private var entries: [LogbookEntryInfo] = []
     @State private var downloadProgress: [String: Double] = [:]
     @State private var errorMessage: String?
+    @State private var isErasingMemory = false
+    @State private var showEraseConfirmation = false
     @State private var isImportingShowcase = false
     @State private var isImportInProgress = false
     @State private var importStatusMessage: String?
@@ -57,6 +59,19 @@ struct RecordingView: View {
                         }
                     }
                 }
+
+                Section {
+                    if isErasingMemory {
+                        ProgressView()
+                    } else {
+                        Button("Effacer toute la mémoire du capteur", role: .destructive) {
+                            showEraseConfirmation = true
+                        }
+                        .disabled(entries.isEmpty)
+                    }
+                } footer: {
+                    Text("Le capteur ne permet pas de supprimer une séance individuellement : ceci efface tout le journal d'un coup. Irréversible.")
+                }
             }
 
             Section {
@@ -97,6 +112,30 @@ struct RecordingView: View {
         ) { result in
             Task { await handleShowcaseImport(result) }
         }
+        .confirmationDialog(
+            eraseConfirmationTitle,
+            isPresented: $showEraseConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Effacer définitivement", role: .destructive) {
+                Task { await eraseMemory() }
+            }
+            Button("Annuler", role: .cancel) {}
+        }
+    }
+
+    private var notYetImportedCount: Int {
+        guard let sessions = try? appEnvironment.allSessions() else { return entries.count }
+        let importedIDs = Set(sessions.map(\.sensorLogbookEntryID))
+        return entries.filter { !importedIDs.contains($0.id) }.count
+    }
+
+    private var eraseConfirmationTitle: String {
+        let missing = notYetImportedCount
+        if missing > 0 {
+            return "\(entries.count) séance(s) sur le capteur, dont \(missing) pas encore téléchargée(s) dans l'app. Les effacer quand même ?"
+        }
+        return "Effacer les \(entries.count) séance(s) du capteur ? Toutes sont déjà téléchargées dans l'app."
     }
 
     private var connectionRow: some View {
@@ -201,6 +240,17 @@ struct RecordingView: View {
                 try await appEnvironment.sensorService.startLogging(config: LoggingConfig())
                 isLogging = true
             }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func eraseMemory() async {
+        isErasingMemory = true
+        defer { isErasingMemory = false }
+        do {
+            try await appEnvironment.sensorService.eraseAllEntries()
+            await refreshEntries()
         } catch {
             errorMessage = error.localizedDescription
         }

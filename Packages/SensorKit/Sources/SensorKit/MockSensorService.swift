@@ -85,6 +85,12 @@ public final class MockSensorService: SensorService {
         entryData.removeValue(forKey: entry.id)
     }
 
+    public func eraseAllEntries() async throws {
+        guard case .connected = state else { throw SensorError.notConnected }
+        storedEntries.removeAll()
+        entryData.removeAll()
+    }
+
     // MARK: - Debug-only helper (not part of SensorService)
 
     /// Populates fake past sessions instantly, so History/Trends can be built and
