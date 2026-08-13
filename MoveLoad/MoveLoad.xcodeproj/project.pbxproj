@@ -1,0 +1,430 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		13A9CFA87CF1DD938DF833DA /* MoveLoadCore in Frameworks */ = {isa = PBXBuildFile; productRef = 8B21C76478EEFBA9FB7C2602 /* MoveLoadCore */; };
+		8CFF710C43E282CC6C96BAA1 /* PersistenceKit in Frameworks */ = {isa = PBXBuildFile; productRef = FAC9725C17D4DB03A15E7F80 /* PersistenceKit */; };
+		AAE79289929934E1DD483F7A /* SensorKit in Frameworks */ = {isa = PBXBuildFile; productRef = AE7B0F50369B46C18E17D19A /* SensorKit */; };
+		DECB65CB387344596C470791 /* AnalysisEngine in Frameworks */ = {isa = PBXBuildFile; productRef = A0C5D3AC0CF51C811A314DEC /* AnalysisEngine */; };
+		F0C4A14F93B248898524878C /* MovesenseVendor in Frameworks */ = {isa = PBXBuildFile; productRef = 34133061192A06644585FB99 /* MovesenseVendor */; };
+		5E5B1001AAAA1111BBBB2222 /* SyncKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5E5B2002CCCC3333DDDD4444 /* SyncKit */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		DF46501D301B6659004E02DC /* MoveLoad.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MoveLoad.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		DF46501F301B6659004E02DC /* MoveLoad */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MoveLoad;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		DF46501A301B6659004E02DC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				13A9CFA87CF1DD938DF833DA /* MoveLoadCore in Frameworks */,
+				DECB65CB387344596C470791 /* AnalysisEngine in Frameworks */,
+				AAE79289929934E1DD483F7A /* SensorKit in Frameworks */,
+				8CFF710C43E282CC6C96BAA1 /* PersistenceKit in Frameworks */,
+				F0C4A14F93B248898524878C /* MovesenseVendor in Frameworks */,
+				5E5B1001AAAA1111BBBB2222 /* SyncKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		DF465014301B6659004E02DC = {
+			isa = PBXGroup;
+			children = (
+				DF46501F301B6659004E02DC /* MoveLoad */,
+				DF46501E301B6659004E02DC /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		DF46501E301B6659004E02DC /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				DF46501D301B6659004E02DC /* MoveLoad.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		DF46501C301B6659004E02DC /* MoveLoad */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DF465028301B665A004E02DC /* Build configuration list for PBXNativeTarget "MoveLoad" */;
+			buildPhases = (
+				DF465019301B6659004E02DC /* Sources */,
+				DF46501A301B6659004E02DC /* Frameworks */,
+				DF46501B301B6659004E02DC /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				DF46501F301B6659004E02DC /* MoveLoad */,
+			);
+			name = MoveLoad;
+			packageProductDependencies = (
+				8B21C76478EEFBA9FB7C2602 /* MoveLoadCore */,
+				A0C5D3AC0CF51C811A314DEC /* AnalysisEngine */,
+				AE7B0F50369B46C18E17D19A /* SensorKit */,
+				FAC9725C17D4DB03A15E7F80 /* PersistenceKit */,
+				34133061192A06644585FB99 /* MovesenseVendor */,
+				5E5B2002CCCC3333DDDD4444 /* SyncKit */,
+			);
+			productName = MoveLoad;
+			productReference = DF46501D301B6659004E02DC /* MoveLoad.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		DF465015301B6659004E02DC /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2660;
+				LastUpgradeCheck = 2660;
+				TargetAttributes = {
+					DF46501C301B6659004E02DC = {
+						CreatedOnToolsVersion = 26.6;
+					};
+				};
+			};
+			buildConfigurationList = DF465018301B6659004E02DC /* Build configuration list for PBXProject "MoveLoad" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = DF465014301B6659004E02DC;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				0DF14ABD7F2F07295380F70D /* XCLocalSwiftPackageReference "../Packages/MoveLoadCore" */,
+				C96014476F04DAE570014AA4 /* XCLocalSwiftPackageReference "../Packages/AnalysisEngine" */,
+				C7D9DDA8E725839472AC8CCD /* XCLocalSwiftPackageReference "../Packages/SensorKit" */,
+				0D3AD3959601B26D3623A5F7 /* XCLocalSwiftPackageReference "../Packages/PersistenceKit" */,
+				92D2DEB194DF381C7AA73BA6 /* XCLocalSwiftPackageReference "../Packages/MovesenseVendor" */,
+				5E5B3003EEEE5555FFFF6666 /* XCLocalSwiftPackageReference "../Packages/SyncKit" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = DF46501E301B6659004E02DC /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				DF46501C301B6659004E02DC /* MoveLoad */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		DF46501B301B6659004E02DC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		DF465019301B6659004E02DC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		DF465026301B665A004E02DC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = XFFXH2Z767;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		DF465027301B665A004E02DC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = XFFXH2Z767;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		DF465029301B665A004E02DC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XFFXH2Z767;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "MoveLoad se connecte à ton capteur Movesense Flash en Bluetooth pour démarrer/arrêter l'enregistrement et récupérer les séances.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.accel.MoveLoad;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		DF46502A301B665A004E02DC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XFFXH2Z767;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "MoveLoad se connecte à ton capteur Movesense Flash en Bluetooth pour démarrer/arrêter l'enregistrement et récupérer les séances.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.accel.MoveLoad;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		DF465018301B6659004E02DC /* Build configuration list for PBXProject "MoveLoad" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DF465026301B665A004E02DC /* Debug */,
+				DF465027301B665A004E02DC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DF465028301B665A004E02DC /* Build configuration list for PBXNativeTarget "MoveLoad" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DF465029301B665A004E02DC /* Debug */,
+				DF46502A301B665A004E02DC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		0D3AD3959601B26D3623A5F7 /* XCLocalSwiftPackageReference "../Packages/PersistenceKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../Packages/PersistenceKit;
+		};
+		0DF14ABD7F2F07295380F70D /* XCLocalSwiftPackageReference "../Packages/MoveLoadCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../Packages/MoveLoadCore;
+		};
+		C7D9DDA8E725839472AC8CCD /* XCLocalSwiftPackageReference "../Packages/SensorKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../Packages/SensorKit;
+		};
+		C96014476F04DAE570014AA4 /* XCLocalSwiftPackageReference "../Packages/AnalysisEngine" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../Packages/AnalysisEngine;
+		};
+		92D2DEB194DF381C7AA73BA6 /* XCLocalSwiftPackageReference "../Packages/MovesenseVendor" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../Packages/MovesenseVendor;
+		};
+		5E5B3003EEEE5555FFFF6666 /* XCLocalSwiftPackageReference "../Packages/SyncKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../Packages/SyncKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		8B21C76478EEFBA9FB7C2602 /* MoveLoadCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0DF14ABD7F2F07295380F70D /* XCLocalSwiftPackageReference "../Packages/MoveLoadCore" */;
+			productName = MoveLoadCore;
+		};
+		A0C5D3AC0CF51C811A314DEC /* AnalysisEngine */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C96014476F04DAE570014AA4 /* XCLocalSwiftPackageReference "../Packages/AnalysisEngine" */;
+			productName = AnalysisEngine;
+		};
+		AE7B0F50369B46C18E17D19A /* SensorKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C7D9DDA8E725839472AC8CCD /* XCLocalSwiftPackageReference "../Packages/SensorKit" */;
+			productName = SensorKit;
+		};
+		FAC9725C17D4DB03A15E7F80 /* PersistenceKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0D3AD3959601B26D3623A5F7 /* XCLocalSwiftPackageReference "../Packages/PersistenceKit" */;
+			productName = PersistenceKit;
+		};
+		34133061192A06644585FB99 /* MovesenseVendor */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 92D2DEB194DF381C7AA73BA6 /* XCLocalSwiftPackageReference "../Packages/MovesenseVendor" */;
+			productName = MovesenseVendor;
+		};
+		5E5B2002CCCC3333DDDD4444 /* SyncKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5E5B3003EEEE5555FFFF6666 /* XCLocalSwiftPackageReference "../Packages/SyncKit" */;
+			productName = SyncKit;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = DF465015301B6659004E02DC /* Project object */;
+}

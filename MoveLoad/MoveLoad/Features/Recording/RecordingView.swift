@@ -1,0 +1,280 @@
+import SwiftUI
+import SensorKit
+import MoveLoadCore
+import MovesenseVendor
+import UniformTypeIdentifiers
+
+struct RecordingView: View {
+    @Environment(AppEnvironment.self) private var appEnvironment
+
+    @State private var connectionState: SensorConnectionState = .disconnected
+    @State private var isScanning = false
+    @State private var isLogging = false
+    @State private var isTogglingLogging = false
+    @State private var isRefreshingEntries = false
+    @State private var entries: [LogbookEntryInfo] = []
+    @State private var downloadProgress: [String: Double] = [:]
+    @State private var errorMessage: String?
+    @State private var isImportingShowcase = false
+    @State private var isImportInProgress = false
+    @State private var importStatusMessage: String?
+
+    var body: some View {
+        List {
+            Section("Connexion") {
+                connectionRow
+            }
+
+            if case .connected = connectionState {
+                Section("Enregistrement") {
+                    if isTogglingLogging {
+                        ProgressView()
+                    } else {
+                        Button(isLogging ? "Arrêter l'enregistrement" : "Démarrer l'enregistrement") {
+                            Task { await toggleLogging() }
+                        }
+                    }
+                }
+
+                Section {
+                    HStack {
+                        Text("Rafraîchir la liste")
+                        Spacer()
+                        if isRefreshingEntries {
+                            ProgressView()
+                        } else {
+                            Button("Rafraîchir") { Task { await refreshEntries() } }
+                        }
+                    }
+                }
+
+                Section("Enregistrements sur le capteur") {
+                    if entries.isEmpty {
+                        Text("Aucun enregistrement").foregroundStyle(.secondary)
+                    } else {
+                        ForEach(entries) { entry in
+                            entryRow(entry)
+                        }
+                    }
+                }
+            }
+
+            Section {
+                Button {
+                    isImportingShowcase = true
+                } label: {
+                    if isImportInProgress {
+                        ProgressView()
+                    } else {
+                        Text("Importer depuis Showcase")
+                    }
+                }
+                .disabled(isImportInProgress)
+
+                if let importStatusMessage {
+                    Text(importStatusMessage)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("Import manuel")
+            } footer: {
+                Text("En attendant que l'enregistrement direct fonctionne : enregistre la séance avec l'app Movesense Showcase, exporte les fichiers acc_stream.json et heartRate_stream.json, puis sélectionne-les ici (les deux à la fois).")
+            }
+
+            if let errorMessage {
+                Section {
+                    Text(errorMessage).foregroundStyle(.red)
+                }
+            }
+        }
+        .navigationTitle("Capteur")
+        .task { await observeConnection() }
+        .fileImporter(
+            isPresented: $isImportingShowcase,
+            allowedContentTypes: [.json],
+            allowsMultipleSelection: true
+        ) { result in
+            Task { await handleShowcaseImport(result) }
+        }
+    }
+
+    private var connectionRow: some View {
+        HStack {
+            Text(connectionLabel)
+            Spacer()
+            if isScanning {
+                ProgressView()
+            } else if case .disconnected = connectionState {
+                Button("Rechercher") { Task { await scanAndConnect() } }
+            } else if case .connected = connectionState {
+                Button("Déconnecter") { Task { await appEnvironment.sensorService.disconnect() } }
+            }
+        }
+    }
+
+    private var connectionLabel: String {
+        switch connectionState {
+        case .disconnected: "Déconnecté"
+        case .connecting: "Connexion..."
+        case .connected(let sensor): sensor.name
+        case .disconnecting: "Déconnexion..."
+        }
+    }
+
+    private func entryRow(_ entry: LogbookEntryInfo) -> some View {
+        HStack {
+            VStack(alignment: .leading) {
+                Text(entry.startDate.formatted(date: .abbreviated, time: .shortened))
+                Text("\(Int(entry.duration / 60)) min")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            if let progress = downloadProgress[entry.id] {
+                ProgressView(value: progress).frame(width: 60)
+            } else {
+                Button("Télécharger") { Task { await download(entry) } }
+            }
+        }
+    }
+
+    private func observeConnection() async {
+        for await state in appEnvironment.sensorService.connectionState {
+            connectionState = state
+            if case .connected = state {
+                await refreshEntries()
+            } else if case .disconnected = state {
+                isLogging = false
+            }
+        }
+    }
+
+    private func scanAndConnect() async {
+        isScanning = true
+        defer { isScanning = false }
+        errorMessage = nil
+
+        let sensor = await withTaskGroup(of: DiscoveredSensor?.self) { group in
+            group.addTask {
+                for await sensor in appEnvironment.sensorService.scan() { return sensor }
+                return nil
+            }
+            group.addTask {
+                try? await Task.sleep(nanoseconds: 15_000_000_000)
+                return nil
+            }
+            let result = await group.next() ?? nil
+            group.cancelAll()
+            return result
+        }
+        appEnvironment.sensorService.stopScan()
+
+        guard let sensor else {
+            var message = "Aucun capteur trouvé. Vérifie que le Bluetooth est activé, que MoveLoad y a accès (Réglages > MoveLoad > Bluetooth), et que le capteur est allumé à proximité."
+            if let movesense = appEnvironment.sensorService as? MovesenseSensorService {
+                message += "\n(\(movesense.diagnosticStateDescription))"
+                message += "\n\n" + (await movesense.debugScanBroad())
+            }
+            errorMessage = message
+            return
+        }
+
+        do {
+            try await appEnvironment.sensorService.connect(to: sensor)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func toggleLogging() async {
+        isTogglingLogging = true
+        defer { isTogglingLogging = false }
+        do {
+            if isLogging {
+                try await appEnvironment.sensorService.stopLogging()
+                isLogging = false
+                // stopLogging reboots the sensor (per the official tool's
+                // flow), which disconnects it — don't refresh entries here,
+                // the connection will drop and the user reconnects to fetch.
+            } else {
+                try await appEnvironment.sensorService.startLogging(config: LoggingConfig())
+                isLogging = true
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func refreshEntries() async {
+        isRefreshingEntries = true
+        defer { isRefreshingEntries = false }
+        do {
+            entries = try await appEnvironment.sensorService.listLogbookEntries()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func download(_ entry: LogbookEntryInfo) async {
+        do {
+            let data = try await appEnvironment.sensorService.downloadEntry(entry) { progress in
+                Task { @MainActor in downloadProgress[entry.id] = progress }
+            }
+            _ = try appEnvironment.importSession(raw: data, logbookEntryID: entry.id)
+            try? await appEnvironment.sensorService.deleteEntry(entry)
+            downloadProgress[entry.id] = nil
+            await refreshEntries()
+        } catch {
+            errorMessage = error.localizedDescription
+            downloadProgress[entry.id] = nil
+        }
+    }
+
+    private func handleShowcaseImport(_ result: Result<[URL], Error>) async {
+        isImportInProgress = true
+        importStatusMessage = nil
+        errorMessage = nil
+        defer { isImportInProgress = false }
+
+        do {
+            let urls = try result.get()
+            guard !urls.isEmpty else { return }
+
+            var accelFile: (filename: String, data: Data)?
+            var hrData: Data?
+
+            for url in urls {
+                guard url.startAccessingSecurityScopedResource() else {
+                    throw SensorError.transferFailed("Accès refusé à \(url.lastPathComponent).")
+                }
+                defer { url.stopAccessingSecurityScopedResource() }
+                let data = try Data(contentsOf: url)
+                if MovesenseShowcaseJSON.looksLikeAcceleration(data) {
+                    accelFile = (url.lastPathComponent, data)
+                } else {
+                    hrData = data
+                }
+            }
+
+            guard let accelFile else {
+                throw SensorError.transferFailed("Aucun fichier acc_stream.json reconnu parmi les fichiers sélectionnés.")
+            }
+
+            let (accelZ, sampleRateHz) = try MovesenseShowcaseJSON.parseAcceleration(accelFile.data)
+            let hrSamples = try hrData.map { try MovesenseShowcaseJSON.parseHeartRate($0) } ?? []
+            let startDate = MovesenseShowcaseJSON.startDate(fromFilename: accelFile.filename)
+
+            let raw = RawSessionData(
+                startDate: startDate,
+                accelSampleRateHz: sampleRateHz,
+                accelX: accelZ,
+                hrSamples: hrSamples
+            )
+            _ = try appEnvironment.importSession(raw: raw, logbookEntryID: "showcase-\(UUID().uuidString)")
+            importStatusMessage = "Séance importée : \(startDate.formatted(date: .abbreviated, time: .shortened)), \(Int(raw.duration / 60)) min."
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+}

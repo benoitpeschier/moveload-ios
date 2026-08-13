@@ -1,0 +1,16 @@
+# Separate repos managed independently, not part of this one
+/CoachWebapp/
+/vendor/
+
+# Xcode / Swift
+.DS_Store
+*.xcuserstate
+xcuserdata/
+DerivedData/
+.build/
+.swiftpm/
+*.xcworkspace/xcuserdata/
+Movesense_dfu*.zip
+Movesense_combined.hex
+_test_build/
+_moveload_build/
