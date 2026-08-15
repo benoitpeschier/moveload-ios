@@ -285,6 +285,7 @@
 				DEVELOPMENT_TEAM = XFFXH2Z767;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "MoveLoad se connecte à ton capteur Movesense Flash en Bluetooth pour démarrer/arrêter l'enregistrement et récupérer les séances.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -319,6 +320,7 @@
 				DEVELOPMENT_TEAM = XFFXH2Z767;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "MoveLoad se connecte à ton capteur Movesense Flash en Bluetooth pour démarrer/arrêter l'enregistrement et récupérer les séances.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
