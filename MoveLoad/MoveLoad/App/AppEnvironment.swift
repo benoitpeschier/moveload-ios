@@ -148,6 +148,7 @@ final class AppEnvironment {
             boatType: session.boatType?.rawValue ?? "",
             date: session.startDate,
             durationSeconds: session.duration,
+            name: session.name ?? "",
             perceivedExertion: session.perceivedExertion,
             isTest: session.isTest,
             hrZone1Seconds: session.hrZoneI1Seconds,

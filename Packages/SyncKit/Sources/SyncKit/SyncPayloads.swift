@@ -41,6 +41,8 @@ public struct SessionSyncPayload: Sendable, Equatable {
     public let boatType: String
     public let date: Date
     public let durationSeconds: Double
+    /// Athlete-given label, empty when the session goes by its date.
+    public let name: String
     public let perceivedExertion: Int?
     /// Flags a session recorded under standardized test conditions — lets the
     /// coach webapp isolate comparable-effort sessions from regular training.
@@ -63,6 +65,7 @@ public struct SessionSyncPayload: Sendable, Equatable {
         boatType: String,
         date: Date,
         durationSeconds: Double,
+        name: String = "",
         perceivedExertion: Int?,
         isTest: Bool,
         hrZone1Seconds: Double,
@@ -80,6 +83,7 @@ public struct SessionSyncPayload: Sendable, Equatable {
         self.boatType = boatType
         self.date = date
         self.durationSeconds = durationSeconds
+        self.name = name
         self.perceivedExertion = perceivedExertion
         self.isTest = isTest
         self.hrZone1Seconds = hrZone1Seconds

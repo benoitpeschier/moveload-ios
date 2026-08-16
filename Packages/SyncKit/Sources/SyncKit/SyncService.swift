@@ -73,6 +73,7 @@ public final class FirestoreSyncService: SyncService {
                 "durationSeconds": .double(session.durationSeconds),
                 "perceivedExertion": session.perceivedExertion.map(FirestoreValue.integer) ?? .null,
                 "isTest": .boolean(session.isTest),
+                "name": .string(session.name),
                 "hrZone1Seconds": .double(session.hrZone1Seconds),
                 "hrZone2Seconds": .double(session.hrZone2Seconds),
                 "hrZone3Seconds": .double(session.hrZone3Seconds),

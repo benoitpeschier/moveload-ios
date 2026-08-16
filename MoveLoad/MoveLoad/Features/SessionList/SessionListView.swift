@@ -67,8 +67,15 @@ private struct SessionRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(session.startDate.formatted(date: .abbreviated, time: .shortened))
+            Text(session.displayTitle)
                 .font(.headline)
+            // Keep the date visible even when a name replaces it in the title,
+            // since that's what distinguishes two sessions named alike.
+            if session.name?.isEmpty == false {
+                Text(session.startDate.formatted(date: .abbreviated, time: .shortened))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
             Text("\(Int(session.duration / 60)) min")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)

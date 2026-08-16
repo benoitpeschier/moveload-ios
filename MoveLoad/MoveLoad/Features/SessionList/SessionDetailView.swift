@@ -13,6 +13,7 @@ struct SessionDetailView: View {
     @State private var rpeValue: Double = 5
     @State private var boatType: BoatType = .k1
     @State private var isTest: Bool = false
+    @State private var name: String = ""
 
     var body: some View {
         ScrollView {
@@ -27,6 +28,8 @@ struct SessionDetailView: View {
                     newRecordBanner(anchor: pendingAnchor)
                 }
 
+                nameBanner
+
                 boatTypeBanner
 
                 perceivedExertionBanner
@@ -37,7 +40,7 @@ struct SessionDetailView: View {
             }
             .padding()
         }
-        .navigationTitle(session.startDate.formatted(date: .abbreviated, time: .shortened))
+        .navigationTitle(session.displayTitle)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 ShareLink(items: exportURLs) {
@@ -49,10 +52,40 @@ struct SessionDetailView: View {
         .task {
             boatType = session.boatType ?? .k1
             isTest = session.isTest
+            name = session.name ?? ""
             rpeValue = Double(session.perceivedExertion ?? 5)
             loadRecords()
             exportURLs = (try? CSVExporter.exportSession(session)) ?? []
         }
+    }
+
+    private var nameBanner: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Nom de la séance")
+                .font(.headline)
+            TextField(
+                session.startDate.formatted(date: .abbreviated, time: .shortened),
+                text: $name
+            )
+            .textFieldStyle(.roundedBorder)
+            .submitLabel(.done)
+            .onSubmit { saveName() }
+            // Also save when the field loses focus or the screen goes away,
+            // so a name typed without pressing Done isn't quietly lost.
+            .onChange(of: name) { _, _ in saveName() }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(bannerBackground)
+    }
+
+    private func saveName() {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let stored = trimmed.isEmpty ? nil : trimmed
+        guard stored != session.name else { return }
+        session.name = stored
+        try? appEnvironment.modelContext.save()
+        appEnvironment.syncSessionInBackground(session)
     }
 
     private var boatTypeBanner: some View {

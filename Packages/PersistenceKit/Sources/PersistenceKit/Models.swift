@@ -133,6 +133,19 @@ public final class Session {
     /// comparable-effort sessions later, rather than mixing test and training data.
     public var isTest: Bool = false
 
+    /// Optional athlete-given label ("Test 45s", "Fractionné 8x2min"). Nil or
+    /// empty means the session is identified by its date, as before.
+    public var name: String?
+
+    /// What to show for this session: its name when it has one, its date
+    /// otherwise.
+    public var displayTitle: String {
+        let trimmed = name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmed.isEmpty
+            ? startDate.formatted(date: .abbreviated, time: .shortened)
+            : trimmed
+    }
+
     @Relationship(deleteRule: .cascade, inverse: \MechanicalCurvePoint.session)
     public var curvePoints: [MechanicalCurvePoint] = []
 

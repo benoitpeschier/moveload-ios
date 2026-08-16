@@ -220,16 +220,21 @@ public final class MovesenseSensorService: NSObject, SensorService {
     public func listLogbookEntries() async throws -> [LogbookEntryInfo] {
         let entries = try await gsp.getLogbookEntries()
         return entries.map { entry in
-            // `lastModified` is a Unix epoch timestamp in seconds; fall back
-            // to "now" if it looks obviously invalid (0 or absurd).
-            let date = entry.lastModified > 0
+            // No accurate duration without decoding: 730 bytes/s is what a
+            // real accel+HR recording measured (2026-08-16), close enough to
+            // label the list. The decoded session carries the true value.
+            let estimatedDuration = TimeInterval(entry.size) / 730.0
+            // `lastModified` is when recording *stopped*, not when it began
+            // (verified against a real recording), so showing it as the start
+            // date would put every entry a full session length late. Backing
+            // the estimated duration off it is still approximate, but it is
+            // wrong by the estimate's error rather than by the whole session.
+            // The exact start comes out of the file itself once downloaded —
+            // see MovesenseSBEMDecoder.
+            let end = entry.lastModified > 0
                 ? Date(timeIntervalSince1970: TimeInterval(entry.lastModified))
                 : Date()
-            // No accurate duration without decoding — rough estimate from
-            // size assuming ~52Hz accel (12 bytes/sample after SBEM framing
-            // overhead, generously rounded) purely so the list isn't empty;
-            // the real value comes from the decoded session at import time.
-            let estimatedDuration = TimeInterval(entry.size) / 900.0
+            let date = end.addingTimeInterval(-estimatedDuration)
             return LogbookEntryInfo(id: "\(entry.id)", startDate: date, duration: estimatedDuration, sizeBytes: Int(entry.size))
         }
     }

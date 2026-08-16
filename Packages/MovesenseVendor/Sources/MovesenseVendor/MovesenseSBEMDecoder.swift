@@ -37,6 +37,9 @@ enum MovesenseSBEMDecoder {
         case group(refs: [UInt8])
     }
 
+    /// `startDate` is only a fallback: the real start is read from the file's
+    /// own wall-clock record when it carries a usable one (see
+    /// `resolvedStartDate`).
     static func decode(_ data: Data, startDate: Date) throws -> RawSessionData {
         let bytes = [UInt8](data)
         guard bytes.count > 9, bytes[0..<8].elementsEqual(Array("SBEM0112".utf8)) else {
@@ -51,6 +54,10 @@ enum MovesenseSBEMDecoder {
         var accelTimestampsMs: [Double] = []
         var hrSamples: [HRSample] = []
         var hrIndex = 0
+        /// First wall-clock fix in the file: the sensor's own millisecond
+        /// counter paired with the matching UTC time, which is what lets the
+        /// sample timestamps be turned into real dates.
+        var timeFix: (relativeMs: Double, utcMicroseconds: Double)?
 
         var pos = dataStart
         while pos < bytes.count - 1 {
@@ -101,9 +108,13 @@ enum MovesenseSBEMDecoder {
                     hrSamples.append(HRSample(timeOffset: TimeInterval(hrIndex), bpm: average))
                     hrIndex += 1
                 }
+            } else if values.keys.contains(where: { $0.contains("TimeDetailed") }) {
+                if timeFix == nil,
+                   let relative = values["Samples+Array.TimeDetailed.relativeTime"]?.first,
+                   let utc = values["Samples.Array.TimeDetailed.utcTime"]?.first {
+                    timeFix = (relativeMs: relative, utcMicroseconds: utc)
+                }
             }
-            // TimeDetailed entries carry wall-clock sync info we don't need
-            // for analysis — skipped.
         }
 
         guard !accelZ.isEmpty else {
@@ -116,11 +127,42 @@ enum MovesenseSBEMDecoder {
         }
 
         return RawSessionData(
-            startDate: startDate,
+            startDate: resolvedStartDate(
+                timeFix: timeFix,
+                firstSampleMs: accelTimestampsMs.first,
+                fallback: startDate
+            ),
             accelSampleRateHz: sampleRateHz,
             axes: AccelerationAxes(x: accelX, y: accelY, z: accelZ),
             hrSamples: hrSamples
         )
+    }
+
+    /// True wall-clock start of the recording.
+    ///
+    /// The logbook's own timestamp is the entry's *last* write, i.e. when
+    /// recording stopped — dating a session by it puts it a full session
+    /// length late (confirmed on a real recording, 2026-08-16: a session run
+    /// 12:43:37 to 12:46:31 was listed as 12:46). The file's TimeDetailed
+    /// record pairs the sensor's millisecond counter with a UTC time, which
+    /// pins the first sample to a real instant.
+    private static func resolvedStartDate(
+        timeFix: (relativeMs: Double, utcMicroseconds: Double)?,
+        firstSampleMs: Double?,
+        fallback: Date
+    ) -> Date {
+        guard let timeFix, let firstSampleMs else { return fallback }
+        let offsetMs = firstSampleMs - timeFix.relativeMs
+        let seconds = (timeFix.utcMicroseconds + offsetMs * 1000) / 1_000_000
+        let candidate = Date(timeIntervalSince1970: seconds)
+
+        // The sensor's clock resets to 2015 on power loss and is only set on
+        // connect, so a recording made before any connection can carry a
+        // meaningless fix. Anything outside a sane window is not trusted.
+        let earliest = Date(timeIntervalSince1970: 1_577_836_800) // 2020-01-01
+        let latest = Date().addingTimeInterval(24 * 3600)
+        guard candidate > earliest, candidate < latest else { return fallback }
+        return candidate
     }
 
     // MARK: - Descriptor table
