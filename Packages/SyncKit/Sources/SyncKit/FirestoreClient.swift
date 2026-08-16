@@ -20,12 +20,7 @@ public struct FirestoreClient: Sendable {
     /// whole document with `fields`, which is what we want since every field
     /// is always sent on every call.
     public func upsertDocument(pathComponents: [String], fields: [String: FirestoreValue]) async throws {
-        let encodedPath = pathComponents
-            .map { $0.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? $0 }
-            .joined(separator: "/")
-        let url = URL(string: "https://firestore.googleapis.com/v1/projects/\(projectID)/databases/(default)/documents/\(encodedPath)")!
-
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: documentURL(pathComponents: pathComponents))
         request.httpMethod = "PATCH"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
@@ -34,5 +29,26 @@ public struct FirestoreClient: Sendable {
 
         let (data, response) = try await session.data(for: request)
         try SyncError.validate(response, data: data)
+    }
+
+    /// Removes a document. A document that is already gone is treated as
+    /// success: the caller's intent is "this must not be there", and Firestore
+    /// answers 404 both for an already-deleted document and for one that never
+    /// existed — neither is a failure worth surfacing.
+    public func deleteDocument(pathComponents: [String]) async throws {
+        var request = URLRequest(url: documentURL(pathComponents: pathComponents))
+        request.httpMethod = "DELETE"
+        request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+
+        let (data, response) = try await session.data(for: request)
+        if let http = response as? HTTPURLResponse, http.statusCode == 404 { return }
+        try SyncError.validate(response, data: data)
+    }
+
+    private func documentURL(pathComponents: [String]) -> URL {
+        let encodedPath = pathComponents
+            .map { $0.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? $0 }
+            .joined(separator: "/")
+        return URL(string: "https://firestore.googleapis.com/v1/projects/\(projectID)/databases/(default)/documents/\(encodedPath)")!
     }
 }

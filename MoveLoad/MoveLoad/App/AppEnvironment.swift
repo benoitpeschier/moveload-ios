@@ -176,7 +176,21 @@ final class AppEnvironment {
     /// Deletes a session and its on-disk raw accel/HR files. Curve points cascade
     /// via the SwiftData relationship — irreversible, the sensor's own logbook
     /// entry (if still present there) is untouched.
-    func deleteSession(_ session: Session) throws {
+    func deleteSession(_ session: Session) async throws {
+        let sessionID = session.id.uuidString
+        let athleteID = athlete.id.uuidString
+
+        // Retract it from the coach's dashboard *before* dropping the local
+        // copy, and stop if that fails: deleting locally while the session
+        // stays visible to the coach is precisely the gap this closes, and
+        // once the local copy is gone there is nothing left to retry from.
+        // An unconfigured sync is not a failure — there is no remote copy.
+        do {
+            try await syncService.deleteSession(id: sessionID, athleteId: athleteID)
+        } catch SyncError.notConfigured {
+            // Nothing was ever pushed.
+        }
+
         let directory = PersistenceContainer.documentsSessionsDirectory()
             .appendingPathComponent(session.rawSampleDirectory)
         try? FileManager.default.removeItem(at: directory)

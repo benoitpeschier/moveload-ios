@@ -7,6 +7,11 @@ public protocol SyncService: Sendable {
 
     /// Upserts the athlete doc (keeps name/gender fresh cheaply) then the session doc.
     func pushSession(_ session: SessionSyncPayload) async throws
+
+    /// Removes a session from the coach's view. Without this, deleting a
+    /// session on the phone left it visible to the coach forever, with no way
+    /// to retract it from the app.
+    func deleteSession(id: String, athleteId: String) async throws
 }
 
 /// Firestore-backed `SyncService`, built entirely on `AuthClient`/`FirestoreClient`'s
@@ -32,6 +37,15 @@ public final class FirestoreSyncService: SyncService {
             settings: settings
         )
         try await upsertSession(session, settings: settings)
+    }
+
+    public func deleteSession(id: String, athleteId: String) async throws {
+        let settings = try requireSettings()
+        let idToken = try await authClient.validIDToken(webAPIKey: settings.webAPIKey)
+        let client = FirestoreClient(projectID: settings.projectID, idToken: idToken)
+        try await client.deleteDocument(
+            pathComponents: ["teams", settings.teamCode, "athletes", athleteId, "sessions", id]
+        )
     }
 
     private func requireSettings() throws -> SyncSettings {

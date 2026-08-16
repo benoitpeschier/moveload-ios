@@ -5,6 +5,7 @@ struct SessionListView: View {
     @Environment(AppEnvironment.self) private var appEnvironment
     @State private var sessions: [Session] = []
     @State private var sessionPendingDelete: Session?
+    @State private var deleteErrorMessage: String?
 
     var body: some View {
         List {
@@ -46,14 +47,34 @@ struct SessionListView: View {
         ) {
             Button("Annuler", role: .cancel) {}
             Button("Supprimer", role: .destructive) {
-                if let session = sessionPendingDelete {
-                    try? appEnvironment.deleteSession(session)
-                    reload()
-                }
+                guard let session = sessionPendingDelete else { return }
                 sessionPendingDelete = nil
+                Task { await delete(session) }
             }
         } message: {
-            Text("Les données de cette séance seront définitivement supprimées de l'appareil.")
+            Text("Les données de cette séance seront définitivement supprimées de l'appareil et du tableau de bord de l'entraîneur.")
+        }
+        .alert(
+            "Suppression impossible",
+            isPresented: Binding(
+                get: { deleteErrorMessage != nil },
+                set: { if !$0 { deleteErrorMessage = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(deleteErrorMessage ?? "")
+        }
+    }
+
+    private func delete(_ session: Session) async {
+        do {
+            try await appEnvironment.deleteSession(session)
+            reload()
+        } catch {
+            // Say plainly that nothing was deleted, rather than leaving the
+            // athlete to assume the coach can no longer see the session.
+            deleteErrorMessage = "La séance n'a pas pu être retirée du tableau de bord de l'entraîneur, elle a donc été conservée. Vérifie ta connexion et réessaie.\n\n(\(error.localizedDescription))"
         }
     }
 
