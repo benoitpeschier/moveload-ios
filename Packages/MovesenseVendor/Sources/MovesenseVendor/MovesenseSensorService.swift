@@ -20,17 +20,45 @@ public final class MovesenseSensorService: NSObject, SensorService {
     private var wantsScanning = false
     private var scanContinuation: AsyncStream<DiscoveredSensor>.Continuation?
 
-    private var connectionContinuation: AsyncStream<SensorConnectionState>.Continuation?
+    /// One continuation per live observer. This used to be a single `lazy var`
+    /// stream, which meant only the first consumer ever received anything:
+    /// SwiftUI restarts a view's `.task` (switching tabs, for one), and the
+    /// second iteration of an already-consumed AsyncStream silently receives
+    /// nothing — leaving the screen stuck on a stale state with buttons that
+    /// looked broken.
+    private var connectionContinuations: [UUID: AsyncStream<SensorConnectionState>.Continuation] = [:]
+    private let continuationsLock = NSLock()
+
     private var state: SensorConnectionState = .disconnected {
-        didSet { connectionContinuation?.yield(state) }
+        didSet { broadcast(state) }
     }
 
     private var connectedSerial: String?
     private var connectedSensor: DiscoveredSensor?
 
-    public private(set) lazy var connectionState: AsyncStream<SensorConnectionState> = AsyncStream { continuation in
-        self.connectionContinuation = continuation
-        continuation.yield(self.state)
+    public var connectionState: AsyncStream<SensorConnectionState> {
+        AsyncStream { continuation in
+            let id = UUID()
+            continuationsLock.lock()
+            connectionContinuations[id] = continuation
+            let current = state
+            continuationsLock.unlock()
+
+            continuation.yield(current)
+            continuation.onTermination = { [weak self] _ in
+                guard let self else { return }
+                self.continuationsLock.lock()
+                self.connectionContinuations[id] = nil
+                self.continuationsLock.unlock()
+            }
+        }
+    }
+
+    private func broadcast(_ newState: SensorConnectionState) {
+        continuationsLock.lock()
+        let observers = connectionContinuations.values
+        continuationsLock.unlock()
+        for continuation in observers { continuation.yield(newState) }
     }
 
     public override init() {
@@ -171,7 +199,14 @@ public final class MovesenseSensorService: NSObject, SensorService {
 
     public func startLogging(config: LoggingConfig) async throws {
         try await gsp.putDataLoggerConfig(paths: [Self.accelerometerPath, Self.heartRatePath])
-        try await gsp.putDataLoggerState(3) // LOGGING
+        try await gsp.putDataLoggerState(Self.loggingStateValue)
+    }
+
+    /// DataLogger states, from the protocol reference: 2 = READY, 3 = LOGGING.
+    private static let loggingStateValue: UInt8 = 3
+
+    public func isCurrentlyLogging() async throws -> Bool {
+        try await gsp.getDataLoggerState() == Self.loggingStateValue
     }
 
     public func stopLogging() async throws {

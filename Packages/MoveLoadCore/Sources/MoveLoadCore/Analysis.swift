@@ -28,17 +28,22 @@ public struct SessionAnalysisResult: Sendable {
     public let mechZoneSeconds: [MechZone: TimeInterval]
     public let curve: [MechanicalWindow: Double?]
     public let mechZoneAnchorUsed: Double
+    /// Time dropped as walking rather than paddling. Zero when the session
+    /// carried no triaxial data to judge from.
+    public let excludedWalkingSeconds: TimeInterval
 
     public init(
         hrZoneSeconds: [HRZone: TimeInterval],
         mechZoneSeconds: [MechZone: TimeInterval],
         curve: [MechanicalWindow: Double?],
-        mechZoneAnchorUsed: Double
+        mechZoneAnchorUsed: Double,
+        excludedWalkingSeconds: TimeInterval = 0
     ) {
         self.hrZoneSeconds = hrZoneSeconds
         self.mechZoneSeconds = mechZoneSeconds
         self.curve = curve
         self.mechZoneAnchorUsed = mechZoneAnchorUsed
+        self.excludedWalkingSeconds = excludedWalkingSeconds
     }
 
     public var peak45s: Double? {

@@ -25,15 +25,20 @@ public enum ZoneTimeAccumulator {
     /// zone 3 threshold counts immediately, even if it only lasts one sample;
     /// this is deliberately different from the 6-window curve's rolling-mean
     /// peaks, which smooth over their window and can't be compared the same way.
+    /// `keepMask`, when supplied, drops excluded samples (walking to and from
+    /// the water) so zone time reflects time actually spent paddling.
     public static func mechZoneSeconds(
         accelX: [Double],
         sampleRateHz: Double,
         thresholdLow: Double,
-        thresholdHigh: Double
+        thresholdHigh: Double,
+        keepMask: [Bool]? = nil
     ) -> [MechZone: TimeInterval] {
         var seconds: [MechZone: TimeInterval] = [.zone1: 0, .zone2: 0, .zone3: 0]
         let dt = 1.0 / sampleRateHz
-        for raw in accelX {
+        let mask = keepMask?.count == accelX.count ? keepMask : nil
+        for (index, raw) in accelX.enumerated() {
+            if let mask, !mask[index] { continue }
             let value = max(0, raw)
             seconds[mechZone(for: value, low: thresholdLow, high: thresholdHigh), default: 0] += dt
         }

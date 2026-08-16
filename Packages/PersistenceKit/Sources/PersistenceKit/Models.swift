@@ -108,6 +108,12 @@ public final class Session {
     /// new anchor, this past session's zone-time reading doesn't silently drift.
     public var mechZoneAnchorUsed: Double = 0
 
+    /// Time automatically left out of the load analysis as walking rather than
+    /// paddling (see GaitDetector). Persisted so the exclusion stays visible
+    /// after the fact — it happens silently, and an athlete comparing two
+    /// sessions deserves to see that one had 9 minutes removed.
+    public var excludedWalkingSeconds: Double = 0
+
     /// Athlete-reported RPE (rate of perceived exertion), 1 (facile) to 10
     /// (extrêmement difficile). Nil until the athlete sets it from the session
     /// detail screen — distinct from the objective cardio/mechanical load.

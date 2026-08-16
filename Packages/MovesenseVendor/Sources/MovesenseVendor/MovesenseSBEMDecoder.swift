@@ -45,6 +45,8 @@ enum MovesenseSBEMDecoder {
 
         let (descriptors, dataStart) = try parseDescriptors(bytes)
 
+        var accelX: [Double] = []
+        var accelY: [Double] = []
         var accelZ: [Double] = []
         var accelTimestampsMs: [Double] = []
         var hrSamples: [HRSample] = []
@@ -79,11 +81,18 @@ enum MovesenseSBEMDecoder {
                 let ys = values["Samples.Array.MeasAcc.ArrayAcc.y"] ?? []
                 let zs = values["Samples.Array.MeasAcc.ArrayAcc.z"] ?? []
                 // Z carries the effort-correlated signal on this sensor's
-                // mounting (observed 2026-08-06). Variable name kept as
-                // `accelZ` for clarity here (unlike the JSON import path,
-                // which keeps the legacy `accelX` name for domain-naming
-                // consistency).
-                for z in zs { accelZ.append(max(0, z)) }
+                // mounting (observed 2026-08-06) and becomes the load signal.
+                // Stored raw, not clamped at zero: GaitDetector derives the
+                // gravity direction from the true acceleration vector, which
+                // a rectified axis would distort. The load analysis clamps on
+                // its own anyway (MechanicalCurveAnalyzer, ZoneTimeAccumulator).
+                let n = min(xs.count, min(ys.count, zs.count))
+                guard n > 0 else { continue }
+                for i in 0..<n {
+                    accelX.append(xs[i])
+                    accelY.append(ys[i])
+                    accelZ.append(zs[i])
+                }
                 // One timestamp per *chunk* (not per sample) — these span
                 // real elapsed time, unlike interpolating within a chunk.
                 if let timestamp { accelTimestampsMs.append(timestamp) }
@@ -106,7 +115,12 @@ enum MovesenseSBEMDecoder {
             sampleRateHz = Double(accelZ.count) / ((last - first) / 1000)
         }
 
-        return RawSessionData(startDate: startDate, accelSampleRateHz: sampleRateHz, accelX: accelZ, hrSamples: hrSamples)
+        return RawSessionData(
+            startDate: startDate,
+            accelSampleRateHz: sampleRateHz,
+            axes: AccelerationAxes(x: accelX, y: accelY, z: accelZ),
+            hrSamples: hrSamples
+        )
     }
 
     // MARK: - Descriptor table

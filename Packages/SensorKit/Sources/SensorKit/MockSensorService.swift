@@ -7,14 +7,36 @@ import MoveLoadCore
 public final class MockSensorService: SensorService {
     private let fakeSensor = DiscoveredSensor(id: "MOCK-FLASH-0001", name: "Movesense Flash (simulé)", rssi: -45)
 
-    private var connectionContinuation: AsyncStream<SensorConnectionState>.Continuation?
-    public private(set) lazy var connectionState: AsyncStream<SensorConnectionState> = AsyncStream { continuation in
-        self.connectionContinuation = continuation
-        continuation.yield(self.state)
+    /// One continuation per observer — see the note in MovesenseSensorService:
+    /// a single shared stream only ever feeds its first consumer.
+    private var connectionContinuations: [UUID: AsyncStream<SensorConnectionState>.Continuation] = [:]
+    private let continuationsLock = NSLock()
+
+    public var connectionState: AsyncStream<SensorConnectionState> {
+        AsyncStream { continuation in
+            let id = UUID()
+            continuationsLock.lock()
+            connectionContinuations[id] = continuation
+            let current = state
+            continuationsLock.unlock()
+
+            continuation.yield(current)
+            continuation.onTermination = { [weak self] _ in
+                guard let self else { return }
+                self.continuationsLock.lock()
+                self.connectionContinuations[id] = nil
+                self.continuationsLock.unlock()
+            }
+        }
     }
 
     private var state: SensorConnectionState = .disconnected {
-        didSet { connectionContinuation?.yield(state) }
+        didSet {
+            continuationsLock.lock()
+            let observers = connectionContinuations.values
+            continuationsLock.unlock()
+            for continuation in observers { continuation.yield(state) }
+        }
     }
 
     private var loggingStartedAt: Date?
@@ -55,6 +77,11 @@ public final class MockSensorService: SensorService {
     public func startLogging(config: LoggingConfig) async throws {
         guard case .connected = state else { throw SensorError.notConnected }
         loggingStartedAt = Date()
+    }
+
+    public func isCurrentlyLogging() async throws -> Bool {
+        guard case .connected = state else { throw SensorError.notConnected }
+        return loggingStartedAt != nil
     }
 
     public func stopLogging() async throws {

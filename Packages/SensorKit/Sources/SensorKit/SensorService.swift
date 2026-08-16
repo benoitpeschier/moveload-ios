@@ -12,6 +12,12 @@ public protocol SensorConnectivityService: AnyObject {
 public protocol SensorLogbookService: AnyObject {
     func startLogging(config: LoggingConfig) async throws
     func stopLogging() async throws
+
+    /// Whether the sensor is recording right now, read from the device rather
+    /// than assumed. Recording continues without the phone, so an app that
+    /// only tracked its own start/stop calls would show the wrong button
+    /// after a relaunch or a reconnection from another phone.
+    func isCurrentlyLogging() async throws -> Bool
     func listLogbookEntries() async throws -> [LogbookEntryInfo]
     func downloadEntry(_ entry: LogbookEntryInfo, progress: @escaping (Double) -> Void) async throws -> RawSessionData
     func deleteEntry(_ entry: LogbookEntryInfo) async throws

@@ -35,12 +35,16 @@ public enum MovesenseShowcaseJSON {
         return entries.contains { $0["acc"] != nil }
     }
 
-    public static func parseAcceleration(_ data: Data) throws -> (accelZ: [Double], sampleRateHz: Double) {
+    /// Returns all three axes: Z is the load signal, X and Y are needed for
+    /// gait detection (see `GaitDetector`).
+    public static func parseAcceleration(_ data: Data) throws -> (axes: AccelerationAxes, sampleRateHz: Double) {
         guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let entries = root["data"] as? [[String: Any]] else {
             throw SensorError.transferFailed("Format JSON Showcase non reconnu (clé \"data\" absente).")
         }
 
+        var accelX: [Double] = []
+        var accelY: [Double] = []
         var accelZ: [Double] = []
         var firstTimestampMs: Double?
         var lastTimestampMs: Double?
@@ -53,7 +57,11 @@ public enum MovesenseShowcaseJSON {
                 lastTimestampMs = timestamp
             }
             for sample in samples {
-                guard let z = (sample["z"] as? NSNumber)?.doubleValue else { continue }
+                guard let x = (sample["x"] as? NSNumber)?.doubleValue,
+                      let y = (sample["y"] as? NSNumber)?.doubleValue,
+                      let z = (sample["z"] as? NSNumber)?.doubleValue else { continue }
+                accelX.append(x)
+                accelY.append(y)
                 accelZ.append(z)
             }
         }
@@ -68,7 +76,7 @@ public enum MovesenseShowcaseJSON {
             sampleRateHz = Double(accelZ.count) / elapsedSeconds
         }
 
-        return (accelZ, sampleRateHz)
+        return (AccelerationAxes(x: accelX, y: accelY, z: accelZ), sampleRateHz)
     }
 
     /// Showcase's heart-rate export has no per-sample timestamp, only an

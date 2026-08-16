@@ -31,6 +31,7 @@ public struct SessionRepository {
         session.mechZone2Seconds = analysis.mechZoneSeconds[.zone2] ?? 0
         session.mechZone3Seconds = analysis.mechZoneSeconds[.zone3] ?? 0
         session.mechZoneAnchorUsed = analysis.mechZoneAnchorUsed
+        session.excludedWalkingSeconds = analysis.excludedWalkingSeconds
 
         context.insert(session)
 

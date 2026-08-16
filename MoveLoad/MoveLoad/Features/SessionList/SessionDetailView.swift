@@ -138,6 +138,14 @@ struct SessionDetailView: View {
                 .font(.title2.bold())
             Text("Durée : \(Int(session.duration / 60)) min")
                 .foregroundStyle(.secondary)
+            if session.excludedWalkingSeconds >= 30 {
+                Label(
+                    "\(Int((session.excludedWalkingSeconds / 60).rounded())) min de marche exclus de l'analyse",
+                    systemImage: "figure.walk"
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
         }
     }
 

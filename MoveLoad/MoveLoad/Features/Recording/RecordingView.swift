@@ -182,6 +182,11 @@ struct RecordingView: View {
         for await state in appEnvironment.sensorService.connectionState {
             connectionState = state
             if case .connected = state {
+                // Ask the sensor whether it is recording rather than trusting
+                // our own start/stop history: it records on its own, so after
+                // an app relaunch (or a session started from another phone)
+                // the button would otherwise offer the wrong action.
+                isLogging = (try? await appEnvironment.sensorService.isCurrentlyLogging()) ?? isLogging
                 await refreshEntries()
             } else if case .disconnected = state {
                 isLogging = false
@@ -311,14 +316,14 @@ struct RecordingView: View {
                 throw SensorError.transferFailed("Aucun fichier acc_stream.json reconnu parmi les fichiers sélectionnés.")
             }
 
-            let (accelZ, sampleRateHz) = try MovesenseShowcaseJSON.parseAcceleration(accelFile.data)
+            let (axes, sampleRateHz) = try MovesenseShowcaseJSON.parseAcceleration(accelFile.data)
             let hrSamples = try hrData.map { try MovesenseShowcaseJSON.parseHeartRate($0) } ?? []
             let startDate = MovesenseShowcaseJSON.startDate(fromFilename: accelFile.filename)
 
             let raw = RawSessionData(
                 startDate: startDate,
                 accelSampleRateHz: sampleRateHz,
-                accelX: accelZ,
+                axes: axes,
                 hrSamples: hrSamples
             )
             _ = try appEnvironment.importSession(raw: raw, logbookEntryID: "showcase-\(UUID().uuidString)")

@@ -96,4 +96,59 @@ private func makeInMemoryContext() throws -> ModelContext {
     }
     #expect(readBack.hrSamples.count == 2)
     #expect(readBack.hrSamples[1].bpm == 145)
+    // No axes given, so none should be invented on the way back.
+    #expect(readBack.axes == nil)
+}
+
+@Test func rawSampleFileStoreRoundTripsAllThreeAxes() throws {
+    let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: dir) }
+
+    let axes = AccelerationAxes(
+        x: [0.1, -1.2, 3.4, 0.0],
+        y: [9.8, 9.7, 10.1, 9.9],
+        z: [1.0, -0.5, 2.2, 0.3]
+    )
+    let original = RawSessionData(
+        startDate: .now,
+        accelSampleRateHz: 52,
+        axes: axes,
+        hrSamples: [HRSample(timeOffset: 0, bpm: 80)]
+    )
+
+    try RawSampleFileStore.write(original, to: dir)
+    let readBack = try RawSampleFileStore.read(startDate: original.startDate, from: dir)
+
+    let restored = try #require(readBack.axes)
+    for (a, b) in zip(restored.x, axes.x) { #expect(abs(a - b) < 0.001) }
+    for (a, b) in zip(restored.y, axes.y) { #expect(abs(a - b) < 0.001) }
+    for (a, b) in zip(restored.z, axes.z) { #expect(abs(a - b) < 0.001) }
+    // Z stays the load signal, negative values intact for gravity projection.
+    for (a, b) in zip(readBack.accelX, axes.z) { #expect(abs(a - b) < 0.001) }
+    #expect(readBack.accelSampleRateHz == 52)
+}
+
+/// Sessions recorded before triaxial storage must keep opening — their files
+/// have no magic header and start straight at the sample rate.
+@Test func rawSampleFileStoreReadsLegacySingleAxisFiles() throws {
+    let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: dir) }
+    try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+
+    var legacy = Data()
+    var rate = Float32(52)
+    withUnsafeBytes(of: &rate) { legacy.append(contentsOf: $0) }
+    for value in [Float32(0.5), 1.5, 2.5] {
+        var v = value
+        withUnsafeBytes(of: &v) { legacy.append(contentsOf: $0) }
+    }
+    try legacy.write(to: dir.appendingPathComponent("accel.bin"))
+
+    let readBack = try RawSampleFileStore.read(startDate: .now, from: dir)
+
+    #expect(readBack.accelSampleRateHz == 52)
+    #expect(readBack.accelX.count == 3)
+    #expect(abs(readBack.accelX[2] - 2.5) < 0.001)
+    // Nothing to detect gait from — analysis must fall back to the whole session.
+    #expect(readBack.axes == nil)
 }

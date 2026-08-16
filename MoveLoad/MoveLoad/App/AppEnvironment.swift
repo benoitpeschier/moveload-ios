@@ -51,7 +51,15 @@ final class AppEnvironment {
             let directory = PersistenceContainer.documentsSessionsDirectory()
                 .appendingPathComponent(session.rawSampleDirectory)
             guard let raw = try? RawSampleFileStore.read(startDate: session.startDate, from: directory) else { continue }
-            let result = MechanicalCurveAnalyzer.analyze(accelX: raw.accelX, sampleRateHz: raw.accelSampleRateHz)
+            // Must apply the same walking exclusion the original analysis did,
+            // or a recomputed curve would quietly let walking back in.
+            var keepMask: [Bool]?
+            if let axes = raw.axes, axes.count == raw.accelX.count {
+                keepMask = GaitDetector.detect(axes: axes, sampleRateHz: raw.accelSampleRateHz).keepMask
+            }
+            let result = keepMask.map {
+                MechanicalCurveAnalyzer.analyze(accelX: raw.accelX, sampleRateHz: raw.accelSampleRateHz, keepMask: $0)
+            } ?? MechanicalCurveAnalyzer.analyze(accelX: raw.accelX, sampleRateHz: raw.accelSampleRateHz)
             try? sessionRepository.replaceCurvePoints(for: session, curve: result.curve, in: modelContext)
             syncSessionInBackground(session)
         }
