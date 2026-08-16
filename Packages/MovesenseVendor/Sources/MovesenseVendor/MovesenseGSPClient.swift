@@ -218,11 +218,31 @@ public actor MovesenseGSPClient {
         var payload = Data(count: 4)
         payload.withUnsafeMutableBytes { $0.storeBytes(of: id.littleEndian, as: UInt32.self) }
 
-        _ = try await send(command: .fetchLog, reference: ref, payload: payload, expectsStatusCode: true)
-
+        // The accumulator MUST exist before the command goes out: the sensor
+        // starts streaming DATA packets as soon as it acknowledges FETCH_LOG,
+        // and notifications reach this actor through their own Tasks. Setting
+        // it up after awaiting the ack (as this used to) left a window where
+        // the first packets — including offset 0, which carries the
+        // "SBEM0112" header — were dropped on a nil accumulator, and the
+        // zero-filled gap then failed to decode as "en-tête SBEM non reconnu".
         return try await withCheckedThrowingContinuation { continuation in
             fetchAccumulator = FetchAccumulator(progress: progress, completion: continuation)
+            Task {
+                do {
+                    _ = try await send(command: .fetchLog, reference: ref, payload: payload, expectsStatusCode: true)
+                } catch {
+                    failPendingFetch(with: error)
+                }
+            }
         }
+    }
+
+    /// Aborts an in-flight fetch (the FETCH_LOG command itself failed, so no
+    /// DATA packets will ever arrive to complete it).
+    private func failPendingFetch(with error: Error) {
+        guard let accumulator = fetchAccumulator else { return }
+        fetchAccumulator = nil
+        accumulator.fail(error)
     }
 
     // MARK: - Internal plumbing
@@ -343,6 +363,10 @@ private final class FetchAccumulator: @unchecked Sendable {
     private var buffer = Data()
     private let progress: (@Sendable (Int) -> Void)?
     private var completion: CheckedContinuation<Data, Error>?
+    /// Total bytes actually written by packets. Gaps are zero-filled to keep
+    /// out-of-order offsets working, so this is what distinguishes "buffer is
+    /// complete" from "buffer has holes we invented" — see `append`.
+    private var bytesWritten = 0
 
     init(progress: (@Sendable (Int) -> Void)?, completion: CheckedContinuation<Data, Error>) {
         self.progress = progress
@@ -353,6 +377,17 @@ private final class FetchAccumulator: @unchecked Sendable {
         guard let completion else { return }
         if bytes.isEmpty {
             self.completion = nil
+            // A missing packet would otherwise surface far downstream as a
+            // confusing decode failure on zero-filled bytes, so refuse the
+            // whole transfer rather than hand back a plausible-looking buffer.
+            // `>=` not `==`: a re-sent or overlapping packet double-counts,
+            // which is harmless — only a shortfall means real zero-filled holes.
+            guard bytesWritten >= buffer.count else {
+                completion.resume(throwing: MovesenseGSPClient.GSPError.unexpectedResponse(
+                    "transfert incomplet : \(buffer.count - bytesWritten) octet(s) manquant(s) sur \(buffer.count)."
+                ))
+                return
+            }
             completion.resume(returning: buffer)
             return
         }
@@ -361,7 +396,14 @@ private final class FetchAccumulator: @unchecked Sendable {
             buffer.append(Data(repeating: 0, count: endOffset - buffer.count))
         }
         buffer.replaceSubrange(offset..<endOffset, with: bytes)
+        bytesWritten += bytes.count
         progress?(endOffset)
+    }
+
+    func fail(_ error: Error) {
+        guard let completion else { return }
+        self.completion = nil
+        completion.resume(throwing: error)
     }
 }
 
@@ -390,6 +432,9 @@ private final class Delegate: NSObject, CBCentralManagerDelegate, CBPeripheralDe
     private var notifyContinuation: CheckedContinuation<Void, Error>?
     private var pendingWriteChar: CBCharacteristic?
     private var pendingNotifyChar: CBCharacteristic?
+
+    private var disconnectContinuation: CheckedContinuation<Void, Never>?
+    private var disconnectTimeoutTask: Task<Void, Never>?
 
     /// `nonisolated` so `MovesenseGSPClient.init()` (synchronous) can call
     /// it directly — safe because it runs once, before any BLE callback
@@ -465,11 +510,54 @@ private final class Delegate: NSObject, CBCentralManagerDelegate, CBPeripheralDe
     }
 
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
+        finishDisconnect()
         Task { [owner] in await owner?.handlePeripheralDisconnected() }
     }
 
+    /// Tears the link down and only returns once CoreBluetooth confirms it.
+    /// Two details matter, and both were missing before: the notification
+    /// subscription is dropped first (iOS can otherwise hold the link open
+    /// for a still-subscribed characteristic), and the call waits for
+    /// `didDisconnectPeripheral` instead of returning straight after
+    /// `cancelPeripheralConnection` — which used to let the UI claim
+    /// "déconnecté" while the sensor was in fact still attached, so nothing
+    /// else (another Mac, another phone) could take it over.
     func disconnect(_ peripheral: CBPeripheral) async {
-        centralManager?.cancelPeripheralConnection(peripheral)
+        guard let central = centralManager else { return }
+        // Already down (the sensor reboots itself after stopLogging, for
+        // one) — no callback would ever come, so don't sit out the timeout.
+        guard peripheral.state != .disconnected else {
+            pendingNotifyChar = nil
+            pendingWriteChar = nil
+            return
+        }
+
+        if let notify = pendingNotifyChar, notify.isNotifying {
+            peripheral.setNotifyValue(false, for: notify)
+        }
+
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            disconnectContinuation = continuation
+            central.cancelPeripheralConnection(peripheral)
+            // Don't hang the UI forever if the callback never lands; the
+            // cancel has been issued either way.
+            disconnectTimeoutTask = Task { @MainActor [weak self] in
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
+                self?.finishDisconnect()
+            }
+        }
+
+        pendingNotifyChar = nil
+        pendingWriteChar = nil
+    }
+
+    private func finishDisconnect() {
+        disconnectTimeoutTask?.cancel()
+        disconnectTimeoutTask = nil
+        if let continuation = disconnectContinuation {
+            disconnectContinuation = nil
+            continuation.resume()
+        }
     }
 
     func discoverGSPCharacteristics(_ peripheral: CBPeripheral) async throws -> (CBCharacteristic, CBCharacteristic) {

@@ -103,6 +103,12 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    Link(destination: URL(string: "https://benoitpeschier.github.io/appmoveload/guide.html#athlete")!) {
+                        Label("Mode d'emploi", systemImage: "questionmark.circle")
+                    }
+                }
+
+                Section {
                     TextField(
                         "Code d'équipe",
                         text: Binding(
