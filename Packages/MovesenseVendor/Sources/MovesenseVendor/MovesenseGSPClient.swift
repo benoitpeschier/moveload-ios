@@ -154,6 +154,19 @@ public actor MovesenseGSPClient {
         return first
     }
 
+    /// Whether the sensor has stopped logging because its flash is nearly
+    /// full. Firmware 2.2 and later halts the DataLogger around 123 MB of the
+    /// 128 MB available, rather than letting write performance collapse — so
+    /// this is the difference between "no room" and "something else went
+    /// wrong" when a recording fails to appear.
+    public func isLogbookFull() async throws -> Bool {
+        let data = try await get("/Mem/Logbook/IsFull")
+        guard let first = data.first else {
+            throw GSPError.unexpectedResponse("État IsFull vide")
+        }
+        return first != 0
+    }
+
     public func get(_ path: String) async throws -> Data {
         let ref = nextReference()
         var payload = Data(path.utf8)

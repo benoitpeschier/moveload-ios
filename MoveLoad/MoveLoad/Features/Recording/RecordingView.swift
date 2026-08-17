@@ -238,10 +238,23 @@ struct RecordingView: View {
             if isLogging {
                 try await appEnvironment.sensorService.stopLogging()
                 isLogging = false
+                // Warn straight away if the recording left nothing behind —
+                // at the water's edge the session can still be redone, hours
+                // later it is simply lost.
+                if let movesense = appEnvironment.sensorService as? MovesenseSensorService,
+                   movesense.lastStopProducedNewEntry == false {
+                    errorMessage = "Attention : l'arrêt n'a produit aucun nouvel enregistrement dans le capteur. La séance n'a probablement pas été sauvegardée. Vérifie que le capteur est resté en contact avec la sangle pendant toute la séance."
+                }
                 // stopLogging reboots the sensor (per the official tool's
                 // flow), which disconnects it — don't refresh entries here,
                 // the connection will drop and the user reconnects to fetch.
             } else {
+                // A sensor that has halted on a full logbook would accept the
+                // start and record nothing, which is only discovered afterwards.
+                if let full = try? await appEnvironment.sensorService.isStorageFull(), full == true {
+                    errorMessage = "La mémoire du capteur est pleine : il ne peut plus enregistrer. Télécharge tes séances puis utilise « Effacer toute la mémoire du capteur »."
+                    return
+                }
                 try await appEnvironment.sensorService.startLogging(config: LoggingConfig())
                 isLogging = true
             }

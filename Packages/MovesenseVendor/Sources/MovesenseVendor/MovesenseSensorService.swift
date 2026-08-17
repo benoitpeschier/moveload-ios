@@ -209,13 +209,37 @@ public final class MovesenseSensorService: NSObject, SensorService {
         try await gsp.getDataLoggerState() == Self.loggingStateValue
     }
 
+    public func isStorageFull() async throws -> Bool? {
+        try await gsp.isLogbookFull()
+    }
+
     public func stopLogging() async throws {
+        // Count what's stored before the reboot, so the caller can tell
+        // whether this recording actually produced an entry. Setting the
+        // state to READY is what flushes the log to flash, so a recording
+        // cut short by a power loss (the sensor is powered by strap contact)
+        // can leave nothing behind at all — worth catching at the water's
+        // edge rather than hours later.
+        let entriesBefore = (try? await gsp.getLogbookEntries())?.count
+
         try await gsp.putDataLoggerState(2) // READY
+
+        var newEntryConfirmed: Bool?
+        if let entriesBefore, let after = try? await gsp.getLogbookEntries() {
+            newEntryConfirmed = after.count > entriesBefore
+        }
+        lastStopProducedNewEntry = newEntryConfirmed
+
         // Matches the official tool's stop flow: reboot the sensor
         // (system mode 5) so the next start begins a fresh log. This
         // disconnects the sensor — `onDisconnect` updates `state`.
         try? await gsp.putSystemMode(5)
     }
+
+    /// Set by `stopLogging`: true when a new logbook entry appeared, false
+    /// when none did, nil when it couldn't be checked. Read straight after
+    /// stopping.
+    public private(set) var lastStopProducedNewEntry: Bool?
 
     public func listLogbookEntries() async throws -> [LogbookEntryInfo] {
         let entries = try await gsp.getLogbookEntries()

@@ -84,6 +84,9 @@ public final class MockSensorService: SensorService {
         return loggingStartedAt != nil
     }
 
+    /// The simulated sensor never runs out of room.
+    public func isStorageFull() async throws -> Bool? { false }
+
     public func stopLogging() async throws {
         guard case .connected = state else { throw SensorError.notConnected }
         guard let start = loggingStartedAt else { return }

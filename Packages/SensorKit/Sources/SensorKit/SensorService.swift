@@ -18,6 +18,10 @@ public protocol SensorLogbookService: AnyObject {
     /// only tracked its own start/stop calls would show the wrong button
     /// after a relaunch or a reconnection from another phone.
     func isCurrentlyLogging() async throws -> Bool
+
+    /// Whether the sensor's storage is full enough that it has stopped
+    /// recording. Nil when the backend can't tell.
+    func isStorageFull() async throws -> Bool?
     func listLogbookEntries() async throws -> [LogbookEntryInfo]
     func downloadEntry(_ entry: LogbookEntryInfo, progress: @escaping (Double) -> Void) async throws -> RawSessionData
     func deleteEntry(_ entry: LogbookEntryInfo) async throws
