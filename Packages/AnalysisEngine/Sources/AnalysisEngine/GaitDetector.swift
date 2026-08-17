@@ -36,14 +36,21 @@ public enum GaitDetector {
     /// Vertical oscillation (m/s², standard deviation) above which a window
     /// looks like walking.
     public static let verticalSDThreshold: Double = 1.2
-    /// Share of vertical energy that must sit in the step band, so that
+    /// Share of vertical energy that must sit in the cadence band, so that
     /// non-rhythmic vertical movement (waves, a stumble) is not read as gait.
-    public static let stepBandRatioThreshold: Double = 0.20
-    public static let stepBand: ClosedRange<Double> = 1.2...3.0
+    public static let cadenceBandRatioThreshold: Double = 0.20
+    /// Human walking cadence: roughly 90 to 130 steps per minute. This is a
+    /// property of walking rather than a threshold fitted to our recordings,
+    /// which is what makes it safe to lean on.
+    public static let cadenceBand: ClosedRange<Double> = 1.5...2.2
     public static let analysisBand: ClosedRange<Double> = 0.3...6.0
-    /// Runs shorter than this are absorbed into their neighbours, so a
-    /// momentary wobble doesn't chop the session into slivers.
-    public static let minSegmentSeconds: Double = 5.0
+    /// Runs shorter than this are absorbed into their neighbours. A real walk
+    /// back up the bank lasts tens of seconds; a five-second "walk" in the
+    /// middle of a session is far likelier to be a hard paddling stroke than a
+    /// few steps, and wrongly dropping an effort costs more than keeping a few
+    /// seconds of walking. Kept below ~25 s so genuinely short walks still
+    /// register (the reference recording's first walk was 25 s).
+    public static let minSegmentSeconds: Double = 15.0
 
     public static func detect(axes: AccelerationAxes, sampleRateHz: Double) -> Result {
         let count = axes.count
@@ -117,7 +124,17 @@ public enum GaitDetector {
         guard variance.squareRoot() >= verticalSDThreshold else { return false }
 
         let centred = vertical.map { $0 - mean }
-        return stepBandRatio(centred, sampleRateHz: sampleRateHz) >= stepBandRatioThreshold
+        let spectrum = cadenceSpectrum(centred, sampleRateHz: sampleRateHz)
+        guard spectrum.bandRatio >= cadenceBandRatioThreshold else { return false }
+        // The bounce's *dominant* frequency has to be a walking cadence, not
+        // merely have some energy in that band. Hard paddling at around 1 Hz
+        // puts its second harmonic squarely in the cadence band, so a
+        // band-energy test alone accepted it: on a real interval session
+        // (2026-08-17) that wrongly excluded 11 minutes of the athlete's
+        // hardest efforts — the most valuable part of the session — while the
+        // genuine walks sat at a tight 1.77-1.94 Hz and the false positives at
+        // 0.84-1.41 Hz.
+        return cadenceBand.contains(spectrum.dominantFrequency)
     }
 
     /// Projection onto the window's own gravity direction, which is simply
@@ -137,13 +154,17 @@ public enum GaitDetector {
         return range.map { axes.x[$0] * gx + axes.y[$0] * gy + axes.z[$0] * gz }
     }
 
-    /// Fraction of the signal's power sitting in the step band. Uses a direct
-    /// Goertzel-style evaluation at a fixed set of frequencies rather than a
-    /// full FFT: the bands are narrow and the windows small, so this stays
-    /// cheap and avoids needing a power-of-two length.
-    private static func stepBandRatio(_ signal: [Double], sampleRateHz: Double) -> Double {
+    /// How much of the signal's power sits in the cadence band, and which
+    /// frequency carries the most. Uses a direct Goertzel-style evaluation at a
+    /// fixed set of frequencies rather than a full FFT: the band is narrow and
+    /// the windows small, so this stays cheap and avoids needing a
+    /// power-of-two length.
+    private static func cadenceSpectrum(
+        _ signal: [Double],
+        sampleRateHz: Double
+    ) -> (bandRatio: Double, dominantFrequency: Double) {
         let n = signal.count
-        guard n > 8 else { return 0 }
+        guard n > 8 else { return (0, 0) }
 
         // Hann window, matching the Python prototype this was validated with.
         let windowed = (0..<n).map { i -> Double in
@@ -152,19 +173,25 @@ public enum GaitDetector {
         }
 
         let resolution = sampleRateHz / Double(n)
-        var stepPower = 0.0
+        var bandPower = 0.0
         var totalPower = 0.0
+        var peakPower = -1.0
+        var peakFrequency = 0.0
 
         var freq = analysisBand.lowerBound
         while freq <= analysisBand.upperBound {
             let power = powerAt(frequency: freq, windowed, sampleRateHz: sampleRateHz)
             totalPower += power
-            if stepBand.contains(freq) { stepPower += power }
+            if cadenceBand.contains(freq) { bandPower += power }
+            if power > peakPower {
+                peakPower = power
+                peakFrequency = freq
+            }
             freq += resolution
         }
 
-        guard totalPower > 1e-12 else { return 0 }
-        return stepPower / totalPower
+        guard totalPower > 1e-12 else { return (0, 0) }
+        return (bandPower / totalPower, peakFrequency)
     }
 
     private static func powerAt(frequency: Double, _ signal: [Double], sampleRateHz: Double) -> Double {

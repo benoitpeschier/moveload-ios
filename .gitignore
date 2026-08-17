@@ -14,3 +14,9 @@ Movesense_dfu*.zip
 Movesense_combined.hex
 _test_build/
 _moveload_build/
+
+# Session exports dropped here for offline analysis — recording data, often
+# tens of megabytes, and not part of the source.
+/session_*.csv
+/all_sessions_summary.csv
+/*.sbem

@@ -39,6 +39,24 @@ private enum Signals {
         return AccelerationAxes(x: x, y: y, z: z)
     }
 
+    /// A hard paddling effort: a stroke near 1 Hz that throws the trunk around
+    /// as much as walking does (vertical sd ~2.8 was measured on a real
+    /// interval session), with a second harmonic landing inside the cadence
+    /// band. This is the shape that used to be misread as walking.
+    static func hardPaddling(seconds: Double, strokeHz: Double = 0.96) -> AccelerationAxes {
+        let n = Int(seconds * sampleRate)
+        var x = [Double](), y = [Double](), z = [Double]()
+        for i in 0..<n {
+            let t = Double(i) / sampleRate
+            let fundamental = 3.5 * sin(2 * .pi * strokeHz * t)
+            let harmonic = 1.6 * sin(2 * .pi * 2 * strokeHz * t)
+            y.append(gravity + fundamental + harmonic)
+            x.append(3.0 * sin(2 * .pi * strokeHz * t))
+            z.append(1.2 * sin(2 * .pi * strokeHz * t))
+        }
+        return AccelerationAxes(x: x, y: y, z: z)
+    }
+
     static func concat(_ parts: [AccelerationAxes]) -> AccelerationAxes {
         AccelerationAxes(
             x: parts.flatMap(\.x),
@@ -65,6 +83,51 @@ private enum Signals {
     let result = GaitDetector.detect(axes: Signals.paddling(seconds: 60), sampleRateHz: Signals.sampleRate)
     #expect(result.keepMask.allSatisfy { $0 })
     #expect(result.excludedSeconds == 0)
+}
+
+/// Regression test for the defect found on a real interval session
+/// (2026-08-17): hard paddling bounces the trunk as hard as walking, and its
+/// second harmonic falls in the cadence band, so a band-energy test alone
+/// excluded 11 minutes of the athlete's best efforts.
+@Test func hardPaddlingIsNotMistakenForWalking() {
+    let result = GaitDetector.detect(
+        axes: Signals.hardPaddling(seconds: 90),
+        sampleRateHz: Signals.sampleRate
+    )
+    #expect(result.excludedSeconds == 0)
+    #expect(result.keepMask.allSatisfy { $0 })
+}
+
+/// The efforts must survive even when real walking sits right beside them.
+@Test func intervalEffortsSurviveBesideRealWalking() {
+    let axes = Signals.concat([
+        Signals.hardPaddling(seconds: 60),
+        Signals.walking(seconds: 60),
+        Signals.hardPaddling(seconds: 60),
+    ])
+    let result = GaitDetector.detect(axes: axes, sampleRateHz: Signals.sampleRate)
+
+    // Only the middle minute should go.
+    #expect(result.excludedSeconds > 45)
+    #expect(result.excludedSeconds < 80)
+    #expect(result.keepMask[Int(30 * Signals.sampleRate)])
+    #expect(!result.keepMask[Int(90 * Signals.sampleRate)])
+    #expect(result.keepMask[Int(150 * Signals.sampleRate)])
+}
+
+/// A cadence far outside the human walking range must not qualify, however
+/// strong and rhythmic the bounce.
+@Test func bounceOutsideWalkingCadenceIsIgnored() {
+    let tooSlow = GaitDetector.detect(
+        axes: Signals.walking(seconds: 60, stepHz: 0.8, verticalSD: 2.5),
+        sampleRateHz: Signals.sampleRate
+    )
+    let tooFast = GaitDetector.detect(
+        axes: Signals.walking(seconds: 60, stepHz: 3.4, verticalSD: 2.5),
+        sampleRateHz: Signals.sampleRate
+    )
+    #expect(tooSlow.excludedSeconds == 0)
+    #expect(tooFast.excludedSeconds == 0)
 }
 
 @Test func detectionSurvivesSensorReorientation() {
