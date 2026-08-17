@@ -203,6 +203,43 @@ private enum Signals {
     #expect(abs(withExclusion.values.reduce(0, +) - 20) < 0.001)
 }
 
+/// Regression test for the defect found on two real recordings (2026-08-17):
+/// the load axis carried gravity, so a sensor lying still — reading a steady
+/// 8.4 with almost no variation — outscored actual paddling and took the
+/// records.
+@Test func aMotionlessSensorProducesNoLoad() {
+    let rate = 52.0
+    // Gravity resting on the load axis, plus the sensor's own noise.
+    let atRest = (0..<Int(120 * rate)).map { i in
+        8.4 + 0.02 * sin(Double(i) * 0.7)
+    }
+    let effort = EffortSignal.dynamic(atRest, sampleRateHz: rate)
+    let curve = MechanicalCurveAnalyzer.analyze(accelX: effort, sampleRateHz: rate)
+
+    for window in MechanicalWindow.allCases {
+        guard let peak = curve.curve[window] ?? nil else { continue }
+        #expect(peak < 0.1)
+    }
+}
+
+/// And real movement must survive the correction, not be flattened with it.
+@Test func strokeDynamicsSurviveGravityRemoval() {
+    let rate = 52.0
+    // A 1 Hz stroke of amplitude 3, riding on a tilt that drifts slowly.
+    let signal = (0..<Int(120 * rate)).map { i -> Double in
+        let t = Double(i) / rate
+        let drift = 6.0 + 2.0 * sin(2 * .pi * 0.01 * t)
+        return drift + 3.0 * sin(2 * .pi * 1.0 * t)
+    }
+    let effort = EffortSignal.dynamic(signal, sampleRateHz: rate)
+    let curve = MechanicalCurveAnalyzer.analyze(accelX: effort, sampleRateHz: rate)
+
+    // The positive half of a 3.0 sine averages about 0.95 over long windows.
+    let peak45 = try! #require(curve.curve[.s45] ?? nil)
+    #expect(peak45 > 0.7)
+    #expect(peak45 < 1.3)
+}
+
 @Test func curveWindowsNeverSpanAnExcludedGap() {
     // Two 10 s bursts of 5.0 either side of an excluded stretch. A window
     // longer than one burst must not find 5.0 by bridging the gap.

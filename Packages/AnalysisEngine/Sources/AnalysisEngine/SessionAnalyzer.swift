@@ -21,14 +21,20 @@ public enum SessionAnalyzer {
             }
         }
 
+        // Load is computed from the *dynamic* part of the axis: the raw signal
+        // includes gravity, which made a motionless sensor outscore real
+        // paddling. See EffortSignal. Gait detection above deliberately keeps
+        // the raw axes, since it locates gravity on purpose.
+        let effort = EffortSignal.dynamic(session.accelX, sampleRateHz: session.accelSampleRateHz)
+
         let curveResult = keepMask.map {
             MechanicalCurveAnalyzer.analyze(
-                accelX: session.accelX,
+                accelX: effort,
                 sampleRateHz: session.accelSampleRateHz,
                 keepMask: $0
             )
         } ?? MechanicalCurveAnalyzer.analyze(
-            accelX: session.accelX,
+            accelX: effort,
             sampleRateHz: session.accelSampleRateHz
         )
 
@@ -39,7 +45,7 @@ public enum SessionAnalyzer {
         )
 
         let mechZoneSeconds = ZoneTimeAccumulator.mechZoneSeconds(
-            accelX: session.accelX,
+            accelX: effort,
             sampleRateHz: session.accelSampleRateHz,
             thresholdLow: thresholds.low,
             thresholdHigh: thresholds.high,

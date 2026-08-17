@@ -38,31 +38,67 @@ final class AppEnvironment {
         migrateSessionCurvesIfNeeded()
     }
 
-    /// One-time-per-launch fixup: if the app's mechanical window set changed
-    /// since a session was last analyzed (its stored curve points don't match
-    /// `MechanicalWindow.allCases`), recompute the curve from the still-on-disk
-    /// raw accel data and re-sync. A cheap no-op once everything matches.
+    /// One-time-per-launch fixup, for sessions whose stored numbers no longer
+    /// mean what the current analysis means: either the mechanical window set
+    /// changed, or the analysis generation did. Everything is recomputed from
+    /// the still-on-disk raw samples, so history stays comparable rather than
+    /// mixing results from two different definitions. A cheap no-op once
+    /// everything is current.
     private func migrateSessionCurvesIfNeeded() {
         let currentSeconds = Set(MechanicalWindow.allCases.map(\.seconds))
         guard let sessions = try? allSessions() else { return }
+
+        var recomputedAny = false
         for session in sessions {
-            let storedSeconds = Set(session.curvePoints.map(\.windowSeconds))
-            guard storedSeconds != currentSeconds else { continue }
+            let windowsChanged = Set(session.curvePoints.map(\.windowSeconds)) != currentSeconds
+            let generationStale = session.analysisVersion < AnalysisGeneration.current
+            guard windowsChanged || generationStale else { continue }
+
             let directory = PersistenceContainer.documentsSessionsDirectory()
                 .appendingPathComponent(session.rawSampleDirectory)
             guard let raw = try? RawSampleFileStore.read(startDate: session.startDate, from: directory) else { continue }
-            // Must apply the same walking exclusion the original analysis did,
-            // or a recomputed curve would quietly let walking back in.
-            var keepMask: [Bool]?
-            if let axes = raw.axes, axes.count == raw.accelX.count {
-                keepMask = GaitDetector.detect(axes: axes, sampleRateHz: raw.accelSampleRateHz).keepMask
-            }
-            let result = keepMask.map {
-                MechanicalCurveAnalyzer.analyze(accelX: raw.accelX, sampleRateHz: raw.accelSampleRateHz, keepMask: $0)
-            } ?? MechanicalCurveAnalyzer.analyze(accelX: raw.accelX, sampleRateHz: raw.accelSampleRateHz)
+
+            // Re-run the whole analysis rather than the curve alone: zone times
+            // are computed from the same signal and would otherwise be left on
+            // the old scale.
+            let settings = athlete.settings!
+            let result = SessionAnalyzer.analyze(
+                session: raw,
+                settings: AnalysisSettings(
+                    hrThresholdLow: settings.hrThresholdLow,
+                    hrThresholdHigh: settings.hrThresholdHigh,
+                    mechZonePercentLow: settings.mechZonePercentLow,
+                    mechZonePercentHigh: settings.mechZonePercentHigh,
+                    confirmedMech45sAnchor: settings.confirmedMech45sAnchor
+                )
+            )
+
+            session.hrZoneI1Seconds = result.hrZoneSeconds[.i1] ?? 0
+            session.hrZoneI2Seconds = result.hrZoneSeconds[.i2] ?? 0
+            session.hrZoneI3Seconds = result.hrZoneSeconds[.i3] ?? 0
+            session.mechZone1Seconds = result.mechZoneSeconds[.zone1] ?? 0
+            session.mechZone2Seconds = result.mechZoneSeconds[.zone2] ?? 0
+            session.mechZone3Seconds = result.mechZoneSeconds[.zone3] ?? 0
+            session.mechZoneAnchorUsed = result.mechZoneAnchorUsed
+            session.excludedWalkingSeconds = result.excludedWalkingSeconds
+            session.analysisVersion = AnalysisGeneration.current
+
             try? sessionRepository.replaceCurvePoints(for: session, curve: result.curve, in: modelContext)
+            recomputedAny = true
             syncSessionInBackground(session)
         }
+
+        // The confirmed 45 s reference was measured on the old signal, where
+        // gravity inflated everything by roughly five- to sevenfold. Carrying
+        // it over would put every mechanical zone permanently in zone 1, which
+        // reads as a real result rather than a stale setting — so it is cleared
+        // and the athlete is asked to confirm a new one.
+        if recomputedAny, let settings = athlete.settings, settings.confirmedMech45sAnchor > 0 {
+            settings.confirmedMech45sAnchor = 0
+            settings.confirmedMech45sAnchorDate = nil
+            settings.confirmedMech45sAnchorSessionID = nil
+        }
+        try? modelContext.save()
     }
 
     struct ImportOutcome {

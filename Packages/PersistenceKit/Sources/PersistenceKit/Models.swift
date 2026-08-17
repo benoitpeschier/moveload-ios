@@ -16,6 +16,18 @@ public enum Gender: String, Codable, Sendable, CaseIterable, Hashable {
 
 /// Boat class the session was recorded in — used to compare an athlete's
 /// records against peers in the same gender/boat category (coach webapp).
+/// Generations of the analysis, so stored results can be recognised as stale.
+public enum AnalysisGeneration {
+    /// Load computed from the raw axis, which included gravity — a motionless
+    /// sensor could outscore real paddling.
+    public static let rawAxis = 0
+    /// Load computed from the axis with its slow (gravity and posture)
+    /// component removed.
+    public static let gravityRemoved = 1
+
+    public static let current = gravityRemoved
+}
+
 public enum BoatType: String, Codable, Sendable, CaseIterable, Hashable {
     case k1 = "K1", c1 = "C1", kx = "KX"
 }
@@ -113,6 +125,12 @@ public final class Session {
     /// after the fact — it happens silently, and an athlete comparing two
     /// sessions deserves to see that one had 9 minutes removed.
     public var excludedWalkingSeconds: Double = 0
+
+    /// Which generation of the analysis produced this session's numbers, so a
+    /// change in what the metric means can recompute past sessions instead of
+    /// leaving a history where old and new values are silently incomparable.
+    /// 0 = before the load axis had gravity removed. See `AnalysisGeneration`.
+    public var analysisVersion: Int = 0
 
     /// Athlete-reported RPE (rate of perceived exertion), 1 (facile) to 10
     /// (extrêmement difficile). Nil until the athlete sets it from the session
