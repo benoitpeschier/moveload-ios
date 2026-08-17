@@ -213,15 +213,38 @@ public actor MovesenseGSPClient {
         _ = try await send(command: .clearLogbook, reference: ref, payload: Data(), expectsStatusCode: true)
     }
 
+    /// Every stored recording, following the resource's pagination.
+    ///
+    /// Only a handful of entries fit in one response — four, in practice on
+    /// this sensor. The Movesense API signals that with status 100 ("not all
+    /// log entries fit in the list, please ask again with StartAfterId") and
+    /// expects the caller to continue from the last id seen. Ignoring that, as
+    /// this used to, made every recording past the fourth invisible: a real
+    /// session went missing that way (2026-08-17), and the athlete reasonably
+    /// concluded the sensor had failed to record it.
     public func getLogbookEntries() async throws -> [LogbookEntry] {
-        let ref = nextReference()
-        var payload = Data("/Mem/Logbook/entries".utf8)
-        payload.append(0)
-        // This resource's response doesn't carry a status code the same way
-        // a generic GET does — the raw notification bytes (header + 16-byte
-        // records) are what we need, so read the full raw response.
-        let raw = try await sendRaw(command: .get, reference: ref, payload: payload)
-        return Self.parseLogbookEntries(raw)
+        var all: [LogbookEntry] = []
+        var startAfterId: UInt32?
+        // Bounded rather than `while true`: a firmware that kept answering
+        // 100 would otherwise spin forever. 64 pages is far beyond the
+        // sensor's capacity in whole recordings.
+        for _ in 0..<64 {
+            let path = startAfterId.map { "/Mem/Logbook/entries?StartAfterId=\($0)" }
+                ?? "/Mem/Logbook/entries"
+            var payload = Data(path.utf8)
+            payload.append(0)
+            let raw = try await sendRaw(command: .get, reference: nextReference(), payload: payload)
+
+            let page = Self.parseLogbookEntries(raw)
+            // Guard against duplicates in case a firmware echoes the anchor
+            // entry back, which would otherwise loop on the same page.
+            let known = Set(all.map(\.id))
+            all.append(contentsOf: page.entries.filter { !known.contains($0.id) })
+
+            guard page.isPartial, let lastID = page.entries.last?.id, lastID != startAfterId else { break }
+            startAfterId = lastID
+        }
+        return all
     }
 
     /// Fetches one logbook entry's raw SBEM bytes. `progress` receives the
@@ -310,10 +333,17 @@ public actor MovesenseGSPClient {
         }
     }
 
-    private static func parseLogbookEntries(_ raw: Data) -> [LogbookEntry] {
+    /// `isPartial` reflects status 100, meaning more entries remain and the
+    /// caller should ask again anchored on the last id.
+    private static func parseLogbookEntries(_ raw: Data) -> (entries: [LogbookEntry], isPartial: Bool) {
         let headerSize = 5
         let entrySize = 16
-        guard raw.count > headerSize else { return [] }
+        guard raw.count > headerSize else { return ([], false) }
+
+        // Layout: responseCode(1) + reference(1) + statusCode(2 LE) + 1 byte
+        // preceding the records.
+        let status = UInt16(raw[raw.startIndex + 2]) | (UInt16(raw[raw.startIndex + 3]) << 8)
+
         let entryData = raw.suffix(from: raw.startIndex + headerSize)
         var entries: [LogbookEntry] = []
         var offset = entryData.startIndex
@@ -325,7 +355,7 @@ public actor MovesenseGSPClient {
             entries.append(LogbookEntry(id: id, lastModified: lastModified, size: size))
             offset += entrySize
         }
-        return entries
+        return (entries, status == 100)
     }
 
     private static func readUInt32LE(_ data: Data.SubSequence, at offset: Int) -> UInt32 {
