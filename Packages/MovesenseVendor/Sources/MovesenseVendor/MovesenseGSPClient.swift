@@ -223,28 +223,36 @@ public actor MovesenseGSPClient {
     /// session went missing that way (2026-08-17), and the athlete reasonably
     /// concluded the sensor had failed to record it.
     public func getLogbookEntries() async throws -> [LogbookEntry] {
-        var all: [LogbookEntry] = []
-        var startAfterId: UInt32?
-        // Bounded rather than `while true`: a firmware that kept answering
-        // 100 would otherwise spin forever. 64 pages is far beyond the
-        // sensor's capacity in whole recordings.
-        for _ in 0..<64 {
-            let path = startAfterId.map { "/Mem/Logbook/entries?StartAfterId=\($0)" }
-                ?? "/Mem/Logbook/entries"
-            var payload = Data(path.utf8)
-            payload.append(0)
-            let raw = try await sendRaw(command: .get, reference: nextReference(), payload: payload)
+        var payload = Data("/Mem/Logbook/entries".utf8)
+        payload.append(0)
+        let raw = try await sendRaw(command: .get, reference: nextReference(), payload: payload)
+        let page = Self.parseLogbookEntries(raw)
+        moreEntriesExistBeyondListing = page.isPartial
+        return page.entries
+    }
 
-            let page = Self.parseLogbookEntries(raw)
-            // Guard against duplicates in case a firmware echoes the anchor
-            // entry back, which would otherwise loop on the same page.
-            let known = Set(all.map(\.id))
-            all.append(contentsOf: page.entries.filter { !known.contains($0.id) })
+    /// True when the sensor answered 100, meaning it holds recordings its
+    /// listing won't show. There is no way to page to them: the documented
+    /// `StartAfterId` continuation is a query parameter, and GSP carries only
+    /// a bare path (confirmed against the sensor, 2026-08-17: status 400).
+    /// Reaching them means fetching by id — see `fetchLogIfPresent`.
+    public private(set) var moreEntriesExistBeyondListing = false
 
-            guard page.isPartial, let lastID = page.entries.last?.id, lastID != startAfterId else { break }
-            startAfterId = lastID
+    /// Fetches a recording by id, returning nil when the sensor has no such
+    /// log. This is the only way to reach recordings past the fourth: the
+    /// listing caps at four and GSP has no query-parameter mechanism, so its
+    /// documented `StartAfterId` continuation is unreachable (confirmed
+    /// against the sensor, 2026-08-17: status 400). The FETCH_LOG
+    /// acknowledgement is what distinguishes a real log from an absent one.
+    public func fetchLogIfPresent(id: UInt32, progress: (@Sendable (Int) -> Void)? = nil) async throws -> Data? {
+        do {
+            return try await fetchLog(id: id, progress: progress)
+        } catch let error as GSPError {
+            // A rejected acknowledgement means no log at that id; anything
+            // else is a real failure worth surfacing.
+            if case .commandFailed = error { return nil }
+            throw error
         }
-        return all
     }
 
     /// Fetches one logbook entry's raw SBEM bytes. `progress` receives the

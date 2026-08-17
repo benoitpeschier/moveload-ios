@@ -61,6 +61,18 @@ public struct SessionRepository {
         try context.save()
     }
 
+    /// The session already imported from a given sensor recording, if any.
+    /// `sensorLogbookEntryID` exists to make importing idempotent — the same
+    /// recording can easily be downloaded twice, since it stays on the sensor
+    /// after import and the recovery path re-walks ids from the start.
+    public func session(withLogbookEntryID id: String, in context: ModelContext) throws -> Session? {
+        guard !id.isEmpty else { return nil }
+        let descriptor = FetchDescriptor<Session>(
+            predicate: #Predicate { $0.sensorLogbookEntryID == id }
+        )
+        return try context.fetch(descriptor).first
+    }
+
     public func allSessions(in context: ModelContext) throws -> [Session] {
         let descriptor = FetchDescriptor<Session>(sortBy: [SortDescriptor(\.startDate, order: .reverse)])
         return try context.fetch(descriptor)

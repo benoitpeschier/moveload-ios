@@ -100,6 +100,31 @@ private func makeInMemoryContext() throws -> ModelContext {
     #expect(readBack.axes == nil)
 }
 
+/// Recordings stay on the sensor after import and the recovery path re-walks
+/// ids, so the same log reaches the importer more than once.
+@Test func sessionLookupFindsAnAlreadyImportedRecording() throws {
+    let container = try PersistenceContainer.make(inMemory: true)
+    let context = ModelContext(container)
+    let athlete = try AthleteRepository().fetchOrCreateSingleAthlete(in: context)
+    let repository = SessionRepository()
+
+    let raw = RawSessionData(
+        startDate: .now, accelSampleRateHz: 10, accelX: [1, 2, 3], hrSamples: []
+    )
+    let analysis = SessionAnalysisResult(
+        hrZoneSeconds: [:], mechZoneSeconds: [:], curve: [:], mechZoneAnchorUsed: 0
+    )
+    _ = try repository.createSession(
+        from: raw, analysis: analysis, athlete: athlete,
+        logbookEntryID: "7", rawSampleDirectory: "dir", in: context
+    )
+
+    #expect(try repository.session(withLogbookEntryID: "7", in: context) != nil)
+    #expect(try repository.session(withLogbookEntryID: "8", in: context) == nil)
+    // An empty id belongs to no recording and must never match.
+    #expect(try repository.session(withLogbookEntryID: "", in: context) == nil)
+}
+
 @Test func rawSampleFileStoreRoundTripsAllThreeAxes() throws {
     let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: dir) }

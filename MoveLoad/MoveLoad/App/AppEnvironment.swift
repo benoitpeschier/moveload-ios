@@ -70,9 +70,23 @@ final class AppEnvironment {
         /// Non-nil when this session's 45s peak beats the currently confirmed
         /// anchor — the UI should offer to update the mechanical zones.
         let candidateNewAnchor: Double?
+        /// True when this recording was already imported and nothing new was
+        /// created.
+        var wasAlreadyImported: Bool = false
     }
 
     func importSession(raw: RawSessionData, logbookEntryID: String) throws -> ImportOutcome {
+        // Recordings stay on the sensor after import, and the recovery path
+        // re-walks ids from the start, so the same log reaches here more than
+        // once. Returning the existing session keeps that from silently
+        // duplicating an athlete's history.
+        if let existing = try sessionRepository.session(withLogbookEntryID: logbookEntryID, in: modelContext) {
+            return ImportOutcome(session: existing, candidateNewAnchor: nil, wasAlreadyImported: true)
+        }
+        return try createImportedSession(raw: raw, logbookEntryID: logbookEntryID)
+    }
+
+    private func createImportedSession(raw: RawSessionData, logbookEntryID: String) throws -> ImportOutcome {
         let settings = athlete.settings!
 
         let analysisSettings = AnalysisSettings(

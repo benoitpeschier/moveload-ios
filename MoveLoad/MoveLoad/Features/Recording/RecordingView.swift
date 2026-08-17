@@ -17,6 +17,9 @@ struct RecordingView: View {
     @State private var errorMessage: String?
     @State private var isErasingMemory = false
     @State private var showEraseConfirmation = false
+    @State private var isRecoveringHidden = false
+    @State private var recoveryStatus: String?
+    @State private var hasUnlistedEntries = false
     @State private var isImportingShowcase = false
     @State private var isImportInProgress = false
     @State private var importStatusMessage: String?
@@ -50,7 +53,7 @@ struct RecordingView: View {
                     }
                 }
 
-                Section("Enregistrements sur le capteur") {
+                Section {
                     if entries.isEmpty {
                         Text("Aucun enregistrement").foregroundStyle(.secondary)
                     } else {
@@ -58,6 +61,40 @@ struct RecordingView: View {
                             entryRow(entry)
                         }
                     }
+                } header: {
+                    Text("Enregistrements sur le capteur")
+                } footer: {
+                    if entries.count >= 4 {
+                        Text("Le capteur n'affiche que quatre enregistrements : au-delà, les suivants deviennent invisibles ici et doivent être récupérés un par un. Prends l'habitude de télécharger tes séances puis d'effacer la mémoire après chaque sortie.")
+                    }
+                }
+
+                Section {
+                    if isRecoveringHidden {
+                        VStack(alignment: .leading, spacing: 4) {
+                            ProgressView()
+                            Text(recoveryStatus ?? "Recherche…")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } else {
+                        Button("Récupérer les séances masquées") {
+                            Task { await recoverHiddenSessions() }
+                        }
+                        if let recoveryStatus {
+                            Text(recoveryStatus)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } header: {
+                    if hasUnlistedEntries {
+                        Label("Enregistrements non listés", systemImage: "exclamationmark.triangle")
+                    }
+                } footer: {
+                    Text(hasUnlistedEntries
+                        ? "Le capteur signale qu'il contient d'autres enregistrements que sa liste ne peut pas afficher (elle plafonne à quatre). Ceci va les chercher directement et les importe."
+                        : "Le capteur ne sait afficher que quatre enregistrements à la fois. Ceci va chercher directement ceux qui suivent, et les importe.")
                 }
 
                 Section {
@@ -263,6 +300,61 @@ struct RecordingView: View {
         }
     }
 
+    /// Walks past the end of what the sensor will list, downloading each
+    /// recording until one isn't there. Fetching *is* the existence test, so
+    /// nothing is downloaded twice.
+    private func recoverHiddenSessions() async {
+        guard let movesense = appEnvironment.sensorService as? MovesenseSensorService else {
+            recoveryStatus = "Indisponible avec le capteur simulé."
+            return
+        }
+        isRecoveringHidden = true
+        defer { isRecoveringHidden = false }
+        errorMessage = nil
+
+        let highestListed = entries.compactMap { UInt32($0.id) }.max() ?? 0
+        // Already-imported recordings must be skipped *before* downloading:
+        // each is megabytes over BLE, and the import would only discard them
+        // afterwards.
+        let alreadyImported = Set(
+            ((try? appEnvironment.allSessions()) ?? []).map(\.sensorLogbookEntryID)
+        )
+        var nextID = highestListed + 1
+        var recovered = 0
+        var skipped = 0
+
+        do {
+            // Bounded so a sensor that answered forever couldn't trap the UI.
+            while nextID <= highestListed + 16 {
+                if alreadyImported.contains(String(nextID)) {
+                    skipped += 1
+                    nextID += 1
+                    continue
+                }
+                recoveryStatus = "Recherche de l'enregistrement \(nextID)…"
+                guard let raw = try await movesense.downloadEntry(id: nextID, progress: { _ in }) else {
+                    break
+                }
+                let outcome = try appEnvironment.importSession(raw: raw, logbookEntryID: String(nextID))
+                if !outcome.wasAlreadyImported { recovered += 1 }
+                nextID += 1
+            }
+
+            switch (recovered, skipped) {
+            case (0, 0):
+                recoveryStatus = "Aucun enregistrement masqué au-delà du \(highestListed)."
+            case (0, _):
+                recoveryStatus = "Rien de nouveau : \(skipped) séance(s) masquée(s) déjà importée(s)."
+            default:
+                recoveryStatus = "\(recovered) séance(s) récupérée(s) et importée(s)."
+            }
+            await refreshEntries()
+        } catch {
+            errorMessage = error.localizedDescription
+            recoveryStatus = recovered > 0 ? "\(recovered) séance(s) récupérée(s) avant l'erreur." : nil
+        }
+    }
+
     private func eraseMemory() async {
         isErasingMemory = true
         defer { isErasingMemory = false }
@@ -279,6 +371,9 @@ struct RecordingView: View {
         defer { isRefreshingEntries = false }
         do {
             entries = try await appEnvironment.sensorService.listLogbookEntries()
+            if let movesense = appEnvironment.sensorService as? MovesenseSensorService {
+                hasUnlistedEntries = movesense.hasUnlistedEntries
+            }
         } catch {
             errorMessage = error.localizedDescription
         }

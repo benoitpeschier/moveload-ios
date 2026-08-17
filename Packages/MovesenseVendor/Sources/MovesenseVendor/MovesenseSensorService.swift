@@ -209,6 +209,10 @@ public final class MovesenseSensorService: NSObject, SensorService {
         try await gsp.getDataLoggerState() == Self.loggingStateValue
     }
 
+    /// True when the sensor holds recordings its listing refuses to show —
+    /// reach them with `downloadEntry(id:progress:)`.
+    public private(set) var hasUnlistedEntries = false
+
     public func isStorageFull() async throws -> Bool? {
         try await gsp.isLogbookFull()
     }
@@ -243,6 +247,7 @@ public final class MovesenseSensorService: NSObject, SensorService {
 
     public func listLogbookEntries() async throws -> [LogbookEntryInfo] {
         let entries = try await gsp.getLogbookEntries()
+        hasUnlistedEntries = await gsp.moreEntriesExistBeyondListing
         return entries.map { entry in
             // No accurate duration without decoding: 730 bytes/s is what a
             // real accel+HR recording measured (2026-08-16), close enough to
@@ -272,6 +277,26 @@ public final class MovesenseSensorService: NSObject, SensorService {
             DispatchQueue.main.async { progress(min(0.95, Double(bytesReceived) / Double(totalSize))) }
         }
         let data = try MovesenseSBEMDecoder.decode(sbemData, startDate: entry.startDate)
+        progress(1.0)
+        return data
+    }
+
+    /// Downloads a recording the listing cannot show, returning nil once no
+    /// log exists at that id. The sensor lists at most four entries and offers
+    /// no reachable way to page past them, so recordings beyond the fourth are
+    /// otherwise invisible — a real session went missing that way. The dates
+    /// come out of the file itself, so the absent listing metadata costs
+    /// nothing.
+    public func downloadEntry(id: UInt32, progress: @escaping (Double) -> Void) async throws -> RawSessionData? {
+        var lastBytes = 0
+        guard let sbem = try await gsp.fetchLogIfPresent(id: id, progress: { bytes in
+            lastBytes = bytes
+            // Size is unknown ahead of time here, so report a slow creep
+            // rather than a fake percentage.
+            DispatchQueue.main.async { progress(min(0.95, Double(bytes) / 5_000_000)) }
+        }) else { return nil }
+        _ = lastBytes
+        let data = try MovesenseSBEMDecoder.decode(sbem, startDate: Date())
         progress(1.0)
         return data
     }
