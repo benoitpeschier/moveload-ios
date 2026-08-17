@@ -46,11 +46,17 @@ public enum SessionAnalyzer {
             keepMask: keepMask
         )
 
+        // Cardio is restricted to the same stretches as the mechanical load, so
+        // both charts describe the same span of the session — walking to the
+        // water otherwise showed up in one and not the other.
         let hrZoneSeconds = ZoneTimeAccumulator.hrZoneSeconds(
             hrSamples: session.hrSamples,
             sessionDuration: session.duration,
             thresholdLow: settings.hrThresholdLow,
-            thresholdHigh: settings.hrThresholdHigh
+            thresholdHigh: settings.hrThresholdHigh,
+            keptRanges: keepMask.map {
+                GaitDetector.keptTimeRanges(keepMask: $0, sampleRateHz: session.accelSampleRateHz)
+            }
         )
 
         return SessionAnalysisResult(

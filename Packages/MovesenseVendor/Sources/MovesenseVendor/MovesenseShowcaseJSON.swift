@@ -79,18 +79,29 @@ public enum MovesenseShowcaseJSON {
         return (AccelerationAxes(x: accelX, y: accelY, z: accelZ), sampleRateHz)
     }
 
-    /// Showcase's heart-rate export has no per-sample timestamp, only an
-    /// implicit ordering — treats the entry index as a one-second offset
-    /// (an approximation, not the true per-beat timing).
+    /// Showcase's heart-rate export carries no timestamp either, but it does
+    /// carry `rrData` — the beat-to-beat intervals, which accumulate into the
+    /// real timeline. Using the entry index as a one-second offset (as this
+    /// used to) inflates zone durations by however far the heart rate sits
+    /// from 60 bpm; see the matching note in `MovesenseSBEMDecoder`.
     public static func parseHeartRate(_ data: Data) throws -> [HRSample] {
         guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let entries = root["data"] as? [[String: Any]] else {
             return []
         }
-        return entries.enumerated().compactMap { index, entry -> HRSample? in
+
+        var elapsedMs = 0.0
+        var samples: [HRSample] = []
+        for entry in entries {
             guard let hr = entry["heartRate"] as? [String: Any],
-                  let average = (hr["average"] as? NSNumber)?.doubleValue else { return nil }
-            return HRSample(timeOffset: TimeInterval(index), bpm: average)
+                  let average = (hr["average"] as? NSNumber)?.doubleValue else { continue }
+            let intervals = (hr["rrData"] as? [NSNumber])?.map(\.doubleValue).filter { $0 > 0 } ?? []
+            let intervalMs = intervals.isEmpty
+                ? (average > 0 ? 60_000 / average : 1_000)
+                : intervals.reduce(0, +)
+            elapsedMs += intervalMs
+            samples.append(HRSample(timeOffset: elapsedMs / 1000, bpm: average))
         }
+        return samples
     }
 }

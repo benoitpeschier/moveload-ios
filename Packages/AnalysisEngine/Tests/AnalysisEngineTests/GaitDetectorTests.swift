@@ -101,6 +101,45 @@ private enum Signals {
     #expect(result.keepMask.allSatisfy { $0 })
 }
 
+@Test func keptTimeRangesMapSamplesToSeconds() {
+    // Keep 0..<10 s, drop 10..<20 s, keep 20..<30 s at 10 Hz.
+    let mask = [Bool](repeating: true, count: 100)
+        + [Bool](repeating: false, count: 100)
+        + [Bool](repeating: true, count: 100)
+    let ranges = GaitDetector.keptTimeRanges(keepMask: mask, sampleRateHz: 10)
+
+    #expect(ranges.count == 2)
+    #expect(abs(ranges[0].lowerBound - 0) < 0.001)
+    #expect(abs(ranges[0].upperBound - 10) < 0.001)
+    #expect(abs(ranges[1].lowerBound - 20) < 0.001)
+    #expect(abs(ranges[1].upperBound - 30) < 0.001)
+}
+
+@Test func hrZoneTimeIgnoresExcludedStretches() {
+    // A beat every second for 30 s: the first 10 s at 100 bpm, the middle 10 s
+    // (which will be excluded) at 180, the last 10 s at 100.
+    var samples: [HRSample] = []
+    for second in 0..<30 {
+        let bpm: Double = (10..<20).contains(second) ? 180 : 100
+        samples.append(HRSample(timeOffset: TimeInterval(second), bpm: bpm))
+    }
+    let kept: [Range<TimeInterval>] = [0..<10, 20..<30]
+
+    let withAll = ZoneTimeAccumulator.hrZoneSeconds(
+        hrSamples: samples, sessionDuration: 30, thresholdLow: 120, thresholdHigh: 150
+    )
+    let withExclusion = ZoneTimeAccumulator.hrZoneSeconds(
+        hrSamples: samples, sessionDuration: 30, thresholdLow: 120, thresholdHigh: 150,
+        keptRanges: kept
+    )
+
+    // The excluded stretch is the only source of I3, so it must vanish, and
+    // the total must fall to the kept span.
+    #expect((withAll[.i3] ?? 0) > 9)
+    #expect((withExclusion[.i3] ?? 0) == 0)
+    #expect(abs(withExclusion.values.reduce(0, +) - 20) < 0.001)
+}
+
 @Test func curveWindowsNeverSpanAnExcludedGap() {
     // Two 10 s bursts of 5.0 either side of an excluded stretch. A window
     // longer than one burst must not find 5.0 by bridging the gap.

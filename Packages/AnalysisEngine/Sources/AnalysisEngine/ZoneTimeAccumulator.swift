@@ -2,11 +2,16 @@ import Foundation
 import MoveLoadCore
 
 public enum ZoneTimeAccumulator {
+    /// `keptRanges`, when supplied, restricts the count to the stretches of the
+    /// session kept for analysis (walking excluded) so that cardio and
+    /// mechanical zone times cover the same span and can be read side by side.
+    /// Ranges must be sorted and non-overlapping, as `GaitDetector` produces them.
     public static func hrZoneSeconds(
         hrSamples: [HRSample],
         sessionDuration: TimeInterval,
         thresholdLow: Double,
-        thresholdHigh: Double
+        thresholdHigh: Double,
+        keptRanges: [Range<TimeInterval>]? = nil
     ) -> [HRZone: TimeInterval] {
         var seconds: [HRZone: TimeInterval] = [.i1: 0, .i2: 0, .i3: 0]
         guard !hrSamples.isEmpty else { return seconds }
@@ -14,10 +19,26 @@ public enum ZoneTimeAccumulator {
         let sorted = hrSamples.sorted { $0.timeOffset < $1.timeOffset }
         for (index, sample) in sorted.enumerated() {
             let nextOffset = index + 1 < sorted.count ? sorted[index + 1].timeOffset : sessionDuration
-            let dt = max(0, nextOffset - sample.timeOffset)
+            let dt = keptDuration(from: sample.timeOffset, to: nextOffset, ranges: keptRanges)
             seconds[hrZone(for: sample.bpm, low: thresholdLow, high: thresholdHigh), default: 0] += dt
         }
         return seconds
+    }
+
+    /// How much of `from..<to` falls inside the kept ranges.
+    private static func keptDuration(
+        from: TimeInterval,
+        to: TimeInterval,
+        ranges: [Range<TimeInterval>]?
+    ) -> TimeInterval {
+        guard let ranges else { return max(0, to - from) }
+        var total: TimeInterval = 0
+        for range in ranges {
+            let lower = max(from, range.lowerBound)
+            let upper = min(to, range.upperBound)
+            if upper > lower { total += upper - lower }
+        }
+        return total
     }
 
     /// Classifies the raw (positive-clamped) acceleration signal directly against

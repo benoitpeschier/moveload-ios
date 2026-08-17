@@ -11,12 +11,20 @@ struct ZoneSlice: Identifiable {
 struct ZonePieChartView: View {
     let title: String
     let slices: [ZoneSlice]
+    /// Shown instead of the chart when the zones have no meaning yet — a
+    /// pie built on thresholds that don't exist reads as a real result.
+    var unavailableMessage: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title).font(.headline)
 
-            if totalSeconds > 0 {
+            if let unavailableMessage {
+                Text(unavailableMessage)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else if totalSeconds > 0 {
                 Chart(slices) { slice in
                     SectorMark(angle: .value("Temps", slice.seconds), innerRadius: .ratio(0.55))
                         .foregroundStyle(slice.color)

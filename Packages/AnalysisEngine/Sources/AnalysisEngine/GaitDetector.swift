@@ -86,6 +86,26 @@ public enum GaitDetector {
         )
     }
 
+    /// The kept stretches as time ranges (seconds from session start), for
+    /// callers working in time rather than sample indices — the heart-rate
+    /// stream has its own irregular timeline and cannot use the sample mask
+    /// directly.
+    public static func keptTimeRanges(keepMask: [Bool], sampleRateHz: Double) -> [Range<TimeInterval>] {
+        guard sampleRateHz > 0 else { return [] }
+        var ranges: [Range<TimeInterval>] = []
+        var start: Int?
+        for i in 0...keepMask.count {
+            let keep = i < keepMask.count && keepMask[i]
+            if keep, start == nil {
+                start = i
+            } else if !keep, let s = start {
+                ranges.append(Double(s) / sampleRateHz ..< Double(i) / sampleRateHz)
+                start = nil
+            }
+        }
+        return ranges
+    }
+
     private static func windowLooksLikeGait(
         axes: AccelerationAxes,
         range: Range<Int>,

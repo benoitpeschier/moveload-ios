@@ -53,7 +53,9 @@ enum MovesenseSBEMDecoder {
         var accelZ: [Double] = []
         var accelTimestampsMs: [Double] = []
         var hrSamples: [HRSample] = []
-        var hrIndex = 0
+        /// Running wall-clock position of the heart-rate stream, accumulated
+        /// from the beat-to-beat intervals — see the note where it is advanced.
+        var hrElapsedMs = 0.0
         /// First wall-clock fix in the file: the sensor's own millisecond
         /// counter paired with the matching UTC time, which is what lets the
         /// sample timestamps be turned into real dates.
@@ -105,8 +107,21 @@ enum MovesenseSBEMDecoder {
                 if let timestamp { accelTimestampsMs.append(timestamp) }
             } else if values.keys.contains(where: { $0.contains("MeasHR") }) {
                 if let average = values["Samples+Array.MeasHR.average"]?.first {
-                    hrSamples.append(HRSample(timeOffset: TimeInterval(hrIndex), bpm: average))
-                    hrIndex += 1
+                    // Heart-rate chunks carry no timestamp of their own — only
+                    // a bpm and `rrData`, the interval since the previous beat.
+                    // Accumulating those intervals reconstructs the real
+                    // timeline: on a reference recording they summed to
+                    // 174.277 s against 174.257 s of accelerometer data
+                    // (2026-08-16). Treating each beat as one second instead,
+                    // as this used to, inflated every zone duration by however
+                    // far the athlete's heart rate sat from 60 bpm — 19% on
+                    // that recording, and far more on a long session.
+                    let rr = values["Samples.MeasHR.rrData"]?.first ?? 0
+                    // Fall back to the interval the reported bpm implies when a
+                    // chunk arrives without a usable one.
+                    let intervalMs = rr > 0 ? rr : (average > 0 ? 60_000 / average : 1_000)
+                    hrElapsedMs += intervalMs
+                    hrSamples.append(HRSample(timeOffset: hrElapsedMs / 1000, bpm: average))
                 }
             } else if values.keys.contains(where: { $0.contains("TimeDetailed") }) {
                 if timeFix == nil,

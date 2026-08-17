@@ -35,7 +35,11 @@ struct SessionDetailView: View {
                 perceivedExertionBanner
 
                 ZonePieChartView(title: "Charge cardio", slices: hrSlices)
-                ZonePieChartView(title: "Charge mécanique", slices: mechSlices)
+                ZonePieChartView(
+                    title: "Charge mécanique",
+                    slices: mechSlices,
+                    unavailableMessage: mechZonesUnavailableMessage
+                )
                 MechanicalCurveChartView(sessionCurve: sessionCurve, records: records)
             }
             .padding()
@@ -230,6 +234,18 @@ struct SessionDetailView: View {
             ZoneSlice(label: "I2", seconds: session.hrZoneI2Seconds, color: .orange),
             ZoneSlice(label: "I3", seconds: session.hrZoneI3Seconds, color: .red),
         ]
+    }
+
+    /// Mechanical zones are percentages of the confirmed 45 s reference, so
+    /// with no reference both thresholds sit at zero and every sample lands in
+    /// zone 3 — a chart that would read as "the whole session at maximum
+    /// intensity" rather than as a missing setting.
+    private var mechZonesUnavailableMessage: String? {
+        let anchor = session.mechZoneAnchorUsed > 0
+            ? session.mechZoneAnchorUsed
+            : (appEnvironment.athlete.settings?.confirmedMech45sAnchor ?? 0)
+        guard anchor <= 0 else { return nil }
+        return "Référence 45 s pas encore définie : les zones mécaniques ne peuvent pas être calculées. Elle se règle en confirmant un record 45 s, ou depuis Réglages."
     }
 
     private var mechSlices: [ZoneSlice] {
