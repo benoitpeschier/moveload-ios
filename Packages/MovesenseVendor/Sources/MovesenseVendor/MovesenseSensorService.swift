@@ -301,14 +301,9 @@ public final class MovesenseSensorService: NSObject, SensorService {
         return data
     }
 
-    public func deleteEntry(_ entry: LogbookEntryInfo) async throws {
-        // GSP only exposes a whole-logbook erase (CLEAR_LOGBOOK), not a
-        // per-entry delete — silently wiping every other stored session
-        // just because one was downloaded would be a real data-loss risk,
-        // so this is deliberately a no-op. Use eraseAllEntries() for the
-        // explicit, user-confirmed whole-logbook clear.
-    }
-
+    /// Clears the sensor's whole logbook. GSP offers CLEAR_LOGBOOK and nothing
+    /// finer, so this is all-or-nothing by nature — callers confirm with the
+    /// athlete first.
     public func eraseAllEntries() async throws {
         try await gsp.eraseMemory()
     }

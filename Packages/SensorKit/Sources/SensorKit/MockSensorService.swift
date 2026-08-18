@@ -110,11 +110,6 @@ public final class MockSensorService: SensorService {
         return data
     }
 
-    public func deleteEntry(_ entry: LogbookEntryInfo) async throws {
-        storedEntries.removeAll { $0.id == entry.id }
-        entryData.removeValue(forKey: entry.id)
-    }
-
     public func eraseAllEntries() async throws {
         guard case .connected = state else { throw SensorError.notConnected }
         storedEntries.removeAll()

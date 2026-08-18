@@ -24,12 +24,11 @@ public protocol SensorLogbookService: AnyObject {
     func isStorageFull() async throws -> Bool?
     func listLogbookEntries() async throws -> [LogbookEntryInfo]
     func downloadEntry(_ entry: LogbookEntryInfo, progress: @escaping (Double) -> Void) async throws -> RawSessionData
-    func deleteEntry(_ entry: LogbookEntryInfo) async throws
-
-    /// Erases the sensor's entire logbook at once. Some backends (the real
-    /// Movesense GSP protocol) have no way to delete a single entry — this
-    /// is the only deletion primitive available, so callers must warn about
-    /// any entries not yet downloaded before calling it.
+    /// Erases the sensor's entire logbook at once. There is deliberately no
+    /// per-recording delete: the Movesense GSP protocol has no such verb, only
+    /// this one, and the per-id DELETE the API documents goes through MDS,
+    /// which this sensor rejects. Callers must warn about any recording not
+    /// yet downloaded before calling it.
     func eraseAllEntries() async throws
 }
 
