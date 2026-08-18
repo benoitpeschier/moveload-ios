@@ -11,6 +11,8 @@ struct TrendsView: View {
     @State private var records: [MechanicalWindow: Double] = [:]
     @State private var isSeeding = false
     @State private var isSeedingRecord = false
+    @State private var selectedRecordDate: Date?
+    @State private var selectedRPEDate: Date?
 
     var body: some View {
         List {
@@ -28,11 +30,21 @@ struct TrendsView: View {
                     Chart(curvePoints) { point in
                         LineMark(x: .value("Date", point.date), y: .value("Pic", point.value))
                         PointMark(x: .value("Date", point.date), y: .value("Pic", point.value))
+
+                        if let nearest = nearestCurvePoint, nearest.id == point.id {
+                            RuleMark(x: .value("Date", nearest.date))
+                                .foregroundStyle(.secondary.opacity(0.3))
+                                .zIndex(-1)
+                        }
                     }
                     .chartXAxis { dateAxisMarks }
+                    .chartXSelection(value: $selectedRecordDate)
                     .frame(height: 200)
 
-                    if let record = records[selectedWindow] {
+                    if let nearest = nearestCurvePoint {
+                        Text("\(nearest.date.formatted(date: .abbreviated, time: .shortened)) : \(String(format: "%.2f", nearest.value)) m/s²")
+                            .font(.caption.monospacedDigit())
+                    } else if let record = records[selectedWindow] {
                         Text("Record actuel : \(String(format: "%.2f", record)) m/s²")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -47,10 +59,22 @@ struct TrendsView: View {
                     Chart(rpeTrendPoints) { point in
                         LineMark(x: .value("Date", point.date), y: .value("RPE", point.value))
                         PointMark(x: .value("Date", point.date), y: .value("RPE", point.value))
+
+                        if let nearest = nearestRPEPoint, nearest.id == point.id {
+                            RuleMark(x: .value("Date", nearest.date))
+                                .foregroundStyle(.secondary.opacity(0.3))
+                                .zIndex(-1)
+                        }
                     }
                     .chartXAxis { dateAxisMarks }
                     .chartYScale(domain: 1...10)
+                    .chartXSelection(value: $selectedRPEDate)
                     .frame(height: 200)
+
+                    if let nearest = nearestRPEPoint {
+                        Text("\(nearest.date.formatted(date: .abbreviated, time: .shortened)) : \(nearest.value) / 10")
+                            .font(.caption.monospacedDigit())
+                    }
                 }
             }
 
@@ -61,6 +85,9 @@ struct TrendsView: View {
                     Chart(hrZoneTrendPoints) { point in
                         BarMark(x: .value("Date", point.date, unit: .day), y: .value("Secondes", point.seconds))
                             .foregroundStyle(by: .value("Zone", point.zoneLabel))
+                            // Zones stack within a session; sessions sharing a
+                            // day sit side by side rather than merging.
+                            .position(by: .value("Séance", point.sessionID))
                     }
                     .chartXAxis { dateAxisMarks }
                     .chartForegroundStyleScale(["I1": Color.blue, "I2": Color.orange, "I3": Color.red])
@@ -75,6 +102,7 @@ struct TrendsView: View {
                     Chart(mechZoneTrendPoints) { point in
                         BarMark(x: .value("Date", point.date, unit: .day), y: .value("Secondes", point.seconds))
                             .foregroundStyle(by: .value("Zone", point.zoneLabel))
+                            .position(by: .value("Séance", point.sessionID))
                     }
                     .chartXAxis { dateAxisMarks }
                     .chartForegroundStyleScale(["Zone 1": Color.green, "Zone 2": Color.yellow, "Zone 3": Color.purple])
@@ -137,6 +165,26 @@ struct TrendsView: View {
         let date: Date
         let seconds: Double
         let zoneLabel: String
+        /// Distinguishes sessions sharing a day, so two outings on the same
+        /// date stand side by side instead of piling into one bar.
+        let sessionID: String
+    }
+
+    /// Touch lands on an x position, not a data point, so the reading shown is
+    /// the closest actual session — sessions are irregular in time and an
+    /// interpolated value would be a number nobody recorded.
+    private var nearestCurvePoint: CurveTrendPoint? {
+        guard let selectedRecordDate else { return nil }
+        return curvePoints.min {
+            abs($0.date.timeIntervalSince(selectedRecordDate)) < abs($1.date.timeIntervalSince(selectedRecordDate))
+        }
+    }
+
+    private var nearestRPEPoint: RPETrendPoint? {
+        guard let selectedRPEDate else { return nil }
+        return rpeTrendPoints.min {
+            abs($0.date.timeIntervalSince(selectedRPEDate)) < abs($1.date.timeIntervalSince(selectedRPEDate))
+        }
     }
 
     private var curvePoints: [CurveTrendPoint] {
@@ -162,9 +210,9 @@ struct TrendsView: View {
         sessions
             .flatMap { session in
                 [
-                    ZoneTrendPoint(date: session.startDate, seconds: session.hrZoneI1Seconds, zoneLabel: "I1"),
-                    ZoneTrendPoint(date: session.startDate, seconds: session.hrZoneI2Seconds, zoneLabel: "I2"),
-                    ZoneTrendPoint(date: session.startDate, seconds: session.hrZoneI3Seconds, zoneLabel: "I3"),
+                    ZoneTrendPoint(date: session.startDate, seconds: session.hrZoneI1Seconds, zoneLabel: "I1", sessionID: session.id.uuidString),
+                    ZoneTrendPoint(date: session.startDate, seconds: session.hrZoneI2Seconds, zoneLabel: "I2", sessionID: session.id.uuidString),
+                    ZoneTrendPoint(date: session.startDate, seconds: session.hrZoneI3Seconds, zoneLabel: "I3", sessionID: session.id.uuidString),
                 ]
             }
             .sorted { $0.date < $1.date }
@@ -174,9 +222,9 @@ struct TrendsView: View {
         sessions
             .flatMap { session in
                 [
-                    ZoneTrendPoint(date: session.startDate, seconds: session.mechZone1Seconds, zoneLabel: "Zone 1"),
-                    ZoneTrendPoint(date: session.startDate, seconds: session.mechZone2Seconds, zoneLabel: "Zone 2"),
-                    ZoneTrendPoint(date: session.startDate, seconds: session.mechZone3Seconds, zoneLabel: "Zone 3"),
+                    ZoneTrendPoint(date: session.startDate, seconds: session.mechZone1Seconds, zoneLabel: "Zone 1", sessionID: session.id.uuidString),
+                    ZoneTrendPoint(date: session.startDate, seconds: session.mechZone2Seconds, zoneLabel: "Zone 2", sessionID: session.id.uuidString),
+                    ZoneTrendPoint(date: session.startDate, seconds: session.mechZone3Seconds, zoneLabel: "Zone 3", sessionID: session.id.uuidString),
                 ]
             }
             .sorted { $0.date < $1.date }

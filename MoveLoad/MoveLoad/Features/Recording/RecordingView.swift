@@ -20,6 +20,7 @@ struct RecordingView: View {
     @State private var isRecoveringHidden = false
     @State private var recoveryStatus: String?
     @State private var hasUnlistedEntries = false
+    @State private var showEraseAfterImportPrompt = false
     @State private var isImportingShowcase = false
     @State private var isImportInProgress = false
     @State private var importStatusMessage: String?
@@ -158,6 +159,18 @@ struct RecordingView: View {
                 Task { await eraseMemory() }
             }
             Button("Annuler", role: .cancel) {}
+        }
+        .confirmationDialog(
+            "Toutes les séances du capteur sont importées. Effacer sa mémoire ?",
+            isPresented: $showEraseAfterImportPrompt,
+            titleVisibility: .visible
+        ) {
+            Button("Effacer la mémoire", role: .destructive) {
+                Task { await eraseMemory() }
+            }
+            Button("Garder", role: .cancel) {}
+        } message: {
+            Text("Le capteur n'affiche que quatre enregistrements : le vider après chaque sortie évite que les suivants deviennent invisibles.")
         }
     }
 
@@ -385,9 +398,15 @@ struct RecordingView: View {
                 Task { @MainActor in downloadProgress[entry.id] = progress }
             }
             _ = try appEnvironment.importSession(raw: data, logbookEntryID: entry.id)
-            try? await appEnvironment.sensorService.deleteEntry(entry)
             downloadProgress[entry.id] = nil
             await refreshEntries()
+            // Nothing left on the sensor that isn't safely imported, so offer
+            // to clear it. Per-recording deletion doesn't exist in this
+            // protocol — only the whole logbook — which is why this waits
+            // until everything is in rather than cleaning up as it goes.
+            if notYetImportedCount == 0 && !entries.isEmpty {
+                showEraseAfterImportPrompt = true
+            }
         } catch {
             errorMessage = error.localizedDescription
             downloadProgress[entry.id] = nil

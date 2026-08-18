@@ -14,6 +14,10 @@ struct SessionDetailView: View {
     @State private var boatType: BoatType = .k1
     @State private var isTest: Bool = false
     @State private var name: String = ""
+    /// Read from the raw file rather than stored on the session: the beat
+    /// stream is far too large for SwiftData rows, which is why it lives on
+    /// disk (see RawSampleFileStore).
+    @State private var hrSamples: [HRSample] = []
 
     var body: some View {
         ScrollView {
@@ -41,6 +45,14 @@ struct SessionDetailView: View {
                     unavailableMessage: mechZonesUnavailableMessage
                 )
                 MechanicalCurveChartView(sessionCurve: sessionCurve, records: records)
+
+                if let settings = appEnvironment.athlete.settings {
+                    HeartRateCurveChartView(
+                        samples: hrSamples,
+                        thresholdLow: settings.hrThresholdLow,
+                        thresholdHigh: settings.hrThresholdHigh
+                    )
+                }
             }
             .padding()
         }
@@ -59,6 +71,7 @@ struct SessionDetailView: View {
             name = session.name ?? ""
             rpeValue = Double(session.perceivedExertion ?? 5)
             loadRecords()
+            loadHeartRate()
             exportURLs = (try? CSVExporter.exportSession(session)) ?? []
         }
     }
@@ -274,6 +287,14 @@ struct SessionDetailView: View {
             guard let peak = sessionCurve[window] ?? nil, let record = records[window] else { return false }
             return peak == record
         }
+    }
+
+    private func loadHeartRate() {
+        let directory = PersistenceContainer.documentsSessionsDirectory()
+            .appendingPathComponent(session.rawSampleDirectory)
+        // Absent or unreadable raw files simply mean no curve, not an error
+        // worth interrupting the athlete over.
+        hrSamples = (try? RawSampleFileStore.read(startDate: session.startDate, from: directory))?.hrSamples ?? []
     }
 
     private func loadRecords() {
