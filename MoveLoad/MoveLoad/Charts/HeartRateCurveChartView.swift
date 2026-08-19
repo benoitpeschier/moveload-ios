@@ -28,9 +28,10 @@ struct HeartRateCurveChartView: View {
     /// Width of the visible window, in minutes. Nil means the whole session,
     /// which is also what a reset returns to.
     @State private var visibleMinutes: Double?
-    /// The width when the current pinch began, so the gesture scales from
-    /// where it started rather than compounding on every callback.
+    /// The width and position when the current pinch began, so the gesture
+    /// scales from where it started rather than compounding on every callback.
     @State private var pinchStartMinutes: Double?
+    @State private var pinchStartScroll: Double?
     @State private var scrollMinutes: Double = 0
 
     private struct Run: Identifiable {
@@ -161,20 +162,43 @@ struct HeartRateCurveChartView: View {
     /// Pinch sets how much of the session fits on screen. Bounded at half a
     /// minute so the chart can't be zoomed past anything meaningful, and at the
     /// session length so it can't be zoomed out past its own data.
+    ///
+    /// The scroll position moves with the width so that the moment between the
+    /// fingers stays put. Changing the width alone pins the left edge instead
+    /// and the curve slides out from under the right hand.
     private var pinchToZoom: some Gesture {
         MagnifyGesture()
             .onChanged { value in
-                let start = pinchStartMinutes ?? visibleMinutes ?? totalMinutes
-                if pinchStartMinutes == nil { pinchStartMinutes = start }
-                let scaled = start / max(value.magnification, 0.01)
-                visibleMinutes = min(max(scaled, 0.5), max(totalMinutes, 0.5))
+                let startLength = pinchStartMinutes ?? visibleMinutes ?? totalMinutes
+                let startScroll = pinchStartScroll ?? scrollMinutes
+                if pinchStartMinutes == nil {
+                    pinchStartMinutes = startLength
+                    pinchStartScroll = startScroll
+                }
+
+                let maxLength = max(totalMinutes, 0.5)
+                let newLength = min(max(startLength / max(value.magnification, 0.01), 0.5), maxLength)
+
+                // Where the pinch began, as a fraction across the chart, and
+                // the moment in the session that sits there.
+                let anchorFraction = min(max(value.startAnchor.x, 0), 1)
+                let anchoredMinute = startScroll + anchorFraction * startLength
+
+                let proposed = anchoredMinute - anchorFraction * newLength
+                visibleMinutes = newLength
+                scrollMinutes = min(max(proposed, 0), max(maxLength - newLength, 0))
             }
-            .onEnded { _ in pinchStartMinutes = nil }
+            .onEnded { _ in
+                pinchStartMinutes = nil
+                pinchStartScroll = nil
+            }
     }
 
     private func resetZoom() {
         visibleMinutes = nil
         scrollMinutes = 0
+        pinchStartMinutes = nil
+        pinchStartScroll = nil
     }
 
     private var legend: some View {
