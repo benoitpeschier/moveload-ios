@@ -200,6 +200,14 @@ struct SessionDetailView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             }
+            if session.inactiveSeconds >= 30 {
+                Label(
+                    "\(Int((session.inactiveSeconds / 60).rounded())) min sans effort non comptés dans les zones",
+                    systemImage: "pause.circle"
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
         }
     }
 

@@ -14,8 +14,6 @@ public enum Gender: String, Codable, Sendable, CaseIterable, Hashable {
     case male, female
 }
 
-/// Boat class the session was recorded in — used to compare an athlete's
-/// records against peers in the same gender/boat category (coach webapp).
 /// Generations of the analysis, so stored results can be recognised as stale.
 public enum AnalysisGeneration {
     /// Load computed from the raw axis, which included gravity — a motionless
@@ -24,10 +22,15 @@ public enum AnalysisGeneration {
     /// Load computed from the axis with its slow (gravity and posture)
     /// component removed.
     public static let gravityRemoved = 1
+    /// Zone time stops counting effortless stretches — conveyor rides, rest,
+    /// waiting — which previously piled into zone 1.
+    public static let inactivityExcluded = 2
 
-    public static let current = gravityRemoved
+    public static let current = inactivityExcluded
 }
 
+/// Boat class the session was recorded in — used to compare an athlete's
+/// records against peers in the same gender/boat category (coach webapp).
 public enum BoatType: String, Codable, Sendable, CaseIterable, Hashable {
     case k1 = "K1", c1 = "C1", kx = "KX"
 }
@@ -131,6 +134,11 @@ public final class Session {
     /// leaving a history where old and new values are silently incomparable.
     /// 0 = before the load axis had gravity removed. See `AnalysisGeneration`.
     public var analysisVersion: Int = 0
+
+    /// Time left out of zone time as effortless — conveyor rides back up the
+    /// course, rest, waiting. Kept in the peak curve, so this explains why the
+    /// zone totals fall short of the session's duration.
+    public var inactiveSeconds: Double = 0
 
     /// Athlete-reported RPE (rate of perceived exertion), 1 (facile) to 10
     /// (extrêmement difficile). Nil until the athlete sets it from the session

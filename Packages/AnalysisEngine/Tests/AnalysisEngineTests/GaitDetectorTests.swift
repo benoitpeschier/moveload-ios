@@ -240,6 +240,48 @@ private enum Signals {
     #expect(peak45 < 1.3)
 }
 
+@Test func restingStretchesAreNotCountedAsActivity() {
+    let rate = 52.0
+    // Two minutes of paddling either side of two minutes of near-stillness.
+    func paddling(_ seconds: Double) -> [Double] {
+        (0..<Int(seconds * rate)).map { 2.0 * sin(2 * .pi * 1.0 * Double($0) / rate) }
+    }
+    func resting(_ seconds: Double) -> [Double] {
+        (0..<Int(seconds * rate)).map { 0.03 * sin(2 * .pi * 0.3 * Double($0) / rate) }
+    }
+    let signal = paddling(120) + resting(120) + paddling(120)
+
+    let result = InactivityDetector.detect(effort: signal, sampleRateHz: rate)
+
+    #expect(result.inactiveSeconds > 90)
+    #expect(result.inactiveSeconds < 140)
+    #expect(result.activeMask[Int(60 * rate)])
+    #expect(!result.activeMask[Int(180 * rate)])
+    #expect(result.activeMask[Int(300 * rate)])
+}
+
+/// A session spent entirely paddling must keep all of its time: the threshold
+/// is relative to the session, so a uniform effort has to stay above it.
+@Test func aSessionWithoutRestKeepsAllItsTime() {
+    let rate = 52.0
+    let signal = (0..<Int(300 * rate)).map { 2.0 * sin(2 * .pi * 1.0 * Double($0) / rate) }
+    let result = InactivityDetector.detect(effort: signal, sampleRateHz: rate)
+    #expect(result.inactiveSeconds == 0)
+}
+
+/// Brief lulls between strokes are not rests; counting them would quietly
+/// shorten every session.
+@Test func shortLullsAreNotTreatedAsRest() {
+    let rate = 52.0
+    var signal: [Double] = []
+    for _ in 0..<10 {
+        signal += (0..<Int(25 * rate)).map { 2.0 * sin(2 * .pi * 1.0 * Double($0) / rate) }
+        signal += [Double](repeating: 0.02, count: Int(5 * rate))
+    }
+    let result = InactivityDetector.detect(effort: signal, sampleRateHz: rate)
+    #expect(result.inactiveSeconds == 0)
+}
+
 @Test func peakPositionPointsAtTheEffort() {
     let rate = 10.0
     // Quiet, then a 10 s burst starting at 30 s, then quiet again.

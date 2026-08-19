@@ -81,6 +81,7 @@ final class AppEnvironment {
             session.mechZone3Seconds = result.mechZoneSeconds[.zone3] ?? 0
             session.mechZoneAnchorUsed = result.mechZoneAnchorUsed
             session.excludedWalkingSeconds = result.excludedWalkingSeconds
+            session.inactiveSeconds = result.inactiveSeconds
             session.analysisVersion = AnalysisGeneration.current
 
             try? sessionRepository.replaceCurvePoints(for: session, curve: result.curve, in: modelContext)

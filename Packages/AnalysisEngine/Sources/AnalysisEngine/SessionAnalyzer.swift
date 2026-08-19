@@ -38,6 +38,22 @@ public enum SessionAnalyzer {
             sampleRateHz: session.accelSampleRateHz
         )
 
+        // Zone time drops the stretches with no effort at all — riding a
+        // conveyor, resting, waiting between runs — which otherwise pile into
+        // zone 1 and describe the session as easier and longer than it was.
+        // Deliberately not applied to the peak curve above: motionless time
+        // never wins a peak, and cutting the recording further would fragment
+        // it enough to make the long windows unmeasurable.
+        let inactivity = InactivityDetector.detect(
+            effort: effort,
+            sampleRateHz: session.accelSampleRateHz,
+            excluded: keepMask
+        )
+        let countedMask: [Bool] = (0..<session.accelX.count).map { i in
+            let kept = keepMask.map { $0[i] } ?? true
+            return kept && inactivity.activeMask[i]
+        }
+
         let thresholds = ZoneThresholds.mechanical(
             anchor: settings.confirmedMech45sAnchor,
             percentLow: settings.mechZonePercentLow,
@@ -49,7 +65,7 @@ public enum SessionAnalyzer {
             sampleRateHz: session.accelSampleRateHz,
             thresholdLow: thresholds.low,
             thresholdHigh: thresholds.high,
-            keepMask: keepMask
+            keepMask: countedMask
         )
 
         // Cardio is restricted to the same stretches as the mechanical load, so
@@ -60,9 +76,10 @@ public enum SessionAnalyzer {
             sessionDuration: session.duration,
             thresholdLow: settings.hrThresholdLow,
             thresholdHigh: settings.hrThresholdHigh,
-            keptRanges: keepMask.map {
-                GaitDetector.keptTimeRanges(keepMask: $0, sampleRateHz: session.accelSampleRateHz)
-            }
+            keptRanges: GaitDetector.keptTimeRanges(
+                keepMask: countedMask,
+                sampleRateHz: session.accelSampleRateHz
+            )
         )
 
         return SessionAnalysisResult(
@@ -70,7 +87,8 @@ public enum SessionAnalyzer {
             mechZoneSeconds: mechZoneSeconds,
             curve: curveResult.curve,
             mechZoneAnchorUsed: settings.confirmedMech45sAnchor,
-            excludedWalkingSeconds: excludedSeconds
+            excludedWalkingSeconds: excludedSeconds,
+            inactiveSeconds: inactivity.inactiveSeconds
         )
     }
 }

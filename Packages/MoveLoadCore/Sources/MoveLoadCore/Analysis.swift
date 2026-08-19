@@ -31,19 +31,24 @@ public struct SessionAnalysisResult: Sendable {
     /// Time dropped as walking rather than paddling. Zero when the session
     /// carried no triaxial data to judge from.
     public let excludedWalkingSeconds: TimeInterval
+    /// Time spent producing no effort — conveyor rides, rest, waiting — left
+    /// out of zone time but kept in the peak curve. See InactivityDetector.
+    public let inactiveSeconds: TimeInterval
 
     public init(
         hrZoneSeconds: [HRZone: TimeInterval],
         mechZoneSeconds: [MechZone: TimeInterval],
         curve: [MechanicalWindow: Double?],
         mechZoneAnchorUsed: Double,
-        excludedWalkingSeconds: TimeInterval = 0
+        excludedWalkingSeconds: TimeInterval = 0,
+        inactiveSeconds: TimeInterval = 0
     ) {
         self.hrZoneSeconds = hrZoneSeconds
         self.mechZoneSeconds = mechZoneSeconds
         self.curve = curve
         self.mechZoneAnchorUsed = mechZoneAnchorUsed
         self.excludedWalkingSeconds = excludedWalkingSeconds
+        self.inactiveSeconds = inactiveSeconds
     }
 
     public var peak45s: Double? {
