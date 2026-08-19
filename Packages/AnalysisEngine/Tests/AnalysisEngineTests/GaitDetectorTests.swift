@@ -240,6 +240,36 @@ private enum Signals {
     #expect(peak45 < 1.3)
 }
 
+@Test func peakPositionPointsAtTheEffort() {
+    let rate = 10.0
+    // Quiet, then a 10 s burst starting at 30 s, then quiet again.
+    var signal = [Double](repeating: 0.2, count: Int(30 * rate))
+    signal += [Double](repeating: 5.0, count: Int(10 * rate))
+    signal += [Double](repeating: 0.2, count: Int(30 * rate))
+
+    let result = MechanicalCurveAnalyzer.analyze(accelX: signal, sampleRateHz: rate)
+    let start = try! #require(result.peakStartSeconds[.s9] ?? nil)
+    #expect(abs(start - 30) < 1.0)
+}
+
+/// Positions must be reported on the whole recording's timeline, not relative
+/// to whichever kept run they were found in.
+@Test func peakPositionAccountsForExcludedStretches() {
+    let rate = 10.0
+    let excluded = Int(40 * rate)
+    var signal = [Double](repeating: 9.0, count: excluded)   // dropped
+    signal += [Double](repeating: 0.2, count: Int(20 * rate))
+    signal += [Double](repeating: 5.0, count: Int(10 * rate)) // the real peak
+    var mask = [Bool](repeating: false, count: excluded)
+    mask += [Bool](repeating: true, count: signal.count - excluded)
+
+    let result = MechanicalCurveAnalyzer.analyze(accelX: signal, sampleRateHz: rate, keepMask: mask)
+    let start = try! #require(result.peakStartSeconds[.s9] ?? nil)
+    // The burst begins 60 s in; a run-relative offset would have said 20 s.
+    #expect(start > 55)
+    #expect(start < 65)
+}
+
 @Test func curveWindowsNeverSpanAnExcludedGap() {
     // Two 10 s bursts of 5.0 either side of an excluded stretch. A window
     // longer than one burst must not find 5.0 by bridging the gap.

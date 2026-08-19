@@ -4,6 +4,19 @@ import MoveLoadCore
 public enum MechanicalCurveAnalyzer {
     public struct Result: Sendable {
         public let curve: [MechanicalWindow: Double?]
+        /// Where each peak was achieved, as the window's start offset in
+        /// seconds from the beginning of the session. Lets the effort be
+        /// located in the recording — to show what the heart was doing during
+        /// it, for one — rather than only reported as a number.
+        public let peakStartSeconds: [MechanicalWindow: Double?]
+
+        public init(
+            curve: [MechanicalWindow: Double?],
+            peakStartSeconds: [MechanicalWindow: Double?] = [:]
+        ) {
+            self.curve = curve
+            self.peakStartSeconds = peakStartSeconds
+        }
     }
 
     /// Peaks over the kept samples only. Each contiguous kept run is scored
@@ -16,7 +29,11 @@ public enum MechanicalCurveAnalyzer {
         }
 
         var best: [MechanicalWindow: Double?] = [:]
-        for window in MechanicalWindow.allCases { best[window] = nil }
+        var bestStart: [MechanicalWindow: Double?] = [:]
+        for window in MechanicalWindow.allCases {
+            best[window] = nil
+            bestStart[window] = nil
+        }
 
         var runStart: Int?
         for i in 0...accelX.count {
@@ -29,13 +46,19 @@ public enum MechanicalCurveAnalyzer {
                 for window in MechanicalWindow.allCases {
                     guard let value = result.curve[window] ?? nil else { continue }
                     let current = best[window] ?? nil
-                    best[window] = current.map { Swift.max($0, value) } ?? value
+                    if current == nil || value > current! {
+                        best[window] = value
+                        // Offsets come back relative to the run, so shift them
+                        // to the whole recording's timeline.
+                        bestStart[window] = (result.peakStartSeconds[window] ?? nil)
+                            .map { $0 + Double(start) / sampleRateHz }
+                    }
                 }
                 runStart = nil
             }
         }
 
-        return Result(curve: best)
+        return Result(curve: best, peakStartSeconds: bestStart)
     }
 
     public static func analyze(accelX: [Double], sampleRateHz: Double) -> Result {
@@ -46,6 +69,7 @@ public enum MechanicalCurveAnalyzer {
 
         var sums = [Double](repeating: 0, count: windows.count)
         var peaks = [Double](repeating: -.infinity, count: windows.count)
+        var peakStartIndex = [Int](repeating: 0, count: windows.count)
 
         for i in 0..<count {
             for w in windows.indices {
@@ -55,17 +79,23 @@ public enum MechanicalCurveAnalyzer {
                 if i >= n { sums[w] -= positive[i - n] }
                 if i >= n - 1 {
                     let mean = sums[w] / Double(n)
-                    peaks[w] = max(peaks[w], mean)
+                    if mean > peaks[w] {
+                        peaks[w] = mean
+                        peakStartIndex[w] = i - n + 1
+                    }
                 }
             }
         }
 
         var curve: [MechanicalWindow: Double?] = [:]
+        var starts: [MechanicalWindow: Double?] = [:]
         for w in windows.indices {
             let n = windowSamples[w]
-            curve[windows[w]] = (n > 0 && n <= count && peaks[w].isFinite) ? peaks[w] : nil
+            let usable = n > 0 && n <= count && peaks[w].isFinite
+            curve[windows[w]] = usable ? peaks[w] : nil
+            starts[windows[w]] = usable ? Double(peakStartIndex[w]) / sampleRateHz : nil
         }
 
-        return Result(curve: curve)
+        return Result(curve: curve, peakStartSeconds: starts)
     }
 }

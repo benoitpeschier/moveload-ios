@@ -9,10 +9,20 @@ import MoveLoadCore
 /// constant zone and each run drawn as its own series. Each run repeats its
 /// predecessor's last sample, otherwise the colour changes would leave visible
 /// gaps in the line.
+/// A record-setting effort located in the recording, so the athlete can see
+/// what their heart was doing while they were producing it.
+struct RecordEffortSpan: Identifiable {
+    let id = UUID()
+    let label: String
+    let startSeconds: TimeInterval
+    let durationSeconds: TimeInterval
+}
+
 struct HeartRateCurveChartView: View {
     let samples: [HRSample]
     let thresholdLow: Double
     let thresholdHigh: Double
+    var recordEfforts: [RecordEffortSpan] = []
 
     @State private var selectedOffset: TimeInterval?
 
@@ -36,6 +46,23 @@ struct HeartRateCurveChartView: View {
                 Text("Pas de données cardio pour cette séance").foregroundStyle(.secondary)
             } else {
                 Chart {
+                    // Drawn first so the line stays legible on top. Short
+                    // windows produce a very thin band, hence the minimum
+                    // width — a 3 s effort in a 90 minute session would
+                    // otherwise be invisible.
+                    ForEach(effortBands) { band in
+                        RectangleMark(
+                            xStart: .value("Début", band.start / 60),
+                            xEnd: .value("Fin", band.end / 60)
+                        )
+                        .foregroundStyle(.yellow.opacity(0.22))
+                        .annotation(position: .top, alignment: .center, spacing: 0) {
+                            Text(band.label)
+                                .font(.system(size: 9, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
                     ForEach(runs) { run in
                         ForEach(run.points, id: \.timeOffset) { point in
                             LineMark(
@@ -58,6 +85,15 @@ struct HeartRateCurveChartView: View {
                 .frame(height: 200)
 
                 legend
+
+                if !recordEfforts.isEmpty {
+                    HStack(spacing: 4) {
+                        Rectangle().fill(.yellow.opacity(0.35)).frame(width: 10, height: 8)
+                        Text("Record sur la séance : \(recordEfforts.map(\.label).joined(separator: ", "))")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
         }
     }
@@ -71,6 +107,61 @@ struct HeartRateCurveChartView: View {
                 }
             }
         }
+    }
+
+    /// Enough of the axis for a band to be seen at all, scaled to the session
+    /// so it stays proportionate on both a 5 minute test and a 2 hour outing.
+    private var minimumVisibleSpanSeconds: TimeInterval {
+        max((samples.last?.timeOffset ?? 0) * 0.012, 8)
+    }
+
+    private struct EffortBand: Identifiable {
+        let id = UUID()
+        let start: TimeInterval
+        let end: TimeInterval
+        let label: String
+    }
+
+    /// One band per effort, not per window. A single hard burst usually takes
+    /// the record for every short window at once, which stacked six labels on
+    /// the same spot and made all of them unreadable. Overlapping efforts are
+    /// merged and labelled with the range they cover, which also says
+    /// something true: these records all came from the same effort.
+    private var effortBands: [EffortBand] {
+        let spans = recordEfforts
+            .map { effort -> (start: TimeInterval, end: TimeInterval, seconds: TimeInterval, label: String) in
+                let width = max(effort.durationSeconds, minimumVisibleSpanSeconds)
+                return (effort.startSeconds, effort.startSeconds + width, effort.durationSeconds, effort.label)
+            }
+            .sorted { $0.start < $1.start }
+        guard !spans.isEmpty else { return [] }
+
+        var bands: [EffortBand] = []
+        var start = spans[0].start
+        var end = spans[0].end
+        var members = [(seconds: spans[0].seconds, label: spans[0].label)]
+
+        func flush() {
+            let sorted = members.sorted { $0.seconds < $1.seconds }
+            let label = sorted.count == 1
+                ? sorted[0].label
+                : "\(sorted.first!.label)–\(sorted.last!.label)"
+            bands.append(EffortBand(start: start, end: end, label: label))
+        }
+
+        for span in spans.dropFirst() {
+            if span.start <= end {
+                end = max(end, span.end)
+                members.append((span.seconds, span.label))
+            } else {
+                flush()
+                start = span.start
+                end = span.end
+                members = [(span.seconds, span.label)]
+            }
+        }
+        flush()
+        return bands
     }
 
     private func color(for zone: HRZone) -> Color {

@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 import PersistenceKit
 import MoveLoadCore
+import AnalysisEngine
 
 struct SessionDetailView: View {
     @Environment(AppEnvironment.self) private var appEnvironment
@@ -18,6 +19,7 @@ struct SessionDetailView: View {
     /// stream is far too large for SwiftData rows, which is why it lives on
     /// disk (see RawSampleFileStore).
     @State private var hrSamples: [HRSample] = []
+    @State private var recordEfforts: [RecordEffortSpan] = []
 
     var body: some View {
         ScrollView {
@@ -50,7 +52,8 @@ struct SessionDetailView: View {
                     HeartRateCurveChartView(
                         samples: hrSamples,
                         thresholdLow: settings.hrThresholdLow,
-                        thresholdHigh: settings.hrThresholdHigh
+                        thresholdHigh: settings.hrThresholdHigh,
+                        recordEfforts: recordEfforts
                     )
                 }
             }
@@ -73,6 +76,7 @@ struct SessionDetailView: View {
             loadRecords()
             loadHeartRate()
             exportURLs = (try? CSVExporter.exportSession(session)) ?? []
+            await loadRecordEfforts()
         }
     }
 
@@ -295,6 +299,47 @@ struct SessionDetailView: View {
         // Absent or unreadable raw files simply mean no curve, not an error
         // worth interrupting the athlete over.
         hrSamples = (try? RawSampleFileStore.read(startDate: session.startDate, from: directory))?.hrSamples ?? []
+    }
+
+    /// Locates the record-setting efforts within the recording. Where a peak
+    /// happened isn't persisted — only its value is — so it's recomputed from
+    /// the raw samples, off the main thread since a long session runs to
+    /// hundreds of thousands of them.
+    private func loadRecordEfforts() async {
+        let windows = recordWindows
+        guard !windows.isEmpty else {
+            recordEfforts = []
+            return
+        }
+        let directory = PersistenceContainer.documentsSessionsDirectory()
+            .appendingPathComponent(session.rawSampleDirectory)
+        let startDate = session.startDate
+
+        let spans = await Task.detached(priority: .userInitiated) { () -> [RecordEffortSpan] in
+            guard let raw = try? RawSampleFileStore.read(startDate: startDate, from: directory) else { return [] }
+
+            // Must mirror SessionAnalyzer exactly, or the located peaks would
+            // belong to a different signal than the reported ones.
+            let effort = EffortSignal.dynamic(raw.accelX, sampleRateHz: raw.accelSampleRateHz)
+            var keepMask: [Bool]?
+            if let axes = raw.axes, axes.count == raw.accelX.count {
+                keepMask = GaitDetector.detect(axes: axes, sampleRateHz: raw.accelSampleRateHz).keepMask
+            }
+            let result = keepMask.map {
+                MechanicalCurveAnalyzer.analyze(accelX: effort, sampleRateHz: raw.accelSampleRateHz, keepMask: $0)
+            } ?? MechanicalCurveAnalyzer.analyze(accelX: effort, sampleRateHz: raw.accelSampleRateHz)
+
+            return windows.compactMap { window in
+                guard let start = result.peakStartSeconds[window] ?? nil else { return nil }
+                return RecordEffortSpan(
+                    label: window.label,
+                    startSeconds: start,
+                    durationSeconds: window.seconds
+                )
+            }
+        }.value
+
+        recordEfforts = spans
     }
 
     private func loadRecords() {
