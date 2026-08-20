@@ -117,7 +117,11 @@ final class AppEnvironment {
         // re-walks ids from the start, so the same log reaches here more than
         // once. Returning the existing session keeps that from silently
         // duplicating an athlete's history.
-        if let existing = try sessionRepository.session(withLogbookEntryID: logbookEntryID, in: modelContext) {
+        if let existing = try sessionRepository.session(
+            withLogbookEntryID: logbookEntryID,
+            startDate: raw.startDate,
+            in: modelContext
+        ) {
             return ImportOutcome(session: existing, candidateNewAnchor: nil, wasAlreadyImported: true)
         }
         return try createImportedSession(raw: raw, logbookEntryID: logbookEntryID)

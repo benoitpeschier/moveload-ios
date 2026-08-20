@@ -119,10 +119,37 @@ private func makeInMemoryContext() throws -> ModelContext {
         logbookEntryID: "7", rawSampleDirectory: "dir", in: context
     )
 
-    #expect(try repository.session(withLogbookEntryID: "7", in: context) != nil)
-    #expect(try repository.session(withLogbookEntryID: "8", in: context) == nil)
+    #expect(try repository.session(withLogbookEntryID: "7", startDate: raw.startDate, in: context) != nil)
+    #expect(try repository.session(withLogbookEntryID: "8", startDate: raw.startDate, in: context) == nil)
     // An empty id belongs to no recording and must never match.
-    #expect(try repository.session(withLogbookEntryID: "", in: context) == nil)
+    #expect(try repository.session(withLogbookEntryID: "", startDate: raw.startDate, in: context) == nil)
+}
+
+/// The logbook id is a slot in the sensor's memory and its counter restarts at
+/// 1 whenever the logbook is erased. Matching on it alone made every recording
+/// made after an erase look like one already imported, and an athlete's
+/// history silently stopped growing.
+@Test func aRecordingReusingAnIdAfterAnEraseIsNotMistakenForAnOldOne() throws {
+    let container = try PersistenceContainer.make(inMemory: true)
+    let context = ModelContext(container)
+    let athlete = try AthleteRepository().fetchOrCreateSingleAthlete(in: context)
+    let repository = SessionRepository()
+
+    let march = Date(timeIntervalSince1970: 1_700_000_000)
+    let old = RawSessionData(startDate: march, accelSampleRateHz: 10, accelX: [1], hrSamples: [])
+    let analysis = SessionAnalysisResult(
+        hrZoneSeconds: [:], mechZoneSeconds: [:], curve: [:], mechZoneAnchorUsed: 0
+    )
+    _ = try repository.createSession(
+        from: old, analysis: analysis, athlete: athlete,
+        logbookEntryID: "1", rawSampleDirectory: "dir", in: context
+    )
+
+    // Same slot, a week later: a different recording entirely.
+    let laterStart = march.addingTimeInterval(7 * 24 * 3600)
+    #expect(try repository.session(withLogbookEntryID: "1", startDate: laterStart, in: context) == nil)
+    // The original still matches itself, including a small rounding drift.
+    #expect(try repository.session(withLogbookEntryID: "1", startDate: march.addingTimeInterval(0.4), in: context) != nil)
 }
 
 @Test func rawSampleFileStoreRoundTripsAllThreeAxes() throws {

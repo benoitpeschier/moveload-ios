@@ -21,6 +21,9 @@ struct RecordingView: View {
     @State private var recoveryStatus: String?
     @State private var hasUnlistedEntries = false
     @State private var showEraseAfterImportPrompt = false
+    /// Logbook ids downloaded and imported since this screen appeared — the
+    /// only trustworthy evidence that erasing the sensor loses nothing.
+    @State private var importedThisRun: Set<String> = []
     @State private var isImportingShowcase = false
     @State private var isImportInProgress = false
     @State private var importStatusMessage: String?
@@ -174,18 +177,28 @@ struct RecordingView: View {
         }
     }
 
+    /// Recordings this run has actually downloaded and imported.
+    ///
+    /// Safety before erasing cannot be inferred from the stored sessions: the
+    /// only shared key is the logbook id, which is a slot in the sensor's
+    /// memory and restarts at 1 after an erase, so a fresh recording matches an
+    /// old session and looks safe when it is not. The listing's start date
+    /// can't rescue it either — before download it is only an estimate. So
+    /// safety is *observed* rather than deduced, and an entry counts only once
+    /// it has come across.
     private var notYetImportedCount: Int {
-        guard let sessions = try? appEnvironment.allSessions() else { return entries.count }
-        let importedIDs = Set(sessions.map(\.sensorLogbookEntryID))
-        return entries.filter { !importedIDs.contains($0.id) }.count
+        entries.filter { !importedThisRun.contains($0.id) }.count
     }
 
     private var eraseConfirmationTitle: String {
         let missing = notYetImportedCount
         if missing > 0 {
-            return "\(entries.count) séance(s) sur le capteur, dont \(missing) pas encore téléchargée(s) dans l'app. Les effacer quand même ?"
+            // Says "not downloaded here", not "not in the app": the app cannot
+            // tell whether a recording it never fetched is already stored, and
+            // claiming otherwise is what would get one erased.
+            return "\(entries.count) séance(s) sur le capteur, dont \(missing) que tu n'as pas téléchargée(s) depuis cet écran. Les effacer quand même ?"
         }
-        return "Effacer les \(entries.count) séance(s) du capteur ? Toutes sont déjà téléchargées dans l'app."
+        return "Effacer les \(entries.count) séance(s) du capteur ? Toutes ont été téléchargées à l'instant."
     }
 
     private var connectionRow: some View {
@@ -326,12 +339,6 @@ struct RecordingView: View {
         errorMessage = nil
 
         let highestListed = entries.compactMap { UInt32($0.id) }.max() ?? 0
-        // Already-imported recordings must be skipped *before* downloading:
-        // each is megabytes over BLE, and the import would only discard them
-        // afterwards.
-        let alreadyImported = Set(
-            ((try? appEnvironment.allSessions()) ?? []).map(\.sensorLogbookEntryID)
-        )
         var nextID = highestListed + 1
         var recovered = 0
         var skipped = 0
@@ -339,17 +346,17 @@ struct RecordingView: View {
         do {
             // Bounded so a sensor that answered forever couldn't trap the UI.
             while nextID <= highestListed + 16 {
-                if alreadyImported.contains(String(nextID)) {
-                    skipped += 1
-                    nextID += 1
-                    continue
-                }
                 recoveryStatus = "Recherche de l'enregistrement \(nextID)…"
                 guard let raw = try await movesense.downloadEntry(id: nextID, progress: { _ in }) else {
                     break
                 }
+                // Deliberately downloaded before deciding it's a duplicate:
+                // the logbook id restarts at 1 after an erase, so skipping on
+                // the id alone would silently discard genuinely new
+                // recordings. Costs bandwidth on a repeat run; losing a
+                // session costs more.
                 let outcome = try appEnvironment.importSession(raw: raw, logbookEntryID: String(nextID))
-                if !outcome.wasAlreadyImported { recovered += 1 }
+                if outcome.wasAlreadyImported { skipped += 1 } else { recovered += 1 }
                 nextID += 1
             }
 
@@ -398,6 +405,7 @@ struct RecordingView: View {
                 Task { @MainActor in downloadProgress[entry.id] = progress }
             }
             _ = try appEnvironment.importSession(raw: data, logbookEntryID: entry.id)
+            importedThisRun.insert(entry.id)
             downloadProgress[entry.id] = nil
             await refreshEntries()
             // Nothing left on the sensor that isn't safely imported, so offer

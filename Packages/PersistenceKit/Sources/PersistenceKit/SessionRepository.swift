@@ -64,15 +64,29 @@ public struct SessionRepository {
     }
 
     /// The session already imported from a given sensor recording, if any.
-    /// `sensorLogbookEntryID` exists to make importing idempotent — the same
-    /// recording can easily be downloaded twice, since it stays on the sensor
-    /// after import and the recovery path re-walks ids from the start.
-    public func session(withLogbookEntryID id: String, in context: ModelContext) throws -> Session? {
+    ///
+    /// Importing has to be idempotent — a recording stays on the sensor after
+    /// import and the recovery path re-walks ids from the start — but the
+    /// logbook id alone cannot identify it. That id is a slot in the sensor's
+    /// memory and the counter restarts at 1 whenever the logbook is erased, so
+    /// matching on it alone made every recording made after an erase look like
+    /// one already imported, and the athlete's history silently stopped
+    /// growing. The start date settles it: two recordings cannot begin at the
+    /// same instant.
+    public func session(
+        withLogbookEntryID id: String,
+        startDate: Date,
+        in context: ModelContext
+    ) throws -> Session? {
         guard !id.isEmpty else { return nil }
         let descriptor = FetchDescriptor<Session>(
             predicate: #Predicate { $0.sensorLogbookEntryID == id }
         )
-        return try context.fetch(descriptor).first
+        // Tolerance rather than equality: a re-download re-derives the date
+        // from the file, and rounding must not defeat the match.
+        return try context.fetch(descriptor).first {
+            abs($0.startDate.timeIntervalSince(startDate)) < 2
+        }
     }
 
     public func allSessions(in context: ModelContext) throws -> [Session] {
