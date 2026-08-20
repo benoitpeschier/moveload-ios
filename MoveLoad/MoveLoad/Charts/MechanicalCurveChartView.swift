@@ -17,8 +17,9 @@ struct MechanicalCurveChartView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
+            HStack(spacing: 6) {
                 Text("Courbe d'accélération").font(.headline)
+                HelpButton(text: ChartHelp.accelerationCurve)
                 Spacer()
                 // Reserve the row even when nothing is selected, so the chart
                 // doesn't jump as values appear and disappear.

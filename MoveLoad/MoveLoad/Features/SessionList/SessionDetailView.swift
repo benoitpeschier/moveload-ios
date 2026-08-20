@@ -40,11 +40,16 @@ struct SessionDetailView: View {
 
                 perceivedExertionBanner
 
-                ZonePieChartView(title: "Charge cardio", slices: hrSlices)
+                ZonePieChartView(
+                    title: "Charge cardio",
+                    slices: hrSlices,
+                    helpText: ChartHelp.cardioLoad
+                )
                 ZonePieChartView(
                     title: "Charge mécanique",
                     slices: mechSlices,
-                    unavailableMessage: mechZonesUnavailableMessage
+                    unavailableMessage: mechZonesUnavailableMessage,
+                    helpText: ChartHelp.mechanicalLoad
                 )
                 MechanicalCurveChartView(sessionCurve: sessionCurve, records: records)
 

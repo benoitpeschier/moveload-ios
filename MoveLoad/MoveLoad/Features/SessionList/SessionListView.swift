@@ -6,8 +6,14 @@ struct SessionListView: View {
     @State private var sessions: [Session] = []
     @State private var sessionPendingDelete: Session?
     @State private var deleteErrorMessage: String?
+    @State private var viewMode: ViewMode = .list
 
-    var body: some View {
+    enum ViewMode: String, CaseIterable {
+        case list = "Liste"
+        case calendar = "Calendrier"
+    }
+
+    private var listView: some View {
         List {
             if sessions.isEmpty {
                 ContentUnavailableView(
@@ -30,7 +36,35 @@ struct SessionListView: View {
                 }
             }
         }
+    }
+
+    private var calendarView: some View {
+        ScrollView {
+            SessionCalendarView(sessions: sessions)
+                .padding()
+        }
+    }
+
+    var body: some View {
+        Group {
+            switch viewMode {
+            case .list: listView
+            case .calendar: calendarView
+            }
+        }
         .navigationTitle("Séances")
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                // A view switch rather than a fifth tab: the same sessions,
+                // read two ways. Two tabs for one set of data only makes the
+                // athlete remember which one they were last in.
+                Picker("Affichage", selection: $viewMode) {
+                    ForEach(ViewMode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 200)
+            }
+        }
         .navigationDestination(for: UUID.self) { sessionID in
             if let session = sessions.first(where: { $0.id == sessionID }) {
                 SessionDetailView(session: session)

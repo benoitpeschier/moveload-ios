@@ -14,10 +14,16 @@ struct ZonePieChartView: View {
     /// Shown instead of the chart when the zones have no meaning yet — a
     /// pie built on thresholds that don't exist reads as a real result.
     var unavailableMessage: String?
+    var helpText: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.headline)
+            HStack(spacing: 6) {
+                Text(title).font(.headline)
+                if let helpText {
+                    HelpButton(text: helpText)
+                }
+            }
 
             if let unavailableMessage {
                 Text(unavailableMessage)
