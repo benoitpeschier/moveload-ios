@@ -13,6 +13,28 @@ struct SettingsView: View {
     var body: some View {
         Form {
             if let settings {
+                Section {
+                    if let serial = appEnvironment.pairedSensorSerial {
+                        HStack {
+                            Text("Capteur")
+                            Spacer()
+                            Text(serial).foregroundStyle(.secondary)
+                        }
+                        Button("Oublier ce capteur", role: .destructive) {
+                            appEnvironment.pairedSensorSerial = nil
+                        }
+                    } else {
+                        Text("Aucun capteur appairé")
+                            .foregroundStyle(.secondary)
+                    }
+                } header: {
+                    Text("Capteur appairé")
+                } footer: {
+                    Text(appEnvironment.pairedSensorSerial == nil
+                         ? "Le premier capteur auquel tu te connecteras deviendra le tien. L'app ne parlera qu'à celui-là et refusera d'importer une séance venue d'un autre."
+                         : "L'app ne se connecte qu'à ce capteur et refuse d'importer une séance venue d'un autre. Ne l'oublie que si tu changes de capteur : les séances déjà importées ne sont pas touchées.")
+                }
+
                 Section("Athlète") {
                     TextField(
                         "Nom affiché",

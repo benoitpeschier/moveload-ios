@@ -36,6 +36,11 @@ public final class MovesenseSensorService: NSObject, SensorService {
     private var connectedSerial: String?
     private var connectedSensor: DiscoveredSensor?
 
+    /// Serial of the sensor currently connected, from its hello response.
+    /// Stamped onto every session imported from it, so a recording can always
+    /// be traced back to the hardware it came off.
+    public var connectedSerialNumber: String? { connectedSerial }
+
     /// The firmware application the connected sensor is running, from its
     /// hello response. Read to tell the stock firmware from ours, and shown
     /// in the sensor screen so a flash can be confirmed at a glance.

@@ -25,6 +25,10 @@ struct RecordingView: View {
     /// only trustworthy evidence that erasing the sensor loses nothing.
     @State private var importedThisRun: Set<String> = []
     @State private var isImportingShowcase = false
+    /// Everything that answered the last scan, kept only to let the athlete
+    /// pick their own sensor the first time.
+    @State private var discoveredSensors: [DiscoveredSensor] = []
+    @State private var showSensorPicker = false
     @State private var isImportInProgress = false
     @State private var importStatusMessage: String?
 
@@ -156,6 +160,9 @@ struct RecordingView: View {
         ) { result in
             Task { await handleShowcaseImport(result) }
         }
+        .sheet(isPresented: $showSensorPicker) {
+            sensorPicker
+        }
         .confirmationDialog(
             eraseConfirmationTitle,
             isPresented: $showEraseConfirmation,
@@ -245,6 +252,53 @@ struct RecordingView: View {
         return "Effacer les \(entries.count) séance(s) du capteur ? Toutes ont été téléchargées à l'instant."
     }
 
+    /// Shown once, the first time a sensor is connected. Picking is the
+    /// athlete's job because nothing in a BLE advertisement says whose sensor
+    /// it is — signal strength included, since a sensor in a nearby bag can
+    /// easily out-shout one on the body.
+    private var sensorPicker: some View {
+        NavigationStack {
+            List {
+                Section {
+                    ForEach(discoveredSensors) { sensor in
+                        Button {
+                            showSensorPicker = false
+                            Task { await connect(to: sensor, pairing: true) }
+                        } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(sensor.name)
+                                    if let rssi = sensor.rssi {
+                                        Text("signal \(rssi) dBm")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                } header: {
+                    Text("Capteurs à portée")
+                } footer: {
+                    Text("Choisis le tien : compare les derniers chiffres avec ceux inscrits sur ton capteur. L'app ne se connectera plus qu'à celui-là, et refusera d'importer une séance venue d'un autre. Tu pourras en changer dans Réglages.")
+                }
+            }
+            .navigationTitle("Quel capteur est le tien ?")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Annuler") { showSensorPicker = false }
+                }
+            }
+        }
+    }
+
     /// The firmware the sensor is running. Worth showing: whether a sensor
     /// carries the stock firmware or ours changes when recordings start and
     /// stop, and after a DFU there is otherwise no way to confirm the update
@@ -319,32 +373,56 @@ struct RecordingView: View {
         }
     }
 
+    /// Serial of the sensor currently connected, stamped onto whatever is
+    /// imported from it. Empty for the simulated sensor, which is treated as
+    /// unknown rather than rejected.
+    private var connectedSerial: String {
+        (appEnvironment.sensorService as? MovesenseSensorService)?.connectedSerialNumber ?? ""
+    }
+
+    /// Does the advertised sensor carry this serial? Before connecting, all
+    /// that is known is the BLE name, which ends with the serial; the paired
+    /// value is the serial itself, read from the hello response at pairing.
+    private static func matches(_ sensor: DiscoveredSensor, _ serial: String) -> Bool {
+        sensor.id == serial || sensor.name.hasSuffix(serial)
+    }
+
+    /// Gathers the sensors in range, stopping early once the paired one
+    /// answers. Collecting rather than taking the first to reply is the whole
+    /// point: in a clubhouse the first to reply is somebody else's.
+    private func collectSensors(seconds: Double, stoppingAt paired: String?) async -> [DiscoveredSensor] {
+        let stream = appEnvironment.sensorService.scan()
+        var found: [String: DiscoveredSensor] = [:]
+
+        let collector = Task { @MainActor in
+            for await sensor in stream {
+                found[sensor.id] = sensor
+                if let paired, Self.matches(sensor, paired) { break }
+            }
+        }
+        let timeout = Task {
+            try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            collector.cancel()
+        }
+        await collector.value
+        timeout.cancel()
+        appEnvironment.sensorService.stopScan()
+
+        return found.values.sorted { ($0.rssi ?? -200) > ($1.rssi ?? -200) }
+    }
+
     private func scanAndConnect() async {
         isScanning = true
         defer { isScanning = false }
         errorMessage = nil
 
-        // Start the scan here, on the main actor, and hand the child task only
-        // the stream: reaching for `appEnvironment.sensorService` from inside a
-        // task-group child would cross an actor boundary (an error in Swift 6).
-        let sensors = appEnvironment.sensorService.scan()
-        let sensor = await withTaskGroup(of: DiscoveredSensor?.self) { group in
-            group.addTask {
-                for await sensor in sensors { return sensor }
-                return nil
-            }
-            group.addTask {
-                try? await Task.sleep(nanoseconds: 15_000_000_000)
-                return nil
-            }
-            let result = await group.next() ?? nil
-            group.cancelAll()
-            return result
-        }
-        appEnvironment.sensorService.stopScan()
+        let paired = appEnvironment.pairedSensorSerial
+        // Unpaired, the wait runs its full course so every sensor in range is
+        // offered; paired, it ends the moment the right one answers.
+        let found = await collectSensors(seconds: paired == nil ? 6 : 15, stoppingAt: paired)
 
-        guard let sensor else {
-            var message = "Aucun capteur trouvé. Vérifie que le Bluetooth est activé, que MoveLoad y a accès (Réglages > MoveLoad > Bluetooth), et que le capteur est allumé à proximité."
+        guard !found.isEmpty else {
+            var message = "Aucun capteur trouvé. Vérifie que le Bluetooth est activé, que MoveLoad y a accès (Réglages > MoveLoad > Bluetooth), et que le capteur est porté et à proximité."
             if let movesense = appEnvironment.sensorService as? MovesenseSensorService {
                 message += "\n(\(movesense.diagnosticStateDescription))"
                 message += "\n\n" + (await movesense.debugScanBroad())
@@ -353,8 +431,39 @@ struct RecordingView: View {
             return
         }
 
+        guard let paired else {
+            // First time: the athlete says which sensor is theirs. Nothing is
+            // connected automatically, because there is no way to guess.
+            discoveredSensors = found
+            showSensorPicker = true
+            return
+        }
+
+        guard let mine = found.first(where: { Self.matches($0, paired) }) else {
+            // Say what did answer: it is how the athlete works out their
+            // sensor is flat, not worn, or left at home.
+            let others = found.map(\.name).joined(separator: ", ")
+            errorMessage = "Ton capteur (\(paired)) n'a pas répondu. \(found.count) autre(s) capteur(s) à portée : \(others). Vérifie que le tien est porté, sangle en place, et que sa pile n'est pas vide."
+            return
+        }
+
+        await connect(to: mine, pairing: false)
+    }
+
+    private func connect(to sensor: DiscoveredSensor, pairing: Bool) async {
         do {
             try await appEnvironment.sensorService.connect(to: sensor)
+            if pairing {
+                // Store the serial the sensor reports rather than the name it
+                // advertises: the hello response is the authoritative one, and
+                // it is what every later comparison is made against.
+                if let serial = (appEnvironment.sensorService as? MovesenseSensorService)?.connectedSerialNumber,
+                   !serial.isEmpty {
+                    appEnvironment.pairedSensorSerial = serial
+                } else {
+                    appEnvironment.pairedSensorSerial = sensor.id
+                }
+            }
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -421,7 +530,11 @@ struct RecordingView: View {
                 // the id alone would silently discard genuinely new
                 // recordings. Costs bandwidth on a repeat run; losing a
                 // session costs more.
-                let outcome = try appEnvironment.importSession(raw: raw, logbookEntryID: String(nextID))
+                let outcome = try appEnvironment.importSession(
+                    raw: raw,
+                    logbookEntryID: String(nextID),
+                    sensorSerial: connectedSerial
+                )
                 if outcome.wasAlreadyImported { skipped += 1 } else { recovered += 1 }
                 nextID += 1
             }
@@ -470,7 +583,11 @@ struct RecordingView: View {
             let data = try await appEnvironment.sensorService.downloadEntry(entry) { progress in
                 Task { @MainActor in downloadProgress[entry.id] = progress }
             }
-            _ = try appEnvironment.importSession(raw: data, logbookEntryID: entry.id)
+            _ = try appEnvironment.importSession(
+                raw: data,
+                logbookEntryID: entry.id,
+                sensorSerial: connectedSerial
+            )
             importedThisRun.insert(entry.id)
             downloadProgress[entry.id] = nil
             await refreshEntries()

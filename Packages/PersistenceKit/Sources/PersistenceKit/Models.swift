@@ -67,6 +67,11 @@ public final class AthleteSettings {
     /// Used to compare the athlete's records against peers of the same gender
     /// and boat class in the coach webapp — not used by any on-device analysis.
     public var genderRaw: String = Gender.male.rawValue
+    /// The one sensor this athlete's app will talk to, chosen once from the
+    /// sensors in range. Empty until then. Without it the app connects to
+    /// whichever sensor answers first, which in a clubhouse means somebody
+    /// else's.
+    public var pairedSensorSerial: String = ""
 
     public var recordsHistoryUnit: HistoryUnit {
         get { HistoryUnit(rawValue: recordsHistoryUnitRaw) ?? .days }
@@ -111,6 +116,14 @@ public final class Session {
     public var endDate: Date = Date.now
     public var statusRaw: String = SessionStatus.downloaded.rawValue
     public var sensorLogbookEntryID: String = ""
+    /// Serial of the sensor this recording came from. Empty for sessions
+    /// imported before it was recorded, and for the Showcase JSON path, which
+    /// carries no serial — so an empty value means "unknown", never "mine".
+    ///
+    /// Kept because the logbook id says nothing about *which* sensor: in a
+    /// changing room full of them a session downloaded from the wrong one
+    /// would otherwise be indistinguishable from a real one, for good.
+    public var sensorSerial: String = ""
     public var rawSampleDirectory: String = ""
 
     public var hrZoneI1Seconds: Double = 0
@@ -189,6 +202,7 @@ public final class Session {
         endDate: Date,
         status: SessionStatus = .downloaded,
         sensorLogbookEntryID: String,
+        sensorSerial: String = "",
         rawSampleDirectory: String
     ) {
         self.id = id
@@ -197,6 +211,7 @@ public final class Session {
         self.endDate = endDate
         self.statusRaw = status.rawValue
         self.sensorLogbookEntryID = sensorLogbookEntryID
+        self.sensorSerial = sensorSerial
         self.rawSampleDirectory = rawSampleDirectory
     }
 }

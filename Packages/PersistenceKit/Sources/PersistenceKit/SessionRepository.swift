@@ -12,6 +12,7 @@ public struct SessionRepository {
         analysis: SessionAnalysisResult,
         athlete: Athlete,
         logbookEntryID: String,
+        sensorSerial: String = "",
         rawSampleDirectory: String,
         in context: ModelContext
     ) throws -> Session {
@@ -22,6 +23,7 @@ public struct SessionRepository {
             endDate: raw.startDate.addingTimeInterval(raw.duration),
             status: .analyzed,
             sensorLogbookEntryID: logbookEntryID,
+            sensorSerial: sensorSerial,
             rawSampleDirectory: rawSampleDirectory
         )
         session.hrZoneI1Seconds = analysis.hrZoneSeconds[.i1] ?? 0

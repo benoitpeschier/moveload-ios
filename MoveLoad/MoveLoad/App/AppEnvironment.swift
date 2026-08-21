@@ -102,6 +102,36 @@ final class AppEnvironment {
         try? modelContext.save()
     }
 
+    /// The sensor this app is paired with, or nil until one is chosen.
+    var pairedSensorSerial: String? {
+        get {
+            let value = athlete.settings?.pairedSensorSerial ?? ""
+            return value.isEmpty ? nil : value
+        }
+        set {
+            athlete.settings?.pairedSensorSerial = newValue ?? ""
+            try? modelContext.save()
+        }
+    }
+
+    enum ImportError: LocalizedError {
+        case wrongSensor(found: String, expected: String)
+
+        var errorDescription: String? {
+            switch self {
+            case let .wrongSensor(found, expected):
+                // Named rather than vague: in a clubhouse the athlete needs to
+                // know it is somebody else's sensor, not that "something went
+                // wrong", so they stop instead of retrying.
+                return """
+                    Cette séance vient du capteur \(found), pas du tien (\(expected)). \
+                    Elle n'a pas été importée. Déconnecte-toi et reconnecte-toi à ton capteur — \
+                    et surtout n'efface pas la mémoire de celui-ci, elle appartient à quelqu'un d'autre.
+                    """
+            }
+        }
+    }
+
     struct ImportOutcome {
         let session: Session
         /// Non-nil when this session's 45s peak beats the currently confirmed
@@ -112,7 +142,21 @@ final class AppEnvironment {
         var wasAlreadyImported: Bool = false
     }
 
-    func importSession(raw: RawSessionData, logbookEntryID: String) throws -> ImportOutcome {
+    /// - Parameter sensorSerial: the sensor the recording was read from, or
+    ///   empty when the source cannot say (the Showcase JSON import). Empty
+    ///   means unknown, so it is allowed through rather than rejected.
+    func importSession(
+        raw: RawSessionData,
+        logbookEntryID: String,
+        sensorSerial: String = ""
+    ) throws -> ImportOutcome {
+        // Refuse a recording from anyone else's sensor before it can reach the
+        // athlete's history — and, through sync, the coach's dashboard under
+        // the wrong name. Once stored it is indistinguishable from a real one.
+        if let paired = pairedSensorSerial, !sensorSerial.isEmpty, sensorSerial != paired {
+            throw ImportError.wrongSensor(found: sensorSerial, expected: paired)
+        }
+
         // Recordings stay on the sensor after import, and the recovery path
         // re-walks ids from the start, so the same log reaches here more than
         // once. Returning the existing session keeps that from silently
@@ -124,10 +168,14 @@ final class AppEnvironment {
         ) {
             return ImportOutcome(session: existing, candidateNewAnchor: nil, wasAlreadyImported: true)
         }
-        return try createImportedSession(raw: raw, logbookEntryID: logbookEntryID)
+        return try createImportedSession(raw: raw, logbookEntryID: logbookEntryID, sensorSerial: sensorSerial)
     }
 
-    private func createImportedSession(raw: RawSessionData, logbookEntryID: String) throws -> ImportOutcome {
+    private func createImportedSession(
+        raw: RawSessionData,
+        logbookEntryID: String,
+        sensorSerial: String
+    ) throws -> ImportOutcome {
         let settings = athlete.settings!
 
         let analysisSettings = AnalysisSettings(
@@ -149,6 +197,7 @@ final class AppEnvironment {
             analysis: result,
             athlete: athlete,
             logbookEntryID: logbookEntryID,
+            sensorSerial: sensorSerial,
             rawSampleDirectory: directory.lastPathComponent,
             in: modelContext
         )
