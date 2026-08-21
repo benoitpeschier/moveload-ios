@@ -35,6 +35,14 @@ const char* const MoveLoadAutoApp::LAUNCHABLE_NAME = "MoveLoadAuto";
 // most of the time, so a strap left damp in a bag still costs almost nothing.
 #define ARMING_RETRY_MS 600000
 
+// The recording watchdog ticks once a minute; three ticks with no pulse at
+// all end the recording. A strap taken off still wet keeps reporting contact
+// and, jostled in a bag, would otherwise record the drive home. Three minutes
+// is the athlete's own judgement of how long a heart rate can legitimately
+// vanish mid-session.
+#define WATCHDOG_TICK_MS 60000
+#define WATCHDOG_TICKS_WITHOUT_HR 3
+
 // Plausible human heart rate. A wet strap produces no QRS at all, so this is
 // mostly a guard against a garbage first reading rather than a fine filter.
 #define HR_MIN_BPM 30
@@ -50,9 +58,14 @@ MoveLoadAutoApp::MoveLoadAutoApp():
     mHrsEnabled(false),
     mArming(false),
     mHeartRateSubscribed(false),
+    mHeartRateSeen(false),
+    mTicksWithoutHeartRate(0),
+    mStopRequested(false),
+    mExternalStopHonoured(false),
     mArmingBackoff(false),
     mStopTimer(wb::ID_INVALID_TIMER),
     mArmingTimer(wb::ID_INVALID_TIMER),
+    mWatchdogTimer(wb::ID_INVALID_TIMER),
     mIndicationTimer(wb::ID_INVALID_TIMER)
 {
 }
@@ -98,6 +111,7 @@ bool MoveLoadAutoApp::startModule()
 void MoveLoadAutoApp::stopModule()
 {
     cancelStopTimer();
+    stopRecordingWatchdog();
     stopTimer(mArmingTimer);
     mArmingTimer = wb::ID_INVALID_TIMER;
     stopTimer(mIndicationTimer);
@@ -127,8 +141,33 @@ void MoveLoadAutoApp::onGetResult(whiteboard::RequestId requestId,
     {
         case WB_RES::LOCAL::MEM_DATALOGGER_STATE::LID:
         {
+            const bool wasLogging = isLogging();
             mDataLoggerState = result.convertTo<WB_RES::DataLoggerState>();
             DEBUGLOG("DataLogger state: %d", mDataLoggerState);
+
+            if (wasLogging && !isLogging())
+            {
+                stopRecordingWatchdog();
+                if (mStopRequested)
+                {
+                    mStopRequested = false;
+                }
+                else
+                {
+                    // Nobody here asked for this, so the app did. Respect it:
+                    // the athlete may well still be wearing the strap with a
+                    // perfectly good pulse, and re-arming would undo the tap
+                    // they just made.
+                    DEBUGLOG("Recording stopped from outside — not restarting until the strap comes off");
+                    mExternalStopHonoured = true;
+                    abandonArming();
+                }
+            }
+            else if (!wasLogging && isLogging())
+            {
+                startRecordingWatchdog();
+            }
+
             evaluateRecordingState();
             break;
         }
@@ -212,6 +251,12 @@ void MoveLoadAutoApp::onNotify(wb::ResourceId resourceId,
         {
             const WB_RES::HRData& hrData = value.convertTo<const WB_RES::HRData&>();
 
+            const uint16_t plausible = (uint16_t)hrData.average;
+            if (plausible >= HR_MIN_BPM && plausible <= HR_MAX_BPM)
+            {
+                mHeartRateSeen = true;
+            }
+
             if (mArming)
             {
                 const uint16_t bpm = (uint16_t)hrData.average;
@@ -227,7 +272,7 @@ void MoveLoadAutoApp::onNotify(wb::ResourceId resourceId,
 
             if (!mHrsEnabled)
             {
-                // Measured only to arm the recording; no watch is listening.
+                // Measured for our own sake; no watch is listening.
                 break;
             }
 
@@ -265,6 +310,12 @@ void MoveLoadAutoApp::evaluateRecordingState()
             // always gets an immediate fresh attempt.
             abandonArming();
             mArmingBackoff = false;
+            mExternalStopHonoured = false;
+            return;
+        }
+
+        if (mExternalStopHonoured)
+        {
             return;
         }
 
@@ -324,6 +375,7 @@ void MoveLoadAutoApp::stopLogging()
 {
     DEBUGLOG("stopLogging()");
     mTransitionPending = true;
+    mStopRequested = true;
 
     // READY is what flushes the buffered samples to flash and closes the
     // logbook entry. Reaching power-off without it loses the session.
@@ -379,6 +431,29 @@ void MoveLoadAutoApp::abandonArming()
     updateHeartRateSubscription();
 }
 
+void MoveLoadAutoApp::startRecordingWatchdog()
+{
+    if (mWatchdogTimer != wb::ID_INVALID_TIMER)
+    {
+        return;
+    }
+    mHeartRateSeen = false;
+    mTicksWithoutHeartRate = 0;
+    mWatchdogTimer = startTimer(WATCHDOG_TICK_MS, true);
+    updateHeartRateSubscription();
+}
+
+void MoveLoadAutoApp::stopRecordingWatchdog()
+{
+    if (mWatchdogTimer == wb::ID_INVALID_TIMER)
+    {
+        return;
+    }
+    stopTimer(mWatchdogTimer);
+    mWatchdogTimer = wb::ID_INVALID_TIMER;
+    updateHeartRateSubscription();
+}
+
 void MoveLoadAutoApp::hrsNotificationChanged(bool enabled)
 {
     if (enabled == mHrsEnabled)
@@ -393,7 +468,9 @@ void MoveLoadAutoApp::updateHeartRateSubscription()
 {
     // The DataLogger subscribes /Meas/HR itself while recording, so this is
     // only about the watch and the arming gate.
-    const bool wanted = mHrsEnabled || mArming;
+    // Three reasons to measure: a watch is listening, we are waiting for a
+    // pulse to start, or we are watching for one to disappear mid-recording.
+    const bool wanted = mHrsEnabled || mArming || (mWatchdogTimer != wb::ID_INVALID_TIMER);
 
     if (wanted == mHeartRateSubscribed)
     {
@@ -430,6 +507,28 @@ void MoveLoadAutoApp::onTimer(wb::TimerId timerId)
         mIndicationTimer = wb::ID_INVALID_TIMER;
         asyncPut(WB_RES::LOCAL::UI_IND_VISUAL(), AsyncRequestOptions::Empty,
                  WB_RES::VisualIndTypeValues::NO_VISUAL_INDICATIONS);
+        return;
+    }
+
+    if (timerId == mWatchdogTimer)
+    {
+        // The DataLogger state cannot be subscribed to, so this tick is also
+        // how we notice the app stopping the recording behind our back.
+        asyncGet(WB_RES::LOCAL::MEM_DATALOGGER_STATE());
+
+        if (mHeartRateSeen)
+        {
+            mHeartRateSeen = false;
+            mTicksWithoutHeartRate = 0;
+            return;
+        }
+
+        mTicksWithoutHeartRate++;
+        if (mTicksWithoutHeartRate >= WATCHDOG_TICKS_WITHOUT_HR && isLogging() && !mTransitionPending)
+        {
+            DEBUGLOG("No pulse for %d minutes — closing the recording", mTicksWithoutHeartRate);
+            stopLogging();
+        }
         return;
     }
 

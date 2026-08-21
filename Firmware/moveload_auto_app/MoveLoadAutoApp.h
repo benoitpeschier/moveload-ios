@@ -58,6 +58,8 @@ private:
     void stopLogging();
     void armStopTimer();
     void cancelStopTimer();
+    void startRecordingWatchdog();
+    void stopRecordingWatchdog();
     void indicateBriefly();
 
     /// Mirrors the standard HR profile's notification switch: only measure
@@ -86,6 +88,17 @@ private:
     bool mArming;
     /// Whether /Meas/HR is currently subscribed on our behalf.
     bool mHeartRateSubscribed;
+    /// A pulse arrived since the last watchdog tick.
+    bool mHeartRateSeen;
+    /// Consecutive watchdog ticks with no pulse at all.
+    uint8_t mTicksWithoutHeartRate;
+    /// True from our own stop request until we see it take effect, so a stop
+    /// the app made can be told apart from one we made ourselves.
+    bool mStopRequested;
+    /// Set when the recording ended without us asking — the app stopped it.
+    /// Blocks restarting until the strap comes off, so tapping "stop" while
+    /// still wearing it is not immediately undone.
+    bool mExternalStopHonoured;
     /// Set while waiting out the pause between two attempts to find a pulse.
     bool mArmingBackoff;
 
@@ -94,5 +107,8 @@ private:
     wb::TimerId mStopTimer;
     /// Bounds one attempt to find a pulse, then the pause before the next.
     wb::TimerId mArmingTimer;
+    /// Ticks throughout a recording: watches for the heart rate going away,
+    /// and re-reads the DataLogger state, which cannot be subscribed to.
+    wb::TimerId mWatchdogTimer;
     wb::TimerId mIndicationTimer;
 };
