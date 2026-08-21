@@ -36,6 +36,20 @@ public final class MovesenseSensorService: NSObject, SensorService {
     private var connectedSerial: String?
     private var connectedSensor: DiscoveredSensor?
 
+    /// The firmware application the connected sensor is running, from its
+    /// hello response. Read to tell the stock firmware from ours, and shown
+    /// in the sensor screen so a flash can be confirmed at a glance.
+    public private(set) var connectedFirmwareName: String?
+
+    /// Our own firmware brackets sessions itself, from strap contact, and
+    /// keeps the state that decides it in RAM.
+    private var sensorManagesItsOwnSessions: Bool {
+        connectedFirmwareName == Self.autoFirmwareName
+    }
+
+    /// Must match `APPINFO_NAME` in Firmware/moveload_auto_app/App.cpp.
+    private static let autoFirmwareName = "MoveLoad Auto"
+
     public var connectionState: AsyncStream<SensorConnectionState> {
         AsyncStream { continuation in
             let id = UUID()
@@ -70,6 +84,7 @@ public final class MovesenseSensorService: NSObject, SensorService {
         DispatchQueue.main.async {
             self.connectedSerial = nil
             self.connectedSensor = nil
+            self.connectedFirmwareName = nil
             self.state = .disconnected
         }
     }
@@ -161,6 +176,7 @@ public final class MovesenseSensorService: NSObject, SensorService {
             let hello = try await gsp.hello()
             let serial = hello.serialNumber.isEmpty ? sensor.id : hello.serialNumber
             connectedSerial = serial
+            connectedFirmwareName = hello.appName
             let resolvedSensor = DiscoveredSensor(id: serial, name: serial, rssi: sensor.rssi)
             connectedSensor = resolvedSensor
             state = .connected(resolvedSensor)
@@ -175,6 +191,7 @@ public final class MovesenseSensorService: NSObject, SensorService {
         await gsp.disconnect()
         connectedSerial = nil
         connectedSensor = nil
+        connectedFirmwareName = nil
         state = .disconnected
     }
 
@@ -237,7 +254,17 @@ public final class MovesenseSensorService: NSObject, SensorService {
         // Matches the official tool's stop flow: reboot the sensor
         // (system mode 5) so the next start begins a fresh log. This
         // disconnects the sensor — `onDisconnect` updates `state`.
-        try? await gsp.putSystemMode(5)
+        //
+        // Except on our own firmware, where the reboot would undo the stop
+        // it follows. That firmware decides on its own when to record, from
+        // strap contact and a detected pulse, and it holds "the app stopped
+        // this, leave it alone" in RAM. A reboot loses that, and the sensor
+        // comes back up still worn, still beating, and starts recording
+        // again. It needs no reboot to begin a fresh log either: the next
+        // recording starts when the strap comes off and goes back on.
+        if !sensorManagesItsOwnSessions {
+            try? await gsp.putSystemMode(5)
+        }
     }
 
     /// Set by `stopLogging`: true when a new logbook entry appeared, false

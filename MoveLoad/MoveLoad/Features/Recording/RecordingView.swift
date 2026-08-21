@@ -32,6 +32,7 @@ struct RecordingView: View {
         List {
             Section("Connexion") {
                 connectionRow
+                firmwareRow
             }
 
             if case .connected = connectionState {
@@ -244,6 +245,24 @@ struct RecordingView: View {
         return "Effacer les \(entries.count) séance(s) du capteur ? Toutes ont été téléchargées à l'instant."
     }
 
+    /// The firmware the sensor is running. Worth showing: whether a sensor
+    /// carries the stock firmware or ours changes when recordings start and
+    /// stop, and after a DFU there is otherwise no way to confirm the update
+    /// took.
+    @ViewBuilder
+    private var firmwareRow: some View {
+        if case .connected = connectionState,
+           let name = (appEnvironment.sensorService as? MovesenseSensorService)?.connectedFirmwareName,
+           !name.isEmpty {
+            HStack {
+                Text("Firmware").foregroundStyle(.secondary)
+                Spacer()
+                Text(name).foregroundStyle(.secondary)
+            }
+            .font(.caption)
+        }
+    }
+
     private var connectionRow: some View {
         HStack {
             Text(connectionLabel)
@@ -305,9 +324,13 @@ struct RecordingView: View {
         defer { isScanning = false }
         errorMessage = nil
 
+        // Start the scan here, on the main actor, and hand the child task only
+        // the stream: reaching for `appEnvironment.sensorService` from inside a
+        // task-group child would cross an actor boundary (an error in Swift 6).
+        let sensors = appEnvironment.sensorService.scan()
         let sensor = await withTaskGroup(of: DiscoveredSensor?.self) { group in
             group.addTask {
-                for await sensor in appEnvironment.sensorService.scan() { return sensor }
+                for await sensor in sensors { return sensor }
                 return nil
             }
             group.addTask {
