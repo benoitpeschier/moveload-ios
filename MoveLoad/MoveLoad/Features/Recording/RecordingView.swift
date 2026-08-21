@@ -57,6 +57,12 @@ struct RecordingView: View {
                     }
                 }
 
+                if let pressure = memoryPressure {
+                    Section {
+                        memoryWarning(pressure)
+                    }
+                }
+
                 Section {
                     if entries.isEmpty {
                         Text("Aucun enregistrement").foregroundStyle(.secondary)
@@ -67,10 +73,6 @@ struct RecordingView: View {
                     }
                 } header: {
                     Text("Enregistrements sur le capteur")
-                } footer: {
-                    if entries.count >= 4 {
-                        Text("Le capteur n'affiche que quatre enregistrements : au-delà, les suivants deviennent invisibles ici et doivent être récupérés un par un. Prends l'habitude de télécharger tes séances puis d'effacer la mémoire après chaque sortie.")
-                    }
                 }
 
                 Section {
@@ -175,6 +177,47 @@ struct RecordingView: View {
         } message: {
             Text("Le capteur n'affiche que quatre enregistrements : le vider après chaque sortie évite que les suivants deviennent invisibles.")
         }
+    }
+
+    /// How close the sensor is to the point where recordings stop being
+    /// listed. Warning only once the listing is already full would be too
+    /// late — by then the athlete has to go hunting for hidden entries — so
+    /// the reminder comes one recording early.
+    private enum MemoryPressure {
+        case approaching
+        case atCap
+    }
+
+    private var memoryPressure: MemoryPressure? {
+        if hasUnlistedEntries || entries.count >= 4 { return .atCap }
+        if entries.count >= 3 { return .approaching }
+        return nil
+    }
+
+    @ViewBuilder
+    private func memoryWarning(_ pressure: MemoryPressure) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(
+                pressure == .atCap ? "La liste du capteur est pleine" : "Trois séances sur le capteur",
+                systemImage: "exclamationmark.triangle.fill"
+            )
+            .font(.headline)
+            .foregroundStyle(pressure == .atCap ? Color.red : Color.orange)
+
+            Text(pressure == .atCap
+                 ? "Le capteur n'en affiche que quatre. Les enregistrements suivants existent toujours, mais n'apparaissent plus ici : va les chercher avec « Récupérer les séances masquées », puis efface la mémoire."
+                 : "À la quatrième, les suivantes n'apparaîtront plus dans cette liste. Télécharge celles qui manquent, puis efface la mémoire du capteur.")
+            .font(.callout)
+
+            // The confirmation this opens counts what has not been downloaded
+            // from this screen and says so, so offering the shortcut here
+            // cannot quietly erase a session that was never fetched.
+            Button("Effacer la mémoire du capteur…") {
+                showEraseConfirmation = true
+            }
+            .disabled(entries.isEmpty)
+        }
+        .padding(.vertical, 4)
     }
 
     /// Recordings this run has actually downloaded and imported.
