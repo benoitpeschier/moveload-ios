@@ -49,6 +49,11 @@ private:
     /// handler, so the rule lives in exactly one place.
     void evaluateRecordingState();
 
+    /// Contact alone is not proof the sensor is on a body: a wet strap
+    /// conducts across the studs just as skin does. Arming subscribes to the
+    /// heart rate and waits for a real pulse before committing to record.
+    void beginArming();
+    void abandonArming();
     void startLogging();
     void stopLogging();
     void armStopTimer();
@@ -58,6 +63,11 @@ private:
     /// Mirrors the standard HR profile's notification switch: only measure
     /// heart rate while a watch is actually listening for it.
     void hrsNotificationChanged(bool enabled);
+
+    /// Heart rate is wanted by the watch, by the arming gate, or by neither.
+    /// Subscribing twice and unsubscribing once would leave it running, so
+    /// the two reasons are tracked apart and reconciled here.
+    void updateHeartRateSubscription();
 
     bool isLogging() const;
 
@@ -70,10 +80,19 @@ private:
     /// True between a DataLogger PUT and its result, so a burst of state
     /// changes cannot fire two starts.
     bool mTransitionPending;
+    /// A watch has switched heart rate notifications on.
     bool mHrsEnabled;
+    /// Waiting to see a pulse before starting to record.
+    bool mArming;
+    /// Whether /Meas/HR is currently subscribed on our behalf.
+    bool mHeartRateSubscribed;
+    /// Set while waiting out the pause between two attempts to find a pulse.
+    bool mArmingBackoff;
 
     /// Runs while the stop conditions hold; stopping happens only when it
     /// expires, never on the state change itself.
     wb::TimerId mStopTimer;
+    /// Bounds one attempt to find a pulse, then the pause before the next.
+    wb::TimerId mArmingTimer;
     wb::TimerId mIndicationTimer;
 };

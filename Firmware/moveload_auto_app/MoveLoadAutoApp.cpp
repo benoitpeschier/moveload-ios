@@ -22,6 +22,24 @@ const char* const MoveLoadAutoApp::LAUNCHABLE_NAME = "MoveLoadAuto";
 // the changing room — ends the recording.
 #define STOP_DELAY_MS 60000
 
+// How long to wait for a pulse after contact is made before concluding the
+// sensor is not on anybody. Long enough for the heart rate to lock on, short
+// enough not to lose the start of a session.
+#define ARMING_TIMEOUT_MS 90000
+
+// After a failed attempt, how long before listening for a pulse again while
+// contact persists. Giving up for good would be worse than a stray recording:
+// skin that is dry at the start of a session becomes conductive once the
+// athlete warms up, and a session silently never recorded is the failure that
+// actually costs something. Retrying keeps the heart rate measurement off
+// most of the time, so a strap left damp in a bag still costs almost nothing.
+#define ARMING_RETRY_MS 600000
+
+// Plausible human heart rate. A wet strap produces no QRS at all, so this is
+// mostly a guard against a garbage first reading rather than a fine filter.
+#define HR_MIN_BPM 30
+#define HR_MAX_BPM 220
+
 MoveLoadAutoApp::MoveLoadAutoApp():
     ResourceClient(WBDEBUG_NAME(__FUNCTION__), WB_EXEC_CTX_APPLICATION),
     LaunchableModule(LAUNCHABLE_NAME, WB_EXEC_CTX_APPLICATION),
@@ -30,7 +48,11 @@ MoveLoadAutoApp::MoveLoadAutoApp():
     mMovementState(0),
     mTransitionPending(false),
     mHrsEnabled(false),
+    mArming(false),
+    mHeartRateSubscribed(false),
+    mArmingBackoff(false),
     mStopTimer(wb::ID_INVALID_TIMER),
+    mArmingTimer(wb::ID_INVALID_TIMER),
     mIndicationTimer(wb::ID_INVALID_TIMER)
 {
 }
@@ -76,15 +98,15 @@ bool MoveLoadAutoApp::startModule()
 void MoveLoadAutoApp::stopModule()
 {
     cancelStopTimer();
+    stopTimer(mArmingTimer);
+    mArmingTimer = wb::ID_INVALID_TIMER;
     stopTimer(mIndicationTimer);
     mIndicationTimer = wb::ID_INVALID_TIMER;
 
     asyncUnsubscribe(WB_RES::LOCAL::COMM_BLE_HRS());
-    if (mHrsEnabled)
-    {
-        asyncUnsubscribe(WB_RES::LOCAL::MEAS_HR());
-        mHrsEnabled = false;
-    }
+    mHrsEnabled = false;
+    mArming = false;
+    updateHeartRateSubscription();
     asyncUnsubscribe(WB_RES::LOCAL::SYSTEM_STATES_STATEID(), AsyncRequestOptions::Empty, WB_RES::StateIdValues::MOVEMENT);
     asyncUnsubscribe(WB_RES::LOCAL::SYSTEM_STATES_STATEID(), AsyncRequestOptions::Empty, WB_RES::StateIdValues::CONNECTOR);
 
@@ -190,6 +212,25 @@ void MoveLoadAutoApp::onNotify(wb::ResourceId resourceId,
         {
             const WB_RES::HRData& hrData = value.convertTo<const WB_RES::HRData&>();
 
+            if (mArming)
+            {
+                const uint16_t bpm = (uint16_t)hrData.average;
+                if (bpm >= HR_MIN_BPM && bpm <= HR_MAX_BPM)
+                {
+                    DEBUGLOG("Pulse found (%d bpm) — the strap is on someone", bpm);
+                    mArming = false;
+                    stopTimer(mArmingTimer);
+                    mArmingTimer = wb::ID_INVALID_TIMER;
+                    startLogging();
+                }
+            }
+
+            if (!mHrsEnabled)
+            {
+                // Measured only to arm the recording; no watch is listening.
+                break;
+            }
+
             WB_RES::HRSData hrsData;
             hrsData.hr = hrData.average;
             if (hrData.rrData.size() > 0)
@@ -216,13 +257,25 @@ void MoveLoadAutoApp::evaluateRecordingState()
 
     if (!isLogging())
     {
-        // Nothing is recording. Putting the strap on is what starts it.
-        // An unknown connector state (2) deliberately does not: better to
-        // record nothing than to fill the flash on a sensor sitting in a bag.
         cancelStopTimer();
-        if (strapOn)
+
+        if (!strapOn)
         {
-            startLogging();
+            // Contact gone: drop everything, so putting the strap on for real
+            // always gets an immediate fresh attempt.
+            abandonArming();
+            mArmingBackoff = false;
+            return;
+        }
+
+        // Contact made — but contact is not proof of a body. Sweat and river
+        // water bridge the studs just as skin does, and a wet strap left in a
+        // bag would otherwise record all evening and fill the flash. Wait for
+        // a pulse before committing. An unknown connector state (2) does not
+        // even get that far.
+        if (!mArming && !mArmingBackoff)
+        {
+            beginArming();
         }
         return;
     }
@@ -242,6 +295,10 @@ void MoveLoadAutoApp::startLogging()
 {
     DEBUGLOG("startLogging()");
     mTransitionPending = true;
+    mArmingBackoff = false;
+
+    // The DataLogger takes over the heart rate from here.
+    abandonArming();
 
     // These two paths and this rate are what MoveLoad's own analysis assumes
     // — see LoggingConfig and MovesenseSensorService.accelerometerPath. A
@@ -296,14 +353,54 @@ void MoveLoadAutoApp::cancelStopTimer()
     mStopTimer = wb::ID_INVALID_TIMER;
 }
 
+void MoveLoadAutoApp::beginArming()
+{
+    DEBUGLOG("Contact made — waiting for a pulse before recording");
+    mArming = true;
+    updateHeartRateSubscription();
+
+    stopTimer(mArmingTimer);
+    mArmingTimer = startTimer(ARMING_TIMEOUT_MS, false);
+}
+
+void MoveLoadAutoApp::abandonArming()
+{
+    if (mArmingTimer != wb::ID_INVALID_TIMER)
+    {
+        stopTimer(mArmingTimer);
+        mArmingTimer = wb::ID_INVALID_TIMER;
+    }
+    mArmingBackoff = false;
+    if (!mArming)
+    {
+        return;
+    }
+    mArming = false;
+    updateHeartRateSubscription();
+}
+
 void MoveLoadAutoApp::hrsNotificationChanged(bool enabled)
 {
     if (enabled == mHrsEnabled)
     {
         return;
     }
+    mHrsEnabled = enabled;
+    updateHeartRateSubscription();
+}
 
-    if (enabled)
+void MoveLoadAutoApp::updateHeartRateSubscription()
+{
+    // The DataLogger subscribes /Meas/HR itself while recording, so this is
+    // only about the watch and the arming gate.
+    const bool wanted = mHrsEnabled || mArming;
+
+    if (wanted == mHeartRateSubscribed)
+    {
+        return;
+    }
+
+    if (wanted)
     {
         asyncSubscribe(WB_RES::LOCAL::MEAS_HR());
     }
@@ -311,8 +408,7 @@ void MoveLoadAutoApp::hrsNotificationChanged(bool enabled)
     {
         asyncUnsubscribe(WB_RES::LOCAL::MEAS_HR());
     }
-
-    mHrsEnabled = enabled;
+    mHeartRateSubscribed = wanted;
 }
 
 void MoveLoadAutoApp::indicateBriefly()
@@ -334,6 +430,26 @@ void MoveLoadAutoApp::onTimer(wb::TimerId timerId)
         mIndicationTimer = wb::ID_INVALID_TIMER;
         asyncPut(WB_RES::LOCAL::UI_IND_VISUAL(), AsyncRequestOptions::Empty,
                  WB_RES::VisualIndTypeValues::NO_VISUAL_INDICATIONS);
+        return;
+    }
+
+    if (timerId == mArmingTimer)
+    {
+        mArmingTimer = wb::ID_INVALID_TIMER;
+
+        if (mArmingBackoff)
+        {
+            // The pause is over: listen again, in case contact has improved.
+            mArmingBackoff = false;
+            evaluateRecordingState();
+            return;
+        }
+
+        DEBUGLOG("No pulse yet — pausing before another attempt");
+        mArming = false;
+        mArmingBackoff = true;
+        updateHeartRateSubscription();
+        mArmingTimer = startTimer(ARMING_RETRY_MS, false);
         return;
     }
 
