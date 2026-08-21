@@ -7,6 +7,8 @@ struct SettingsView: View {
     @Environment(AppEnvironment.self) private var appEnvironment
     @State private var settings: AthleteSettings?
     @State private var syncSettings = SyncSettings()
+    @State private var showScanner = false
+    @State private var scanErrorMessage: String?
     @State private var isSyncing = false
     @State private var syncStatusMessage: String?
 
@@ -162,6 +164,27 @@ struct SettingsView: View {
                     .autocorrectionDisabled()
 
                     Button {
+                        scanErrorMessage = nil
+                        showScanner = true
+                    } label: {
+                        Label("Scanner un QR code", systemImage: "qrcode.viewfinder")
+                    }
+
+                    if syncSettings.isConfigured {
+                        NavigationLink {
+                            SyncQRCodeView(settings: syncSettings)
+                        } label: {
+                            Label("Partager ces réglages", systemImage: "qrcode")
+                        }
+                    }
+
+                    if let scanErrorMessage {
+                        Text(scanErrorMessage)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+
+                    Button {
                         Task { await syncNow() }
                     } label: {
                         if isSyncing {
@@ -180,11 +203,37 @@ struct SettingsView: View {
                 } header: {
                     Text("Synchronisation")
                 } footer: {
-                    Text("Relie cet appareil à la webapp coach. Le code d'équipe doit être identique sur tous les téléphones et dans l'URL de la webapp.")
+                    Text("Relie cet appareil à la webapp coach. Le code d'équipe doit être identique sur tous les téléphones et dans l'URL de la webapp. Le plus simple est de scanner le QR code d'un appareil déjà configuré plutôt que de recopier les trois valeurs.")
                 }
             }
         }
         .navigationTitle("Réglages")
+        .sheet(isPresented: $showScanner) {
+            NavigationStack {
+                QRScannerView { payload in
+                    showScanner = false
+                    // Refuse anything that is not a complete MoveLoad payload
+                    // rather than half-filling the fields: a configuration that
+                    // looks set up and never syncs is harder to diagnose than
+                    // one that is plainly empty.
+                    guard let scanned = SyncSettings(shareablePayload: payload) else {
+                        scanErrorMessage = "Ce QR code n'est pas un code de réglages MoveLoad. Rien n'a été modifié."
+                        return
+                    }
+                    syncSettings = scanned
+                    saveSyncSettings()
+                    scanErrorMessage = nil
+                }
+                .ignoresSafeArea()
+                .navigationTitle("Scanner le QR code")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Annuler") { showScanner = false }
+                    }
+                }
+            }
+        }
         .task {
             settings = appEnvironment.athlete.settings
             syncSettings = appEnvironment.syncSettingsStore.load() ?? SyncSettings()

@@ -17,6 +17,50 @@ public struct SyncSettings: Codable, Sendable, Equatable {
     public var isConfigured: Bool {
         !teamCode.isEmpty && !projectID.isEmpty && !webAPIKey.isEmpty
     }
+
+    // MARK: - Sharing
+
+    /// The three settings as one string, for a QR code an already-configured
+    /// device shows and a new one scans. Typing them by hand is the single
+    /// worst moment of onboarding: the team code is deliberately long and
+    /// random, the API key is forty opaque characters, and one wrong
+    /// character fails silently as a sync that never lands.
+    ///
+    /// Shaped as a URL so a custom scheme or a universal link can be added
+    /// later without invalidating codes already handed out. Nothing reads it
+    /// as a URL today — it is scanned inside the app.
+    public var shareablePayload: String {
+        var components = URLComponents()
+        components.scheme = Self.payloadScheme
+        components.host = Self.payloadHost
+        components.queryItems = [
+            URLQueryItem(name: "c", value: teamCode),
+            URLQueryItem(name: "p", value: projectID),
+            URLQueryItem(name: "k", value: webAPIKey)
+        ]
+        return components.url?.absoluteString ?? ""
+    }
+
+    /// Reads a payload back, returning nil for anything that is not one —
+    /// a QR code from another app, or one of ours missing a field. A partial
+    /// configuration is worse than none: it looks set up and never syncs.
+    public init?(shareablePayload: String) {
+        guard let components = URLComponents(string: shareablePayload),
+              components.scheme == Self.payloadScheme,
+              components.host == Self.payloadHost,
+              let items = components.queryItems
+        else { return nil }
+
+        func value(_ name: String) -> String {
+            items.first { $0.name == name }?.value ?? ""
+        }
+
+        self.init(teamCode: value("c"), projectID: value("p"), webAPIKey: value("k"))
+        guard isConfigured else { return nil }
+    }
+
+    private static let payloadScheme = "moveload"
+    private static let payloadHost = "team"
 }
 
 public struct AthleteSyncPayload: Sendable, Equatable {

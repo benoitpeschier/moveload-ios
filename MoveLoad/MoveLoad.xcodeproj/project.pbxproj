@@ -287,6 +287,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "MoveLoad se connecte à ton capteur Movesense Flash en Bluetooth pour démarrer/arrêter l'enregistrement et récupérer les séances.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "MoveLoad utilise la caméra uniquement pour scanner le QR code des réglages de synchronisation de ton équipe.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -322,6 +323,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "MoveLoad se connecte à ton capteur Movesense Flash en Bluetooth pour démarrer/arrêter l'enregistrement et récupérer les séances.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "MoveLoad utilise la caméra uniquement pour scanner le QR code des réglages de synchronisation de ton équipe.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
