@@ -21,3 +21,6 @@ _moveload_build/
 /all_sessions_summary.csv
 /*.sbem
 /vuitton_*.csv
+
+# Firmware build folders created by Firmware/build.sh
+/vendor/movesense-device-lib/_build_*
