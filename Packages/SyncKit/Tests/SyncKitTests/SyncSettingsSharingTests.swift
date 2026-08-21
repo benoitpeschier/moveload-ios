@@ -37,3 +37,21 @@ final class SyncSettingsSharingTests: XCTestCase {
         XCTAssertNil(SyncSettings(shareablePayload: "moveload://team?c=abc&p=def&k="))
     }
 }
+
+/// The coach webapp builds this payload in JavaScript, so the two encoders
+/// have to agree. This exact string was produced by the webapp's
+/// `invitePayload()` and pasted here; if either side changes its escaping,
+/// this fails rather than athletes silently syncing nowhere.
+///
+/// Note the space encoded as %20, not "+": Swift's URLComponents reads "+"
+/// as a literal plus, so the webapp must not use URLSearchParams.
+final class WebappPayloadCompatibilityTests: XCTestCase {
+    func testDecodesAPayloadBuiltByTheCoachWebapp() throws {
+        let fromWebapp = "moveload://team?c=demo%20equipe%2Fcano%C3%AB%3Fx%3D1&p=appmoveload&k=AIzaSyDnSvSGlXZLKqRCgoiFqlkEFSpkPZ72YTU"
+        let decoded = try XCTUnwrap(SyncSettings(shareablePayload: fromWebapp))
+
+        XCTAssertEqual(decoded.teamCode, "demo equipe/canoë?x=1")
+        XCTAssertEqual(decoded.projectID, "appmoveload")
+        XCTAssertEqual(decoded.webAPIKey, "AIzaSyDnSvSGlXZLKqRCgoiFqlkEFSpkPZ72YTU")
+    }
+}
