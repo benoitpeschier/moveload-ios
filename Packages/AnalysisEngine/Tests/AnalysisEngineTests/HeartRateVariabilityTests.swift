@@ -139,3 +139,49 @@ final class HeartRateVariabilityTests: XCTestCase {
         }
     }
 }
+
+/// The protocol drops 30 s from each end of every position, so a five-minute
+/// recording is read on its middle four. The first half-minute is the
+/// transition into the position rather than the position itself.
+final class HeartRateVariabilityTrimTests: XCTestCase {
+
+    private func steady(seconds: Double, ms: Double = 1000) -> [Double] {
+        Array(repeating: ms, count: Int(seconds * 1000 / ms))
+    }
+
+    func testFiveMinutesBecomesFour() {
+        let kept = HeartRateVariability.trimmingEnds(steady(seconds: 300), by: 30)
+        XCTAssertEqual(kept.reduce(0, +) / 1000, 240, accuracy: 1.5)
+    }
+
+    func testTrimTakesTimeNotBeatCount() {
+        // Fast beats: 600 ms each, so 30 s is fifty of them, not thirty.
+        let kept = HeartRateVariability.trimmingEnds(steady(seconds: 300, ms: 600), by: 30)
+        XCTAssertEqual(kept.reduce(0, +) / 1000, 240, accuracy: 1.5)
+    }
+
+    /// A series too short to give up a minute is not a test recording. Trimming
+    /// it to nothing would come back later as an unexplained nil, so it is left
+    /// whole and caught by the duration check instead.
+    func testAShortSeriesIsLeftAlone() {
+        let short = steady(seconds: 40)
+        XCTAssertEqual(HeartRateVariability.trimmingEnds(short, by: 30).count, short.count)
+    }
+
+    func testTrimmingIsAppliedByDefault() throws {
+        let full = steady(seconds: 300)
+        let trimmed = try XCTUnwrap(HeartRateVariability.analyse(rrIntervalsMs: full))
+        let whole = try XCTUnwrap(HeartRateVariability.analyse(rrIntervalsMs: full, trimmingSeconds: 0))
+
+        XCTAssertEqual(trimmed.durationSeconds, 240, accuracy: 1.5)
+        XCTAssertEqual(whole.durationSeconds, 300, accuracy: 1.5)
+    }
+
+    /// A well-run test must not be flagged. Trimmed from exactly five minutes
+    /// it lands a hair under four, and a flag that fires on every good
+    /// recording is a flag nobody reads.
+    func testAProperlyRunTestIsNotFlaggedShort() throws {
+        let result = try XCTUnwrap(HeartRateVariability.analyse(rrIntervalsMs: steady(seconds: 300, ms: 870)))
+        XCTAssertTrue(result.isFrequencyDomainReliable)
+    }
+}

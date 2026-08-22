@@ -33,8 +33,19 @@ public enum HeartRateVariability {
     /// a single misplaced beat puts a spike across LF and HF alike.
     public static let maxCorrectedFraction: Double = 0.05
 
+    /// Dropped from each end before anything is computed. The half-minute
+    /// after lying down or standing up is the transition itself, not the
+    /// state being measured, and the last half-minute is the athlete
+    /// anticipating the end and breathing accordingly. A 5-minute position
+    /// therefore yields four analysed minutes.
+    public static let trimSeconds: Double = 30
+
     /// Below this, the frequency-domain figures are reported but flagged.
-    public static let minimumSecondsForSpectrum: Double = 240
+    /// Set below the protocol's nominal four minutes on purpose: a recording
+    /// trimmed from exactly 5:00 lands a hair under 240 s more often than not,
+    /// and flagging every well-run test would teach the athlete to ignore the
+    /// flag.
+    public static let minimumSecondsForSpectrum: Double = 210
 
     // MARK: - Result
 
@@ -71,10 +82,18 @@ public enum HeartRateVariability {
 
     // MARK: - Entry point
 
-    /// - Parameter rrIntervalsMs: consecutive R-R intervals in milliseconds.
+    /// - Parameters:
+    ///   - rrIntervalsMs: consecutive R-R intervals in milliseconds, for one
+    ///     position of the orthostatic test.
+    ///   - trimmingSeconds: dropped from each end (see `trimSeconds`). Pass 0
+    ///     to analyse the whole series, which only tests should need.
     /// - Returns: nil when there are too few beats to say anything at all.
-    public static func analyse(rrIntervalsMs: [Double]) -> Result? {
-        let (corrected, correctedFraction) = correctingArtifacts(rrIntervalsMs)
+    public static func analyse(
+        rrIntervalsMs: [Double],
+        trimmingSeconds: Double = trimSeconds
+    ) -> Result? {
+        let kept = trimmingEnds(rrIntervalsMs, by: trimmingSeconds)
+        let (corrected, correctedFraction) = correctingArtifacts(kept)
         guard corrected.count >= 4 else { return nil }
 
         let meanRR = corrected.reduce(0, +) / Double(corrected.count)
@@ -109,6 +128,38 @@ public enum HeartRateVariability {
             isFrequencyDomainReliable: correctedFraction <= maxCorrectedFraction
                 && durationSeconds >= minimumSecondsForSpectrum
         )
+    }
+
+    // MARK: - Trimming
+
+    /// Drops `seconds` of beats from each end.
+    ///
+    /// Refuses to trim rather than return a stub: a series too short to give
+    /// up a minute is not a test recording, and quietly emptying it would
+    /// surface later as a mystery nil. What comes back is then flagged short
+    /// by the duration check instead, which says something true.
+    static func trimmingEnds(_ intervals: [Double], by seconds: Double) -> [Double] {
+        guard seconds > 0, !intervals.isEmpty else { return intervals }
+
+        let total = intervals.reduce(0, +) / 1000
+        guard total > 2 * seconds + 30 else { return intervals }
+
+        var start = 0
+        var elapsed = 0.0
+        while start < intervals.count, elapsed < seconds {
+            elapsed += intervals[start] / 1000
+            start += 1
+        }
+
+        var end = intervals.count
+        elapsed = 0
+        while end > start, elapsed < seconds {
+            end -= 1
+            elapsed += intervals[end] / 1000
+        }
+
+        guard end > start else { return intervals }
+        return Array(intervals[start..<end])
     }
 
     // MARK: - Artifact correction
