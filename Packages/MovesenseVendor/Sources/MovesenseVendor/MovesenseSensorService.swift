@@ -36,6 +36,18 @@ public final class MovesenseSensorService: NSObject, SensorService {
     private var connectedSerial: String?
     private var connectedSensor: DiscoveredSensor?
 
+    /// Remaining charge of the connected sensor, 0–100 %, or nil when it has
+    /// not been read yet or the sensor refused to measure.
+    ///
+    /// A coin cell in a sensor that now records on its own is invisible until
+    /// a session goes missing, so it is read once per connection rather than
+    /// waited for.
+    public private(set) var batteryPercent: Int?
+
+    public func refreshBatteryLevel() async {
+        batteryPercent = try? await gsp.getBatteryPercent()
+    }
+
     /// Serial of the sensor currently connected, from its hello response.
     /// Stamped onto every session imported from it, so a recording can always
     /// be traced back to the hardware it came off.
@@ -90,6 +102,7 @@ public final class MovesenseSensorService: NSObject, SensorService {
             self.connectedSerial = nil
             self.connectedSensor = nil
             self.connectedFirmwareName = nil
+            self.batteryPercent = nil
             self.state = .disconnected
         }
     }
@@ -182,6 +195,7 @@ public final class MovesenseSensorService: NSObject, SensorService {
             let serial = hello.serialNumber.isEmpty ? sensor.id : hello.serialNumber
             connectedSerial = serial
             connectedFirmwareName = hello.appName
+            batteryPercent = try? await gsp.getBatteryPercent()
             let resolvedSensor = DiscoveredSensor(id: serial, name: serial, rssi: sensor.rssi)
             connectedSensor = resolvedSensor
             state = .connected(resolvedSensor)

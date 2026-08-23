@@ -167,6 +167,19 @@ public actor MovesenseGSPClient {
         return first != 0
     }
 
+    /// Remaining charge, 0–100 %.
+    ///
+    /// The sensor answers 503 while it cannot take the measurement, which the
+    /// send below surfaces as an error rather than a figure — a battery level
+    /// invented when none could be read is worse than none at all.
+    public func getBatteryPercent() async throws -> Int {
+        let data = try await get("/System/Energy/Level")
+        guard let first = data.first else {
+            throw GSPError.unexpectedResponse("Niveau de batterie vide")
+        }
+        return Int(first)
+    }
+
     public func get(_ path: String) async throws -> Data {
         let ref = nextReference()
         var payload = Data(path.utf8)

@@ -37,6 +37,7 @@ struct RecordingView: View {
             Section("Connexion") {
                 connectionRow
                 firmwareRow
+                batteryRow
             }
 
             if case .connected = connectionState {
@@ -296,6 +297,48 @@ struct RecordingView: View {
                     Button("Annuler") { showSensorPicker = false }
                 }
             }
+        }
+    }
+
+    /// Remaining charge, shown beside the firmware.
+    ///
+    /// Worth its line: a coin cell in a sensor that starts recording on its
+    /// own gives no sign it is dying. The failure it causes — a session that
+    /// simply is not there — looks exactly like the strap having slipped, so
+    /// the number has to be visible before the athlete goes to the water.
+    @ViewBuilder
+    private var batteryRow: some View {
+        if case .connected = connectionState,
+           let percent = (appEnvironment.sensorService as? MovesenseSensorService)?.batteryPercent {
+            HStack {
+                Label("Batterie", systemImage: batterySymbol(percent))
+                    .foregroundStyle(percent <= 15 ? Color.red : percent <= 30 ? Color.orange : Color.secondary)
+                Spacer()
+                Text("\(percent) %")
+                    .foregroundStyle(percent <= 15 ? Color.red : .secondary)
+                    .monospacedDigit()
+            }
+            .font(.caption)
+
+            if percent <= 30 {
+                // Named as an errand rather than a status: the pile is a
+                // CR2025 from any supermarket, and saying so is what turns a
+                // warning into something done this week.
+                Text(percent <= 15
+                     ? "Remplace la pile (CR2025) avant la prochaine sortie."
+                     : "Pense à prévoir une pile CR2025 de rechange.")
+                    .font(.caption2)
+                    .foregroundStyle(percent <= 15 ? Color.red : Color.orange)
+            }
+        }
+    }
+
+    private func batterySymbol(_ percent: Int) -> String {
+        switch percent {
+        case ..<15: "battery.0percent"
+        case ..<40: "battery.25percent"
+        case ..<70: "battery.50percent"
+        default: "battery.100percent"
         }
     }
 
