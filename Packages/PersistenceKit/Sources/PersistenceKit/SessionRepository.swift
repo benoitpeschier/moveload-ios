@@ -35,6 +35,7 @@ public struct SessionRepository {
         session.mechZoneAnchorUsed = analysis.mechZoneAnchorUsed
         session.excludedWalkingSeconds = analysis.excludedWalkingSeconds
         session.inactiveSeconds = analysis.inactiveSeconds
+        session.secondsAboveAnchor = analysis.secondsAboveAnchor
         session.analysisVersion = AnalysisGeneration.current
 
         context.insert(session)

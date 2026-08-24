@@ -60,6 +60,12 @@ public enum SessionAnalyzer {
             percentHigh: settings.mechZonePercentHigh
         )
 
+        let secondsAboveAnchor = ZoneTimeAccumulator.secondsAboveAnchor(
+            accelX: effort,
+            sampleRateHz: session.accelSampleRateHz,
+            anchor: settings.confirmedMech45sAnchor,
+            keepMask: countedMask
+        )
         let mechZoneSeconds = ZoneTimeAccumulator.mechZoneSeconds(
             accelX: effort,
             sampleRateHz: session.accelSampleRateHz,

@@ -25,8 +25,13 @@ public enum AnalysisGeneration {
     /// Zone time stops counting effortless stretches — conveyor rides, rest,
     /// waiting — which previously piled into zone 1.
     public static let inactivityExcluded = 2
+    /// Mechanical zones read off a 15 s rolling mean instead of each sample on
+    /// its own, with thresholds moved from 70/90 % of the anchor to 35/55 %.
+    /// Every stored zone time from before this is on a different scale and
+    /// cannot be compared with anything after it.
+    public static let rollingMeanZones = 3
 
-    public static let current = inactivityExcluded
+    public static let current = rollingMeanZones
 }
 
 /// Boat class the session was recorded in — used to compare an athlete's
@@ -53,8 +58,16 @@ public final class Athlete {
 public final class AthleteSettings {
     public var hrThresholdLow: Double = 130
     public var hrThresholdHigh: Double = 160
-    public var mechZonePercentLow: Double = 0.70
-    public var mechZonePercentHigh: Double = 0.90
+    /// Zone boundaries as a share of the confirmed 45 s anchor.
+    ///
+    /// 35 % and 55 %, not 70/90: the zones are read off a 15 s rolling mean,
+    /// which lives at 26–44 % of the anchor in median and reaches 62–88 % at
+    /// its 90th centile. Thresholds at 70/90 sat above almost everything a
+    /// session reaches — zone 3 meant "within 10 % of your lifetime best
+    /// 45 s". Those figures were right for the instantaneous signal, whose
+    /// spikes tower over its own mean, and wrong once the signal is averaged.
+    public var mechZonePercentLow: Double = 0.35
+    public var mechZonePercentHigh: Double = 0.55
     public var recordsHistoryValue: Int = 90
     public var recordsHistoryUnitRaw: String = HistoryUnit.days.rawValue
     /// The athlete-confirmed 45s anchor mechanical zones are derived from — distinct
@@ -86,8 +99,8 @@ public final class AthleteSettings {
     public init(
         hrThresholdLow: Double = 130,
         hrThresholdHigh: Double = 160,
-        mechZonePercentLow: Double = 0.70,
-        mechZonePercentHigh: Double = 0.90,
+        mechZonePercentLow: Double = 0.35,
+        mechZonePercentHigh: Double = 0.55,
         recordsHistoryValue: Int = 90,
         recordsHistoryUnit: HistoryUnit = .days,
         confirmedMech45sAnchor: Double = 0,
@@ -140,6 +153,9 @@ public final class Session {
     /// paddling (see GaitDetector). Persisted so the exclusion stays visible
     /// after the fact — it happens silently, and an athlete comparing two
     /// sessions deserves to see that one had 9 minutes removed.
+    /// Seconds above the athlete's anchor, from the instantaneous signal —
+    /// the hard-work figure the rolling-mean zones cannot express.
+    public var secondsAboveAnchor: Double = 0
     public var excludedWalkingSeconds: Double = 0
 
     /// Which generation of the analysis produced this session's numbers, so a

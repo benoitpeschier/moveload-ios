@@ -34,6 +34,9 @@ public struct SessionAnalysisResult: Sendable {
     /// Time spent producing no effort — conveyor rides, rest, waiting — left
     /// out of zone time but kept in the peak curve. See InactivityDetector.
     public let inactiveSeconds: TimeInterval
+    /// Seconds above the athlete's anchor, on the instantaneous signal — real
+    /// seconds of hard work, which the rolling-mean zones cannot express.
+    public let secondsAboveAnchor: TimeInterval
 
     public init(
         hrZoneSeconds: [HRZone: TimeInterval],
@@ -41,11 +44,13 @@ public struct SessionAnalysisResult: Sendable {
         curve: [MechanicalWindow: Double?],
         mechZoneAnchorUsed: Double,
         excludedWalkingSeconds: TimeInterval = 0,
-        inactiveSeconds: TimeInterval = 0
+        inactiveSeconds: TimeInterval = 0,
+        secondsAboveAnchor: TimeInterval = 0
     ) {
         self.hrZoneSeconds = hrZoneSeconds
         self.mechZoneSeconds = mechZoneSeconds
         self.curve = curve
+        self.secondsAboveAnchor = secondsAboveAnchor
         self.mechZoneAnchorUsed = mechZoneAnchorUsed
         self.excludedWalkingSeconds = excludedWalkingSeconds
         self.inactiveSeconds = inactiveSeconds

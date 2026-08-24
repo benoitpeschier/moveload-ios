@@ -16,14 +16,24 @@ import MoveLoadCore
     #expect(seconds[.i3] == 10)
 }
 
-@Test func mechZoneSecondsClassifiesRawSamplesNotARollingMean() {
-    let accel: [Double] = [1.0, 5.0, 9.0, -2.0]
+@Test func mechZoneSecondsClassifiesARollingMeanNotRawSamples() {
+    // This test used to assert the opposite, and the reversal is the point.
+    // Classifying each sample on its own gave a middle zone holding ~4 % of the
+    // time in every session measured, because that figure follows the band's
+    // width rather than the athlete's effort — the signal crosses the band
+    // between strokes instead of staying in it. Averaging first is what lets a
+    // zone be occupied.
+    //
+    // Four samples at 1 Hz sit well inside one 15 s window, so all four are
+    // classified by the same mean: (1 + 5 + 9 + 0) / 4 = 3.75, which is
+    // zone 2 for these thresholds.
+    let accel: [Double] = [1.0, 5.0, 9.0, -2.0]   // -2.0 clamps to 0
     let seconds = ZoneTimeAccumulator.mechZoneSeconds(
         accelX: accel, sampleRateHz: 1, thresholdLow: 3, thresholdHigh: 7
     )
-    #expect(seconds[.zone1] == 2) // 1.0, and -2.0 clamped to 0
-    #expect(seconds[.zone2] == 1) // 5.0
-    #expect(seconds[.zone3] == 1) // 9.0
+    #expect(seconds[.zone1] == 0)
+    #expect(seconds[.zone2] == 4)
+    #expect(seconds[.zone3] == 0)
     let total: Double = (seconds[.zone1] ?? 0) + (seconds[.zone2] ?? 0) + (seconds[.zone3] ?? 0)
     #expect(total == 4)
 }
