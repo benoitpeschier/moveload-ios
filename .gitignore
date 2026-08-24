@@ -15,12 +15,18 @@ Movesense_combined.hex
 _test_build/
 _moveload_build/
 
-# Session exports dropped here for offline analysis — recording data, often
-# tens of megabytes, and not part of the source.
-/session_*.csv
-/all_sessions_summary.csv
+# Recording data dropped in the root for offline analysis — the app's own
+# session exports, third-party boat-sensor files, coaches' workbooks. Tens of
+# megabytes each, athlete data, and not source. Matched by extension rather
+# than by name: three rounds of adding one filename at a time was enough.
+/*.csv
 /*.sbem
-/vuitton_*.csv
+/*.xlsm
+/*.xlsx
+
+# Build products, kept beside the project for Transporter.
+/*.ipa
+/preview-screenshot.png
 
 # Firmware build folders created by Firmware/build.sh
 /vendor/movesense-device-lib/_build_*
