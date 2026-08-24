@@ -35,7 +35,12 @@ final class AppEnvironment {
 
     func bootstrap() throws {
         athlete = try athleteRepository.fetchOrCreateSingleAthlete(in: modelContext)
-        migrateSessionCurvesIfNeeded()
+        // Moving the thresholds changes what every stored zone time means, so
+        // the session pass is told to recompute everything rather than only
+        // what its own staleness checks would catch — on an install that has
+        // already migrated, those checks find nothing.
+        let thresholdsMoved = migrateZoneThresholdsIfNeeded()
+        migrateSessionCurvesIfNeeded(forceAll: thresholdsMoved)
     }
 
     /// One-time-per-launch fixup, for sessions whose stored numbers no longer
@@ -44,7 +49,27 @@ final class AppEnvironment {
     /// the still-on-disk raw samples, so history stays comparable rather than
     /// mixing results from two different definitions. A cheap no-op once
     /// everything is current.
-    private func migrateSessionCurvesIfNeeded() {
+    /// Moves the zone thresholds onto the rolling-mean scale, once.
+    ///
+    /// Only when they are still exactly the old defaults: a coach who chose
+    /// their own figures meant them, and having the app quietly overwrite a
+    /// deliberate setting is worse than leaving it alone.
+    @discardableResult
+    private func migrateZoneThresholdsIfNeeded() -> Bool {
+        guard let settings = athlete.settings, !settings.movedToRollingMeanThresholds else { return false }
+        settings.movedToRollingMeanThresholds = true
+
+        let atOldDefaults = abs(settings.mechZonePercentLow - 0.70) < 0.001
+            && abs(settings.mechZonePercentHigh - 0.90) < 0.001
+        if atOldDefaults {
+            settings.mechZonePercentLow = 0.35
+            settings.mechZonePercentHigh = 0.55
+        }
+        try? modelContext.save()
+        return atOldDefaults
+    }
+
+    private func migrateSessionCurvesIfNeeded(forceAll: Bool = false) {
         let currentSeconds = Set(MechanicalWindow.allCases.map(\.seconds))
         guard let sessions = try? allSessions() else { return }
 
@@ -53,7 +78,7 @@ final class AppEnvironment {
         for session in sessions {
             let windowsChanged = Set(session.curvePoints.map(\.windowSeconds)) != currentSeconds
             let generationStale = session.analysisVersion < AnalysisGeneration.current
-            guard windowsChanged || generationStale else { continue }
+            guard forceAll || windowsChanged || generationStale else { continue }
 
             let directory = PersistenceContainer.documentsSessionsDirectory()
                 .appendingPathComponent(session.rawSampleDirectory)

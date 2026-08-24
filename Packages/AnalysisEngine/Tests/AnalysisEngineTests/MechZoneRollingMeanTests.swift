@@ -122,3 +122,63 @@ final class MechZoneRollingMeanTests: XCTestCase {
             0, "an unset anchor cannot be exceeded")
     }
 }
+
+/// End-to-end through SessionAnalyzer, because the unit tests above all passed
+/// while the analyser computed the figure and then left it out of the result
+/// it returned. A default of zero on the initialiser made that compile in
+/// silence, and the app showed an empty bar that read as "no hard work".
+final class SessionAnalyzerCarriesEveryFigureTests: XCTestCase {
+
+    /// A stroke train, not a constant: EffortSignal subtracts a 2 s moving
+    /// average, so a steady value is gravity and posture by definition and
+    /// comes out as no effort at all. The first draft of this test used a
+    /// constant and measured 0.32 s — the analyser was right and the test was
+    /// wrong, which is worth remembering before trusting a synthetic signal.
+    func testSecondsAboveAnchorSurvivesTheAnalyser() throws {
+        let fs = 50.0
+        let accel = (0..<Int(240 * fs)).map { i -> Double in
+            let phase = Double(i) / fs * (80.0 / 60)
+            let u = phase - phase.rounded(.down)
+            return u < 0.45 ? 6 * sin(.pi * u / 0.45) : 0
+        }
+
+        let raw = RawSessionData(
+            startDate: .now,
+            accelSampleRateHz: fs,
+            accelX: accel,
+            hrSamples: []
+        )
+        let result = SessionAnalyzer.analyze(
+            session: raw,
+            settings: AnalysisSettings(
+                hrThresholdLow: 130, hrThresholdHigh: 160,
+                mechZonePercentLow: 0.35, mechZonePercentHigh: 0.55,
+                confirmedMech45sAnchor: 2.0
+            )
+        )
+
+        XCTAssertGreaterThan(
+            result.secondsAboveAnchor, 60,
+            "the loud half is minutes long, not zero"
+        )
+    }
+
+    func testNoAnchorStillReportsNothingRatherThanEverything() throws {
+        let fs = 50.0
+        let raw = RawSessionData(
+            startDate: .now,
+            accelSampleRateHz: fs,
+            accelX: [Double](repeating: 6, count: Int(60 * fs)),
+            hrSamples: []
+        )
+        let result = SessionAnalyzer.analyze(
+            session: raw,
+            settings: AnalysisSettings(
+                hrThresholdLow: 130, hrThresholdHigh: 160,
+                mechZonePercentLow: 0.35, mechZonePercentHigh: 0.55,
+                confirmedMech45sAnchor: 0
+            )
+        )
+        XCTAssertEqual(result.secondsAboveAnchor, 0, "nothing to exceed")
+    }
+}

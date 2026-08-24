@@ -271,13 +271,25 @@ struct SettingsView: View {
         }
     }
 
+    /// Steps whole percents, and stores the rounded result.
+    ///
+    /// Stepping a Double by 0.05 drifts: seven steps down from 0.70 lands on
+    /// 0.34999999999999987, which `Int(_ * 100)` truncates to 34 %. The athlete
+    /// then cannot reach 35 at all, however many times they press. Working in
+    /// whole percents and converting once removes both the drift and the
+    /// coarseness.
     private func percentRow(label: String, value: Binding<Double>, upperBound: Double = 0.99) -> some View {
-        HStack {
+        let percent = Binding<Int>(
+            get: { Int((value.wrappedValue * 100).rounded()) },
+            set: { value.wrappedValue = Double($0) / 100 }
+        )
+        return HStack {
             Text(label)
             Spacer()
-            Text("\(Int(value.wrappedValue * 100)) %")
+            Text("\(percent.wrappedValue) %")
                 .foregroundStyle(.secondary)
-            Stepper("", value: value, in: 0.1...upperBound, step: 0.05)
+                .monospacedDigit()
+            Stepper("", value: percent, in: 10...Int((upperBound * 100).rounded()), step: 1)
                 .labelsHidden()
         }
     }

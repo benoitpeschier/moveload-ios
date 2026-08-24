@@ -94,7 +94,8 @@ public enum SessionAnalyzer {
             curve: curveResult.curve,
             mechZoneAnchorUsed: settings.confirmedMech45sAnchor,
             excludedWalkingSeconds: excludedSeconds,
-            inactiveSeconds: inactivity.inactiveSeconds
+            inactiveSeconds: inactivity.inactiveSeconds,
+            secondsAboveAnchor: secondsAboveAnchor
         )
     }
 }

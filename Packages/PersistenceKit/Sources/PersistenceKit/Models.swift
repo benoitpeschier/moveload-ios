@@ -74,6 +74,13 @@ public final class AthleteSettings {
     /// from the "live" record computed on demand from session history (see
     /// AnalysisEngine.RecordCalculator). Only updated when the athlete explicitly
     /// confirms a new record after a session.
+    /// Whether the zone thresholds have been moved to the rolling-mean scale.
+    ///
+    /// A stored default is only a default the day the row is created, so
+    /// changing `mechZonePercentLow` in the source moved nothing for anyone who
+    /// already had the app — they kept 70/90 on a signal those figures no
+    /// longer suit, with no sign anything was wrong.
+    public var movedToRollingMeanThresholds: Bool = false
     public var confirmedMech45sAnchor: Double = 0
     public var confirmedMech45sAnchorDate: Date?
     public var confirmedMech45sAnchorSessionID: UUID?

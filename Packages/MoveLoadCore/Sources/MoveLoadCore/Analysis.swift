@@ -45,7 +45,10 @@ public struct SessionAnalysisResult: Sendable {
         mechZoneAnchorUsed: Double,
         excludedWalkingSeconds: TimeInterval = 0,
         inactiveSeconds: TimeInterval = 0,
-        secondsAboveAnchor: TimeInterval = 0
+        // Deliberately no default: this was computed and then dropped from the
+        // call for a whole build, and a default of zero made it compile
+        // silently and read as "no hard work" rather than as a mistake.
+        secondsAboveAnchor: TimeInterval
     ) {
         self.hrZoneSeconds = hrZoneSeconds
         self.mechZoneSeconds = mechZoneSeconds
