@@ -97,6 +97,9 @@ public struct SessionSyncPayload: Sendable, Equatable {
     public let mechZone1Seconds: Double
     public let mechZone2Seconds: Double
     public let mechZone3Seconds: Double
+    /// Seconds above the athlete's confirmed 45 s reference, from the
+    /// instantaneous signal — the hard-work figure the zones cannot express.
+    public let secondsAboveAnchor: Double
     /// Peak value per rolling-window duration in seconds ("5"/"10"/"30"/"45"/"90"/"180");
     /// nil when the session was shorter than that window.
     public let mechanicalPeaks: [String: Double?]
@@ -118,6 +121,7 @@ public struct SessionSyncPayload: Sendable, Equatable {
         mechZone1Seconds: Double,
         mechZone2Seconds: Double,
         mechZone3Seconds: Double,
+        secondsAboveAnchor: Double = 0,
         mechanicalPeaks: [String: Double?]
     ) {
         self.id = id
@@ -136,6 +140,7 @@ public struct SessionSyncPayload: Sendable, Equatable {
         self.mechZone1Seconds = mechZone1Seconds
         self.mechZone2Seconds = mechZone2Seconds
         self.mechZone3Seconds = mechZone3Seconds
+        self.secondsAboveAnchor = secondsAboveAnchor
         self.mechanicalPeaks = mechanicalPeaks
     }
 }

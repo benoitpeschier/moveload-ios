@@ -94,6 +94,7 @@ public final class FirestoreSyncService: SyncService {
                 "mechZone1Seconds": .double(session.mechZone1Seconds),
                 "mechZone2Seconds": .double(session.mechZone2Seconds),
                 "mechZone3Seconds": .double(session.mechZone3Seconds),
+                "secondsAboveAnchor": .double(session.secondsAboveAnchor),
                 "mechanicalPeaks": .map(peakFields)
             ]
         )

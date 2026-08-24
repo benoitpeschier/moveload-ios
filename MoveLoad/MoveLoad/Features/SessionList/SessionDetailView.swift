@@ -51,6 +51,11 @@ struct SessionDetailView: View {
                     unavailableMessage: mechZonesUnavailableMessage,
                     helpText: ChartHelp.mechanicalLoad
                 )
+                TimeAboveAnchorView(
+                    seconds: session.secondsAboveAnchor,
+                    anchor: session.mechZoneAnchorUsed,
+                    countedSeconds: session.mechZone1Seconds + session.mechZone2Seconds + session.mechZone3Seconds
+                )
                 MechanicalCurveChartView(sessionCurve: sessionCurve, records: records)
 
                 if let settings = appEnvironment.athlete.settings {

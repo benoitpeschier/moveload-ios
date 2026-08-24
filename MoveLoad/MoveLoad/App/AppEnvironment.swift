@@ -261,6 +261,7 @@ final class AppEnvironment {
             mechZone1Seconds: session.mechZone1Seconds,
             mechZone2Seconds: session.mechZone2Seconds,
             mechZone3Seconds: session.mechZone3Seconds,
+            secondsAboveAnchor: session.secondsAboveAnchor,
             mechanicalPeaks: peaks
         )
     }
