@@ -63,31 +63,31 @@ struct SettingsView: View {
                         label: "Seuil I1 / I2",
                         value: Binding(
                             get: { settings.hrThresholdLow },
-                            set: { settings.hrThresholdLow = $0; save() }
+                            set: { settings.hrThresholdLow = $0; saveAndRecompute() }
                         )
                     )
                     thresholdRow(
                         label: "Seuil I2 / I3",
                         value: Binding(
                             get: { settings.hrThresholdHigh },
-                            set: { settings.hrThresholdHigh = $0; save() }
+                            set: { settings.hrThresholdHigh = $0; saveAndRecompute() }
                         )
                     )
                 }
 
-                Section("Zones mécaniques (% du record 45 s)") {
+                Section {
                     percentRow(
                         label: "Zone 1 / 2",
                         value: Binding(
                             get: { settings.mechZonePercentLow },
-                            set: { settings.mechZonePercentLow = $0; save() }
+                            set: { settings.mechZonePercentLow = $0; saveAndRecompute() }
                         )
                     )
                     percentRow(
                         label: "Zone 2 / 3",
                         value: Binding(
                             get: { settings.mechZonePercentHigh },
-                            set: { settings.mechZonePercentHigh = $0; save() }
+                            set: { settings.mechZonePercentHigh = $0; saveAndRecompute() }
                         ),
                         upperBound: 2.0
                     )
@@ -97,6 +97,10 @@ struct SettingsView: View {
                         Text(String(format: "%.2f m/s²", settings.confirmedMech45sAnchor))
                             .foregroundStyle(.secondary)
                     }
+                } header: {
+                    Text("Zones mécaniques")
+                } footer: {
+                    Text("Les seuils sont une part de ta référence 45 s confirmée. Ils s'appliquent à une moyenne glissante de 15 secondes, pas à l'accélération instantanée — c'est pourquoi ils valent 35 et 55 % et non 70 et 90. Modifier une valeur recalcule aussitôt toutes tes séances.")
                 }
 
                 Section("Historique des records") {
@@ -295,5 +299,14 @@ struct SettingsView: View {
 
     private func save() {
         try? appEnvironment.modelContext.save()
+    }
+
+    /// For settings the stored figures were computed against. Zone times are
+    /// worked out from the signal when a session is imported, so moving a
+    /// threshold afterwards leaves every stored session describing boundaries
+    /// that no longer exist.
+    private func saveAndRecompute() {
+        save()
+        appEnvironment.recomputeStoredSessions()
     }
 }

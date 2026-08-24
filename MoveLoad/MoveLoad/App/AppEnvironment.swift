@@ -49,6 +49,7 @@ final class AppEnvironment {
         guard let sessions = try? allSessions() else { return }
 
         var recomputedAny = false
+        var crossedGravityFix = false
         for session in sessions {
             let windowsChanged = Set(session.curvePoints.map(\.windowSeconds)) != currentSeconds
             let generationStale = session.analysisVersion < AnalysisGeneration.current
@@ -61,40 +62,17 @@ final class AppEnvironment {
             // Re-run the whole analysis rather than the curve alone: zone times
             // are computed from the same signal and would otherwise be left on
             // the old scale.
-            let settings = athlete.settings!
-            let result = SessionAnalyzer.analyze(
-                session: raw,
-                settings: AnalysisSettings(
-                    hrThresholdLow: settings.hrThresholdLow,
-                    hrThresholdHigh: settings.hrThresholdHigh,
-                    mechZonePercentLow: settings.mechZonePercentLow,
-                    mechZonePercentHigh: settings.mechZonePercentHigh,
-                    confirmedMech45sAnchor: settings.confirmedMech45sAnchor
-                )
-            )
-
-            session.hrZoneI1Seconds = result.hrZoneSeconds[.i1] ?? 0
-            session.hrZoneI2Seconds = result.hrZoneSeconds[.i2] ?? 0
-            session.hrZoneI3Seconds = result.hrZoneSeconds[.i3] ?? 0
-            session.mechZone1Seconds = result.mechZoneSeconds[.zone1] ?? 0
-            session.mechZone2Seconds = result.mechZoneSeconds[.zone2] ?? 0
-            session.mechZone3Seconds = result.mechZoneSeconds[.zone3] ?? 0
-            session.mechZoneAnchorUsed = result.mechZoneAnchorUsed
-            session.excludedWalkingSeconds = result.excludedWalkingSeconds
-            session.inactiveSeconds = result.inactiveSeconds
-            session.analysisVersion = AnalysisGeneration.current
-
-            try? sessionRepository.replaceCurvePoints(for: session, curve: result.curve, in: modelContext)
+            if session.analysisVersion < AnalysisGeneration.gravityRemoved { crossedGravityFix = true }
+            reanalyse(session, from: raw)
             recomputedAny = true
-            syncSessionInBackground(session)
         }
 
-        // The confirmed 45 s reference was measured on the old signal, where
-        // gravity inflated everything by roughly five- to sevenfold. Carrying
-        // it over would put every mechanical zone permanently in zone 1, which
-        // reads as a real result rather than a stale setting — so it is cleared
-        // and the athlete is asked to confirm a new one.
-        if recomputedAny, let settings = athlete.settings, settings.confirmedMech45sAnchor > 0 {
+        // Only the gravity fix invalidated the reference: it was measured on a
+        // signal five- to sevenfold larger, so carrying it over would have put
+        // every zone permanently in zone 1. Later migrations change how the
+        // signal is *read*, not its scale, and clearing the reference for those
+        // silently threw away a measurement the athlete had to go out and make.
+        if crossedGravityFix, let settings = athlete.settings, settings.confirmedMech45sAnchor > 0 {
             settings.confirmedMech45sAnchor = 0
             settings.confirmedMech45sAnchorDate = nil
             settings.confirmedMech45sAnchorSessionID = nil
@@ -266,12 +244,65 @@ final class AppEnvironment {
         )
     }
 
+    /// Recomputes one session in place from its raw samples.
+    private func reanalyse(_ session: Session, from raw: RawSessionData) {
+        let settings = athlete.settings!
+        let result = SessionAnalyzer.analyze(
+            session: raw,
+            settings: AnalysisSettings(
+                hrThresholdLow: settings.hrThresholdLow,
+                hrThresholdHigh: settings.hrThresholdHigh,
+                mechZonePercentLow: settings.mechZonePercentLow,
+                mechZonePercentHigh: settings.mechZonePercentHigh,
+                confirmedMech45sAnchor: settings.confirmedMech45sAnchor
+            )
+        )
+
+        session.hrZoneI1Seconds = result.hrZoneSeconds[.i1] ?? 0
+        session.hrZoneI2Seconds = result.hrZoneSeconds[.i2] ?? 0
+        session.hrZoneI3Seconds = result.hrZoneSeconds[.i3] ?? 0
+        session.mechZone1Seconds = result.mechZoneSeconds[.zone1] ?? 0
+        session.mechZone2Seconds = result.mechZoneSeconds[.zone2] ?? 0
+        session.mechZone3Seconds = result.mechZoneSeconds[.zone3] ?? 0
+        session.mechZoneAnchorUsed = result.mechZoneAnchorUsed
+        session.secondsAboveAnchor = result.secondsAboveAnchor
+        session.excludedWalkingSeconds = result.excludedWalkingSeconds
+        session.inactiveSeconds = result.inactiveSeconds
+        session.analysisVersion = AnalysisGeneration.current
+
+        try? sessionRepository.replaceCurvePoints(for: session, curve: result.curve, in: modelContext)
+        syncSessionInBackground(session)
+    }
+
+    /// Re-reads every stored session against the current settings.
+    ///
+    /// Zone times and the seconds above the reference are computed from the
+    /// signal when a session is imported, so changing the reference afterwards
+    /// leaves them describing thresholds that no longer exist. Confirming a new
+    /// 45 s reference used to change nothing an athlete could see: the setting
+    /// moved, every stored figure stayed put.
+    func recomputeStoredSessions() {
+        guard let sessions = try? allSessions() else { return }
+        for session in sessions {
+            let directory = PersistenceContainer.documentsSessionsDirectory()
+                .appendingPathComponent(session.rawSampleDirectory)
+            guard let raw = try? RawSampleFileStore.read(startDate: session.startDate, from: directory) else { continue }
+            reanalyse(session, from: raw)
+        }
+        try? modelContext.save()
+    }
+
     func confirmMechanicalZoneUpdate(newAnchor: Double, sessionID: UUID) throws {
         let settings = athlete.settings!
         settings.confirmedMech45sAnchor = newAnchor
         settings.confirmedMech45sAnchorDate = .now
         settings.confirmedMech45sAnchorSessionID = sessionID
         try modelContext.save()
+
+        // The reference is what the thresholds are a share of, so every stored
+        // zone time is now stale. Recompute rather than leave the athlete
+        // looking at figures from the previous reference.
+        recomputeStoredSessions()
     }
 
     func allSessions() throws -> [Session] {
