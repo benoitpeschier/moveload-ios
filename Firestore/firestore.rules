@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /teams/{teamCode}/athletes/{athleteId} {
+      allow read, write: if request.auth != null;
+
+      // Firestore rules do not cascade: a rule on the athlete document says
+      // nothing about what lives underneath it. Naming `sessions` explicitly
+      // meant `hrv` and `config` were never allowed at all — every morning
+      // test refused on the way up, every threshold refused on the way down.
+      match /{document=**} {
+        allow read, write: if request.auth != null;
+      }
+    }
+  }
+}
+
+// Kept in the repository so the rules stop being invisible state that only
+// exists in a console. They are NOT deployed from here — paste them into
+// Firebase > Firestore Database > Rules, and update this file in the same
+// change so the two never drift.
+//
+// Security note, true before and after this change: any signed-in account can
+// read and write any team. The team code is obscurity, not access control.
+// Real per-team rules arrive with the team model (step 2), which is what the
+// uid in `request.auth` will finally have something to be checked against.

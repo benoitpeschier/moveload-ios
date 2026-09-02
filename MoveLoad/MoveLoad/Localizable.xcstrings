@@ -1072,6 +1072,23 @@
         }
       }
     },
+    "Dernier envoi automatique en échec : %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last automatic upload failed: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dernier envoi automatique en échec : %@"
+          }
+        }
+      }
+    },
     "Dernier téléchargement : %@ en %@ — %@/s": {
       "extractionState": "manual",
       "localizations": {

@@ -25,6 +25,15 @@ final class AppEnvironment {
 
     private(set) var athlete: Athlete!
 
+    /// The last background sync failure, or nil when the last one worked.
+    ///
+    /// Background pushes deliberately do not interrupt the athlete mid-session,
+    /// but swallowing the error outright is how a Firestore rule that never
+    /// covered the `hrv` subcollection stayed invisible: every morning test was
+    /// refused, on the phone and on the dashboard, and nothing anywhere said so.
+    /// Settings shows this so there is one place to look.
+    private(set) var lastBackgroundSyncError: String?
+
     var modelContext: ModelContext { modelContainer.mainContext }
 
     init(sensorService: SensorService = MovesenseSensorService(), syncService: SyncService = FirestoreSyncService(), inMemory: Bool = false) {
@@ -219,7 +228,18 @@ final class AppEnvironment {
     /// webapp (boat type, RPE) — see `SessionDetailView`.
     func syncSessionInBackground(_ session: Session) {
         let payload = sessionSyncPayload(for: session)
-        Task { try? await syncService.pushSession(payload) }
+        Task { await pushInBackground { try await self.syncService.pushSession(payload) } }
+    }
+
+    /// Runs a background push and remembers whether it worked. Still silent to
+    /// the athlete — it never throws and never blocks — but no longer secret.
+    private func pushInBackground(_ push: @escaping () async throws -> Void) async {
+        do {
+            try await push()
+            lastBackgroundSyncError = nil
+        } catch {
+            lastBackgroundSyncError = error.localizedDescription
+        }
     }
 
     /// Explicit re-push of athlete + every local session — the Settings
@@ -426,7 +446,7 @@ final class AppEnvironment {
             wellnessScore: test.wellnessScore,
             isReliable: supine.isFrequencyDomainReliable && standing.isFrequencyDomainReliable
         )
-        Task { try? await syncService.pushHRVTest(payload) }
+        Task { await pushInBackground { try await self.syncService.pushHRVTest(payload) } }
     }
 
     func allSessions() throws -> [Session] {

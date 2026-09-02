@@ -249,6 +249,19 @@ struct SettingsView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
+
+                    // Sessions and HRV tests push on their own, without ever
+                    // interrupting the athlete. This is the one place a failure
+                    // they never saw becomes visible.
+                    if let backgroundError = appEnvironment.lastBackgroundSyncError {
+                        Label {
+                            Text("Dernier envoi automatique en échec : \(backgroundError)")
+                                .font(.caption)
+                        } icon: {
+                            Image(systemName: "exclamationmark.triangle")
+                        }
+                        .foregroundStyle(.orange)
+                    }
                 } header: {
                     Text("Synchronisation")
                 } footer: {
