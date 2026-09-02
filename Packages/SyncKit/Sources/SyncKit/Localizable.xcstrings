@@ -1,6 +1,108 @@
 {
   "sourceLanguage": "fr",
   "strings": {
+    "Adresse e-mail ou mot de passe incorrect.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incorrect e-mail address or password."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adresse e-mail ou mot de passe incorrect."
+          }
+        }
+      }
+    },
+    "Aucun compte connecté sur cet appareil.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No account signed in on this device."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun compte connecté sur cet appareil."
+          }
+        }
+      }
+    },
+    "Ce compte a été désactivé.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This account has been disabled."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce compte a été désactivé."
+          }
+        }
+      }
+    },
+    "Cette adresse a déjà un compte. Utilisez « Se connecter ».": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This address already has an account. Use “Sign in”."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette adresse a déjà un compte. Utilisez « Se connecter »."
+          }
+        }
+      }
+    },
+    "Cette adresse e-mail n'est pas valide.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This e-mail address is not valid."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette adresse e-mail n'est pas valide."
+          }
+        }
+      }
+    },
+    "La connexion par e-mail n'est pas activée sur le projet Firebase.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "E-mail sign-in is not enabled on the Firebase project."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La connexion par e-mail n'est pas activée sur le projet Firebase."
+          }
+        }
+      }
+    },
     "La synchronisation n'est pas configurée (code d'équipe, projet ou clé API manquants).": {
       "extractionState": "manual",
       "localizations": {
@@ -14,6 +116,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "La synchronisation n'est pas configurée (code d'équipe, projet ou clé API manquants)."
+          }
+        }
+      }
+    },
+    "Le mot de passe doit faire au moins 6 caractères.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The password must be at least 6 characters."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le mot de passe doit faire au moins 6 caractères."
+          }
+        }
+      }
+    },
+    "Trop de tentatives. Réessayez dans quelques minutes.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Too many attempts. Try again in a few minutes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trop de tentatives. Réessayez dans quelques minutes."
+          }
+        }
+      }
+    },
+    "Échec de la connexion : %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign-in failed: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échec de la connexion : %@"
           }
         }
       }

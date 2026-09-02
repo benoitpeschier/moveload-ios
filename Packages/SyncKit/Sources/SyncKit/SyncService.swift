@@ -18,6 +18,16 @@ public protocol SyncService: Sendable {
     /// have set none. The coach owns them — the phone reads and never writes
     /// them — so that both screens read the same test the same way.
     func fetchHRVThresholds(athleteId: String) async throws -> [String: Double]?
+
+    // MARK: - Account
+
+    /// Who this device is signed in as, or nil when it has never signed in.
+    /// An `isAnonymous` account is the pre-account behaviour: it still syncs,
+    /// but it belongs to this install and nothing else.
+    func currentAccount() async -> AuthAccount?
+    func createAccount(email: String, password: String) async throws -> AuthAccount
+    func signIn(email: String, password: String) async throws -> AuthAccount
+    func signOut() async
 }
 
 /// Firestore-backed `SyncService`, built entirely on `AuthClient`/`FirestoreClient`'s
@@ -72,6 +82,32 @@ public final class FirestoreSyncService: SyncService {
                 "isReliable": .boolean(test.isReliable),
             ]
         )
+    }
+
+    public func currentAccount() async -> AuthAccount? {
+        await authClient.currentAccount()
+    }
+
+    public func createAccount(email: String, password: String) async throws -> AuthAccount {
+        let settings = try requireSettings()
+        return try await authClient.createAccount(
+            email: normalised(email), password: password, webAPIKey: settings.webAPIKey)
+    }
+
+    public func signIn(email: String, password: String) async throws -> AuthAccount {
+        let settings = try requireSettings()
+        return try await authClient.signIn(
+            email: normalised(email), password: password, webAPIKey: settings.webAPIKey)
+    }
+
+    public func signOut() async {
+        await authClient.signOut()
+    }
+
+    /// iOS's e-mail keyboard happily leaves a trailing space, and an address
+    /// typed with a capital first letter is the same address.
+    private func normalised(_ email: String) -> String {
+        email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
     public func fetchHRVThresholds(athleteId: String) async throws -> [String: Double]? {

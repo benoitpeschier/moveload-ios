@@ -11,6 +11,7 @@ struct SettingsView: View {
     @State private var scanErrorMessage: String?
     @State private var isSyncing = false
     @State private var syncStatusMessage: String?
+    @State private var account: AuthAccount?
 
     var body: some View {
         Form {
@@ -160,6 +161,27 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    NavigationLink {
+                        AccountView(account: account) { account = $0 }
+                    } label: {
+                        if let account, !account.isAnonymous {
+                            LabeledContent("Compte", value: account.email ?? "")
+                        } else {
+                            Label("Créer un compte ou se connecter", systemImage: "person.crop.circle")
+                        }
+                    }
+                    .disabled(!syncSettings.isConfigured)
+                } header: {
+                    Text("Compte")
+                } footer: {
+                    if syncSettings.isConfigured {
+                        Text("Un compte vous rattache à vos données plutôt qu'à ce téléphone : vous les retrouvez après un changement d'appareil, et le coach pourra vous inviter dans une équipe. Sans compte, tout continue de fonctionner, mais seulement ici.")
+                    } else {
+                        Text("Renseignez d'abord la synchronisation ci-dessous : le compte est créé sur le projet Firebase de l'équipe.")
+                    }
+                }
+
+                Section {
                     TextField(
                         "Code d'équipe",
                         text: Binding(
@@ -264,6 +286,7 @@ struct SettingsView: View {
         .task {
             settings = appEnvironment.athlete.settings
             syncSettings = appEnvironment.syncSettingsStore.load() ?? SyncSettings()
+            account = await appEnvironment.syncService.currentAccount()
         }
     }
 

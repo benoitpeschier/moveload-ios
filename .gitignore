@@ -7,6 +7,9 @@
 *.xcuserstate
 xcuserdata/
 DerivedData/
+# `xcodebuild -derivedDataPath build` when installing on the phone — 165 MB
+# of build products, not source.
+/MoveLoad/build/
 .build/
 .swiftpm/
 *.xcworkspace/xcuserdata/
