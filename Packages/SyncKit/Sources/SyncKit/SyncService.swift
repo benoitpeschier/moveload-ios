@@ -220,6 +220,18 @@ public final class FirestoreSyncService: SyncService {
                 "userId": .string(connection.uid)
             ]
         )
+
+        // The squad's roster entry. Name and gender only — enough for the
+        // dashboard to draw a card and then go and read the real data at
+        // athletes/{id}. This is what replaces listing a team subcollection,
+        // and it is why the athletes collection never has to be enumerable.
+        try await connection.client.upsertDocument(
+            pathComponents: ["teams", connection.teamId, "roster", athlete.id],
+            fields: [
+                "name": .string(athlete.name),
+                "gender": .string(athlete.gender)
+            ]
+        )
     }
 
     private func upsertSession(_ session: SessionSyncPayload, connection: Connection) async throws {

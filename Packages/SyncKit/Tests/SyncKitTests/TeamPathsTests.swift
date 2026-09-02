@@ -76,10 +76,20 @@ final class TeamPathsTests: XCTestCase {
 
         XCTAssertTrue(writtenPaths.contains("athletes/ath1/sessions/sess1"),
                       "wrote: \(writtenPaths)")
-        // The whole point of the migration: no team code anywhere in the path,
-        // so an athlete in two teams still has one copy of every session.
+        // The whole point of the migration: no team code anywhere in the data
+        // path, so an athlete in two teams has one copy of every session.
         XCTAssertFalse(writtenPaths.contains { $0.hasPrefix("teams/TEAM-XYZ/athletes") },
                        "wrote: \(writtenPaths)")
+    }
+
+    func testTeamKeepsOnlyARosterPointer() async throws {
+        try await makeService().pushSession(
+            SessionSyncPayload.fixture(athleteId: "ath1", id: "sess1"))
+
+        // Discovery lives under the team; the data does not. Without this the
+        // dashboard would have to enumerate every athlete in the project.
+        XCTAssertTrue(writtenPaths.contains("teams/TEAM-XYZ/roster/ath1"),
+                      "wrote: \(writtenPaths)")
     }
 
     func testMembershipIsWrittenBeforeTheAthlete() async throws {

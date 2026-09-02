@@ -9,34 +9,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- Helpers ---------------------------------------------------------
     function signedIn() {
       return request.auth != null;
     }
 
-    // The teams the caller belongs to, denormalised onto their own user
-    // document so a membership check is one read rather than a scan of
-    // teams/{id}/members. Returns an empty list — never an error — for a
-    // caller who has no user document yet, so a missing doc denies access
-    // instead of failing rule evaluation.
-    function myTeams() {
-      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-      return userDoc == null ? [] : userDoc.data.get('teamIds', []);
-    }
-
-    function sharesATeam(teamIds) {
-      return signedIn() && teamIds != null && myTeams().hasAny(teamIds);
-    }
-
-    function athleteTeams(athleteId) {
-      let doc = get(/databases/$(database)/documents/athletes/$(athleteId));
-      return doc == null ? [] : doc.data.get('teamIds', []);
-    }
-
     // --- Identity --------------------------------------------------------
-    // Your own document and nobody else's. `teamIds` is self-asserted here,
-    // which is the same protection as today: knowing the team code is what
-    // gets you in. Invitations replace that in step 3.
     match /users/{uid} {
       allow read, write: if signedIn() && request.auth.uid == uid;
     }
@@ -49,10 +26,16 @@ service cloud.firestore {
         allow write: if signedIn() && request.auth.uid == uid;
       }
 
+      // Who is in this squad: one small pointer per athlete, name and gender
+      // only. This is how the dashboard *finds* athletes now that their data
+      // no longer lives under the team — and it is why `athletes` itself
+      // never has to be listed.
+      match /roster/{athleteId} {
+        allow read, write: if signedIn();
+      }
+
       // --- Legacy path, phase A only ------------------------------------
-      // The pre-migration shape, still readable and writable so that
-      // publishing these rules breaks nothing before the clients move.
-      // Deleted in phase C, together with the documents themselves.
+      // The pre-migration shape. Deleted in phase C with the documents.
       match /athletes/{athleteId} {
         allow read, write: if signedIn();
         match /{document=**} {
@@ -62,24 +45,38 @@ service cloud.firestore {
     }
 
     // --- Athletes and their data ----------------------------------------
-    // Stored once, whatever the memberships: an athlete in two teams has one
-    // copy of their sessions, not one copy per team prefix.
+    // Stored once, whatever the memberships: an athlete in two squads has one
+    // copy of their sessions, not one copy per team prefix. That is the whole
+    // point of step 2, and it is independent of who may read them.
     match /athletes/{athleteId} {
-      allow read: if sharesATeam(resource.data.get('teamIds', []));
-      // On create there is no `resource` yet, so the incoming document is what
-      // must place the athlete in one of the caller's teams.
-      allow create: if sharesATeam(request.resource.data.get('teamIds', []));
-      // Both sides checked on update: without the second test, a member could
-      // move an athlete into a team they do not belong to, or out of every one.
-      allow update: if sharesATeam(resource.data.get('teamIds', []))
-                    && sharesATeam(request.resource.data.get('teamIds', []));
-      allow delete: if sharesATeam(resource.data.get('teamIds', []));
+      // `get`, deliberately not `read`: the collection must not be
+      // enumerable. Finding an athlete means going through a team's roster,
+      // which needs the team id — exactly the protection that existed before
+      // the migration, no more and no less. Ids are UUIDs, so a `get` is not
+      // a way in.
+      //
+      // Per-membership rules were tried here and withdrawn: they refused a
+      // `get` on an athlete that does not exist yet (`resource` is null, so
+      // `resource.data` fails evaluation rather than returning false), and
+      // they refused the collection query outright even for a document whose
+      // teamIds matched. Both were measured against the live project. Real
+      // membership rules land in step 3, with an emulator to test them
+      // against instead of a production database.
+      allow get: if signedIn();
+      allow write: if signedIn();
 
       // Sessions, HRV tests and the coach's thresholds. Rules do not cascade,
-      // so this recursive match is what covers them — the lesson of the rule
-      // that named `sessions` and silently refused `hrv` and `config`.
-      match /{document=**} {
-        allow read, write: if sharesATeam(athleteTeams(athleteId));
+      // so a recursive match is what covers them — the lesson of the rule that
+      // named `sessions` and silently refused `hrv` and `config`.
+      //
+      // The leading {subcollection} is load-bearing. A bare `/{document=**}`
+      // matches *zero* or more segments in rules_version 2, so it also matches
+      // the athlete document itself and grants it `read` — which includes
+      // `list`, quietly undoing the `get`-only rule above and making every
+      // athlete in the project enumerable without any team id. Requiring one
+      // segment first confines this to everything *below* an athlete.
+      match /{subcollection}/{document=**} {
+        allow read, write: if signedIn();
       }
     }
   }
