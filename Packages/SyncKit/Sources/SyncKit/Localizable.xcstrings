@@ -1,0 +1,40 @@
+{
+  "sourceLanguage": "fr",
+  "strings": {
+    "La synchronisation n'est pas configurée (code d'équipe, projet ou clé API manquants).": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync is not configured (team code, project or API key missing)."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La synchronisation n'est pas configurée (code d'équipe, projet ou clé API manquants)."
+          }
+        }
+      }
+    },
+    "Échec de la requête réseau : %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Network request failed: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échec de la requête réseau : %@"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

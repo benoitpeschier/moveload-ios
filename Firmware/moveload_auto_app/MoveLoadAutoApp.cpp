@@ -7,6 +7,8 @@
 #include "meas_hr/resources.h"
 #include "system_states/resources.h"
 #include "comm_ble/resources.h"
+#include "GATTSensorDataClient.h"
+#include "comm_ble/resources.h"
 #include "comm_ble_hrs/resources.h"
 #include "ui_ind/resources.h"
 
@@ -14,6 +16,16 @@ const char* const MoveLoadAutoApp::LAUNCHABLE_NAME = "MoveLoadAuto";
 
 // How long the LED stays on after the recording starts or stops.
 #define INDICATION_DURATION_MS 2000
+
+// One blink is 180 ms lit, 180 ms dark: fast enough to read a count of three
+// at a glance, slow enough to be seen at all.
+#define BLINK_STEP_MS 180
+
+// The vocabulary. Three at the start of an automatic recording, five at the
+// end — different counts rather than different lengths, because a count can be
+// reported over the phone and a length cannot.
+#define BLINKS_RECORDING_STARTED 3
+#define BLINKS_RECORDING_STOPPED 5
 
 // How long the strap must stay off the body *and* the sensor stay still
 // before the recording is closed. Losing skin contact mid-session is common
@@ -23,9 +35,15 @@ const char* const MoveLoadAutoApp::LAUNCHABLE_NAME = "MoveLoadAuto";
 #define STOP_DELAY_MS 60000
 
 // How long to wait for a pulse after contact is made before concluding the
-// sensor is not on anybody. Long enough for the heart rate to lock on, short
-// enough not to lose the start of a session.
-#define ARMING_TIMEOUT_MS 90000
+// sensor is not on anybody.
+//
+// Was 90 s, which was too short: on the first hardware test the pulse appeared
+// only after a while — dry indoor skin takes its time to conduct — and arming
+// had already given up, leaving nothing to see for another ten minutes. The
+// cost of waiting longer is only the heart rate measurement running on a strap
+// that turns out to be empty; the cost of waiting too little is a session that
+// never records, which is the failure that actually matters.
+#define ARMING_TIMEOUT_MS 300000
 
 // After a failed attempt, how long before listening for a pulse again while
 // contact persists. Giving up for good would be worse than a stray recording:
@@ -33,18 +51,49 @@ const char* const MoveLoadAutoApp::LAUNCHABLE_NAME = "MoveLoadAuto";
 // athlete warms up, and a session silently never recorded is the failure that
 // actually costs something. Retrying keeps the heart rate measurement off
 // most of the time, so a strap left damp in a bag still costs almost nothing.
-#define ARMING_RETRY_MS 600000
+//
+// Shortened with the longer window above: what matters to the athlete is the
+// worst case between putting the strap on and recording starting, and that is
+// the window plus the gap. Five and three keeps it under ten minutes while
+// still leaving the measurement off for most of a damp strap's life.
+#define ARMING_RETRY_MS 180000
 
-// The recording watchdog ticks once a minute; three ticks with no pulse at
-// all end the recording. A strap taken off still wet keeps reporting contact
-// and, jostled in a bag, would otherwise record the drive home. Three minutes
-// is the athlete's own judgement of how long a heart rate can legitimately
-// vanish mid-session.
+// The recording watchdog ticks once a minute; one tick with nothing that looks
+// like a heart ends the recording. A strap taken off still wet keeps reporting
+// contact, so this is the only thing that stops a sensor left on a damp belt
+// from recording all evening — the "no contact and no movement" rule never
+// even starts its timer in that case.
+//
+// One tick rather than three (the athlete's call, 2026-09-01). It is less
+// brittle than it sounds: a tick only counts as bad when the *whole* sixty
+// seconds held fewer than RR_ALIVE_TRANSITIONS_NEEDED plausible beats, so a
+// dropout of a few seconds mid-minute leaves enough good beats to pass. The
+// risk it accepts is a genuine minute-long loss of signal mid-session ending
+// the recording — against which the counter resets on any good tick.
 #define WATCHDOG_TICK_MS 60000
-#define WATCHDOG_TICKS_WITHOUT_HR 3
+#define WATCHDOG_TICKS_WITHOUT_HR 1
 
 // Plausible human heart rate. A wet strap produces no QRS at all, so this is
 // mostly a guard against a garbage first reading rather than a fine filter.
+// What separates a heart from a damp strap, second attempt.
+//
+// The first (1.3.0) asked only that the intervals *change*, on the theory that
+// an artefact repeats itself. Tested on hardware: the recording still never
+// stopped, so the noise varies rather than freezing — the detector fires on
+// random peaks and the intervals scatter across the whole window it accepts,
+// 270 to 2000 ms.
+//
+// So the test is not that the interval moves but that it moves *like a heart*:
+// beat to beat, by tens of milliseconds. The eight intervals captured from a
+// real chest on 2026-09-01 moved by 16, 24, 32, 71, 78, 94 and 219 ms — a
+// resting athlete at 46 bpm, which is about as much natural variability as
+// there is. Random crossings of a 270–2000 ms window average far more.
+//
+// A change of exactly zero is not alive either: that is the frozen case 1.3.0
+// was aimed at, and it must still be rejected.
+#define RR_ALIVE_MAX_DELTA_MS 250
+#define RR_ALIVE_TRANSITIONS_NEEDED 5
+
 #define HR_MIN_BPM 30
 #define HR_MAX_BPM 220
 
@@ -66,7 +115,12 @@ MoveLoadAutoApp::MoveLoadAutoApp():
     mStopTimer(wb::ID_INVALID_TIMER),
     mArmingTimer(wb::ID_INVALID_TIMER),
     mWatchdogTimer(wb::ID_INVALID_TIMER),
-    mIndicationTimer(wb::ID_INVALID_TIMER)
+    mIndicationTimer(wb::ID_INVALID_TIMER),
+    mLastRRms(0),
+    mAliveTransitionsThisTick(0),
+    mWildTransitionsThisTick(0),
+    mBlinksLeft(0),
+    mBlinkOn(false)
 {
 }
 
@@ -139,6 +193,30 @@ void MoveLoadAutoApp::onGetResult(whiteboard::RequestId requestId,
 {
     switch (resourceId.localResourceId)
     {
+        case WB_RES::LOCAL::COMM_BLE_PEERS::LID:
+        {
+            // Only ever requested by releaseLinkToWatch, and only while not
+            // recording — so anything connected is holding the link for a
+            // reason that can wait until the next session.
+            //
+            // Except a phone: the HRV test streams R-R live over GSP with the
+            // DataLogger deliberately stopped, so "not recording" is exactly
+            // when it needs the link most. A GSP client with its notifications
+            // enabled is that phone, and is never shown the door.
+            if (isLogging() || GATTSensorDataClient::hasActiveClient()) return;
+            const WB_RES::PeerList &peers = result.convertTo<const WB_RES::PeerList&>();
+            for (size_t i = 0; i < peers.connectedPeers.size(); i++)
+            {
+                const WB_RES::PeerEntry &peer = peers.connectedPeers[i];
+                if (peer.handle.hasValue())
+                {
+                    asyncDelete(WB_RES::LOCAL::COMM_BLE_PEERS_CONNHANDLE(),
+                                AsyncRequestOptions::ForceAsync,
+                                static_cast<int32_t>(peer.handle.getValue()));
+                }
+            }
+            return;
+        }
         case WB_RES::LOCAL::MEM_DATALOGGER_STATE::LID:
         {
             const bool wasLogging = isLogging();
@@ -252,6 +330,28 @@ void MoveLoadAutoApp::onNotify(wb::ResourceId resourceId,
             const WB_RES::HRData& hrData = value.convertTo<const WB_RES::HRData&>();
 
             const uint16_t plausible = (uint16_t)hrData.average;
+
+            // Count how far the interval moved. Plausibility of the average is
+            // kept as a first filter, but on its own it is what a damp strap
+            // satisfies all evening.
+            if (hrData.rrData.size() > 0)
+            {
+                const uint16_t rr = hrData.rrData[hrData.rrData.size() - 1];
+                if (mLastRRms != 0)
+                {
+                    const uint16_t delta = (rr > mLastRRms) ? (rr - mLastRRms) : (mLastRRms - rr);
+                    if (delta > 0 && delta <= RR_ALIVE_MAX_DELTA_MS)
+                    {
+                        if (mAliveTransitionsThisTick < 255) mAliveTransitionsThisTick++;
+                    }
+                    else if (delta > RR_ALIVE_MAX_DELTA_MS)
+                    {
+                        if (mWildTransitionsThisTick < 255) mWildTransitionsThisTick++;
+                    }
+                }
+                mLastRRms = rr;
+            }
+
             if (plausible >= HR_MIN_BPM && plausible <= HR_MAX_BPM)
             {
                 mHeartRateSeen = true;
@@ -260,7 +360,21 @@ void MoveLoadAutoApp::onNotify(wb::ResourceId resourceId,
             if (mArming)
             {
                 const uint16_t bpm = (uint16_t)hrData.average;
-                if (bpm >= HR_MIN_BPM && bpm <= HR_MAX_BPM)
+                // The same test as the watchdog, for the same reason: this gate
+                // exists precisely to keep a damp strap from recording all
+                // evening, and a plausible average is exactly what a damp strap
+                // produces. Waiting for the intervals to move costs about five
+                // beats — five seconds — against a phantom session.
+                // The same guard as the one on beginArming, applied here too.
+                // 1.6.0 only stopped arming from *starting* while a phone was
+                // connected — but the strap goes on before the app is opened,
+                // so arming was already under way and the pulse started a
+                // recording in the middle of the HRV test anyway. This is the
+                // moment that actually matters.
+                if (bpm >= HR_MIN_BPM && bpm <= HR_MAX_BPM
+                    && mAliveTransitionsThisTick >= RR_ALIVE_TRANSITIONS_NEEDED
+                    && mAliveTransitionsThisTick > mWildTransitionsThisTick
+                    && !GATTSensorDataClient::hasActiveClient())
                 {
                     DEBUGLOG("Pulse found (%d bpm) — the strap is on someone", bpm);
                     mArming = false;
@@ -306,9 +420,19 @@ void MoveLoadAutoApp::evaluateRecordingState()
 
         if (!strapOn)
         {
-            // Contact gone: drop everything, so putting the strap on for real
-            // always gets an immediate fresh attempt.
-            abandonArming();
+            // Contact gone — but an arming attempt already under way is left
+            // to run.
+            //
+            // Connector state chatters: a strap being settled on the chest
+            // reports contact made and lost several times a second, and tearing
+            // arming down on each loss restarted the heart rate measurement
+            // every time, so it never got the continuous run it needs to lock
+            // on. The pulse then never reached the gate at all — while Showcase,
+            // which subscribes heart rate regardless of connector state, saw it
+            // perfectly. The LED blinking without pause was this loop, visible.
+            //
+            // Nothing is needed to bound it: if the strap really is off, no
+            // pulse arrives and the arming timer ends the attempt on its own.
             mArmingBackoff = false;
             mExternalStopHonoured = false;
             return;
@@ -324,7 +448,17 @@ void MoveLoadAutoApp::evaluateRecordingState()
         // bag would otherwise record all evening and fill the flash. Wait for
         // a pulse before committing. An unknown connector state (2) does not
         // even get that far.
-        if (!mArming && !mArmingBackoff)
+        // Not while a phone is connected over GSP.
+        //
+        // A connected phone means someone is deliberately using the sensor —
+        // running an HRV test, downloading, looking at settings — not putting a
+        // strap on to go training. During the first real HRV test the firmware
+        // did exactly the wrong thing: the test stopped the DataLogger, and
+        // seconds later contact and a real pulse armed it and started
+        // recording again, which is precisely what stopping it was for. During
+        // a genuine session the phone is not connected; it is in the changing
+        // room.
+        if (!mArming && !mArmingBackoff && !GATTSensorDataClient::hasActiveClient())
         {
             beginArming();
         }
@@ -368,7 +502,7 @@ void MoveLoadAutoApp::startLogging()
     asyncPut(WB_RES::LOCAL::MEM_DATALOGGER_STATE(), AsyncRequestOptions::ForceAsync,
              WB_RES::DataLoggerStateValues::DATALOGGER_LOGGING);
 
-    indicateBriefly();
+    blink(BLINKS_RECORDING_STARTED);
 }
 
 void MoveLoadAutoApp::stopLogging()
@@ -382,7 +516,7 @@ void MoveLoadAutoApp::stopLogging()
     asyncPut(WB_RES::LOCAL::MEM_DATALOGGER_STATE(), AsyncRequestOptions::ForceAsync,
              WB_RES::DataLoggerStateValues::DATALOGGER_READY);
 
-    indicateBriefly();
+    blink(BLINKS_RECORDING_STOPPED);
 }
 
 void MoveLoadAutoApp::armStopTimer()
@@ -409,6 +543,10 @@ void MoveLoadAutoApp::beginArming()
 {
     DEBUGLOG("Contact made — waiting for a pulse before recording");
     mArming = true;
+    // Tell the wearer the strap was noticed. Until this, a sensor that had
+    // seen nothing and one patiently waiting for a pulse looked exactly the
+    // same from the outside, which made the first hardware test unreadable.
+    indicateBriefly();
     updateHeartRateSubscription();
 
     stopTimer(mArmingTimer);
@@ -462,6 +600,22 @@ void MoveLoadAutoApp::hrsNotificationChanged(bool enabled)
     }
     mHrsEnabled = enabled;
     updateHeartRateSubscription();
+
+    // A watch subscribing while nothing is being recorded is a watch holding
+    // the only link outside a session. Give it back.
+    if (enabled && !isLogging())
+    {
+        DEBUGLOG("Heart rate profile taken outside a session — releasing the link");
+        releaseLinkToWatch();
+    }
+}
+
+void MoveLoadAutoApp::releaseLinkToWatch()
+{
+    // Reading the peer list rather than remembering a handle: the disconnect
+    // needs one, and with a single link whatever is connected here is the
+    // subscriber we just heard from.
+    asyncGet(WB_RES::LOCAL::COMM_BLE_PEERS());
 }
 
 void MoveLoadAutoApp::updateHeartRateSubscription()
@@ -500,10 +654,41 @@ void MoveLoadAutoApp::indicateBriefly()
     mIndicationTimer = startTimer(INDICATION_DURATION_MS, false);
 }
 
+void MoveLoadAutoApp::blink(uint8_t count)
+{
+    mBlinksLeft = count;
+    mBlinkOn = false;
+    if (mIndicationTimer != wb::ID_INVALID_TIMER)
+    {
+        stopTimer(mIndicationTimer);
+        mIndicationTimer = wb::ID_INVALID_TIMER;
+    }
+    blinkStep();
+}
+
+void MoveLoadAutoApp::blinkStep()
+{
+    if (mBlinksLeft == 0 && !mBlinkOn)
+    {
+        asyncPut(WB_RES::LOCAL::UI_IND_VISUAL(), AsyncRequestOptions::Empty,
+                 WB_RES::VisualIndTypeValues::NO_VISUAL_INDICATIONS);
+        mIndicationTimer = wb::ID_INVALID_TIMER;
+        return;
+    }
+
+    mBlinkOn = !mBlinkOn;
+    if (!mBlinkOn) { mBlinksLeft--; }
+    asyncPut(WB_RES::LOCAL::UI_IND_VISUAL(), AsyncRequestOptions::ForceAsync,
+             mBlinkOn ? WB_RES::VisualIndTypeValues::CONTINUOUS_VISUAL_INDICATION
+                      : WB_RES::VisualIndTypeValues::NO_VISUAL_INDICATIONS);
+    mIndicationTimer = startTimer(BLINK_STEP_MS, false);
+}
+
 void MoveLoadAutoApp::onTimer(wb::TimerId timerId)
 {
     if (timerId == mIndicationTimer)
     {
+        if (mBlinksLeft > 0 || mBlinkOn) { blinkStep(); return; }
         mIndicationTimer = wb::ID_INVALID_TIMER;
         asyncPut(WB_RES::LOCAL::UI_IND_VISUAL(), AsyncRequestOptions::Empty,
                  WB_RES::VisualIndTypeValues::NO_VISUAL_INDICATIONS);
@@ -516,9 +701,23 @@ void MoveLoadAutoApp::onTimer(wb::TimerId timerId)
         // how we notice the app stopping the recording behind our back.
         asyncGet(WB_RES::LOCAL::MEM_DATALOGGER_STATE());
 
-        if (mHeartRateSeen)
+        // A pulse counts only if the intervals moved. Without this the
+        // recording never ended: the strap comes off still damp, the service
+        // keeps reporting an average in range, and every tick looked like a
+        // beating heart.
+        // Enough heart-like changes, and more of them than wild ones. A damp
+        // strap can produce either a frozen reading or a scattered one; this
+        // rejects both without rejecting a resting athlete with high
+        // variability.
+        const bool aliveThisTick = mHeartRateSeen
+            && mAliveTransitionsThisTick >= RR_ALIVE_TRANSITIONS_NEEDED
+            && mAliveTransitionsThisTick > mWildTransitionsThisTick;
+        mHeartRateSeen = false;
+        mAliveTransitionsThisTick = 0;
+        mWildTransitionsThisTick = 0;
+
+        if (aliveThisTick)
         {
-            mHeartRateSeen = false;
             mTicksWithoutHeartRate = 0;
             return;
         }

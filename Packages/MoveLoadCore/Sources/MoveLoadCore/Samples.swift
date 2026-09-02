@@ -74,3 +74,45 @@ public struct RawSessionData: Sendable, Codable {
         Double(accelX.count) / accelSampleRateHz
     }
 }
+
+
+/// One live heart-rate notification from the sensor.
+///
+/// The layout was read off the wire on 2026-09-01 rather than assumed: a
+/// notification is `float32` little-endian (the averaged bpm) followed by one
+/// or more `uint16` little-endian R-R intervals in milliseconds. Captured
+/// samples decoded to 46.6–48.8 bpm average against 1218–1453 ms intervals,
+/// which agree — mean R-R 1294 ms is 46.3 bpm.
+///
+/// `rrIntervalsMs` is what HRV is computed from; `bpm` is the sensor's own
+/// smoothed figure and is only good for showing a number on screen.
+public struct HeartRateStreamSample: Sendable, Equatable {
+    public let bpm: Double
+    public let rrIntervalsMs: [Int]
+
+    public init(bpm: Double, rrIntervalsMs: [Int]) {
+        self.bpm = bpm
+        self.rrIntervalsMs = rrIntervalsMs
+    }
+
+    /// Returns nil for a payload too short to hold the average, rather than
+    /// inventing a beat from whatever bytes arrived.
+    public init?(payload: Data) {
+        guard payload.count >= 4 else { return nil }
+        let bytes = [UInt8](payload)
+        let raw = UInt32(bytes[0]) | UInt32(bytes[1]) << 8 | UInt32(bytes[2]) << 16 | UInt32(bytes[3]) << 24
+        self.bpm = Double(Float(bitPattern: raw))
+
+        // The whiteboard type carries rrData as an array, so a notification may
+        // hold more than one beat even though every sample observed so far held
+        // exactly one. Reading however many fit costs nothing and avoids
+        // silently dropping beats the day the sensor batches them.
+        var intervals: [Int] = []
+        var index = 4
+        while index + 1 < bytes.count {
+            intervals.append(Int(UInt16(bytes[index]) | UInt16(bytes[index + 1]) << 8))
+            index += 2
+        }
+        self.rrIntervalsMs = intervals
+    }
+}

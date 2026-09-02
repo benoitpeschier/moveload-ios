@@ -45,6 +45,37 @@ public struct FirestoreClient: Sendable {
         try SyncError.validate(response, data: data)
     }
 
+    /// Reads a document's numeric fields, or nil when it does not exist.
+    ///
+    /// The app's first *read* from Firestore — until now it only ever wrote.
+    /// A missing document is an ordinary answer here, not an error: the coach
+    /// simply has not set anything for this athlete, and the defaults stand.
+    public func fetchNumbers(pathComponents: [String]) async throws -> [String: Double]? {
+        var request = URLRequest(url: documentURL(pathComponents: pathComponents))
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+
+        let (data, response) = try await session.data(for: request)
+        if let http = response as? HTTPURLResponse, http.statusCode == 404 { return nil }
+        try SyncError.validate(response, data: data)
+
+        guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let fields = root["fields"] as? [String: Any]
+        else { return [:] }
+
+        var numbers: [String: Double] = [:]
+        for (key, wrapped) in fields {
+            guard let value = wrapped as? [String: Any] else { continue }
+            // Firestore hands back whichever numeric wrapper it stored, and
+            // int64 arrives as a *string* to survive JSON. Both are read: a
+            // threshold typed as "-48" in the browser comes back as an integer.
+            if let d = value["doubleValue"] as? Double { numbers[key] = d }
+            else if let i = value["integerValue"] as? String, let d = Double(i) { numbers[key] = d }
+            else if let i = value["integerValue"] as? Int { numbers[key] = Double(i) }
+        }
+        return numbers
+    }
+
     private func documentURL(pathComponents: [String]) -> URL {
         let encodedPath = pathComponents
             .map { $0.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? $0 }

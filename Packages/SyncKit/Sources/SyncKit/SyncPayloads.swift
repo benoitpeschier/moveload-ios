@@ -91,6 +91,10 @@ public struct SessionSyncPayload: Sendable, Equatable {
     /// Flags a session recorded under standardized test conditions — lets the
     /// coach webapp isolate comparable-effort sessions from regular training.
     public let isTest: Bool
+    public let isConditioning: Bool
+    /// Only carried for test sessions — see SyncService.
+    public let bestNineSecondsSignal: [Double]
+    public let bestNineSecondsRateHz: Double
     public let hrZone1Seconds: Double
     public let hrZone2Seconds: Double
     public let hrZone3Seconds: Double
@@ -115,6 +119,9 @@ public struct SessionSyncPayload: Sendable, Equatable {
         name: String = "",
         perceivedExertion: Int?,
         isTest: Bool,
+        isConditioning: Bool,
+        bestNineSecondsSignal: [Double] = [],
+        bestNineSecondsRateHz: Double = 0,
         hrZone1Seconds: Double,
         hrZone2Seconds: Double,
         hrZone3Seconds: Double,
@@ -134,6 +141,9 @@ public struct SessionSyncPayload: Sendable, Equatable {
         self.name = name
         self.perceivedExertion = perceivedExertion
         self.isTest = isTest
+        self.isConditioning = isConditioning
+        self.bestNineSecondsSignal = bestNineSecondsSignal
+        self.bestNineSecondsRateHz = bestNineSecondsRateHz
         self.hrZone1Seconds = hrZone1Seconds
         self.hrZone2Seconds = hrZone2Seconds
         self.hrZone3Seconds = hrZone3Seconds
@@ -142,5 +152,66 @@ public struct SessionSyncPayload: Sendable, Equatable {
         self.mechZone3Seconds = mechZone3Seconds
         self.secondsAboveAnchor = secondsAboveAnchor
         self.mechanicalPeaks = mechanicalPeaks
+    }
+}
+
+
+/// One morning test, as the coach sees it.
+///
+/// **The five Wellness answers are deliberately absent.** Only the score
+/// travels: an athlete who knows their "stress 2/5" is read by their coach
+/// stops answering honestly, and the questionnaire is worth having only as an
+/// honest contradiction of the measurement. There is no field here to put them
+/// in, which is stronger than remembering not to fill one.
+public struct HRVTestSyncPayload: Codable, Sendable {
+    public let id: String
+    public let athleteId: String
+    public let date: Date
+
+    public let supineMeanHR: Double
+    public let supineRMSSD: Double
+    public let supineTotalPower: Double
+    public let supineLFOverHF: Double
+    /// Kept because the fatigue-pattern rules are expressed on LF and HF
+    /// individually, not on their ratio — the ratio cannot be taken apart.
+    public let supineLF: Double
+    public let supineHF: Double
+
+    public let standingMeanHR: Double
+    public let standingRMSSD: Double
+    public let standingTotalPower: Double
+    public let standingLFOverHF: Double
+    public let standingLF: Double
+    public let standingHF: Double
+
+    public let wellnessScore: Int?
+    /// Flagged so the coach is not shown a spectrum the engine itself distrusts.
+    public let isReliable: Bool
+
+    public init(
+        id: String, athleteId: String, date: Date,
+        supineMeanHR: Double, supineRMSSD: Double, supineTotalPower: Double, supineLFOverHF: Double,
+        supineLF: Double, supineHF: Double,
+        standingMeanHR: Double, standingRMSSD: Double, standingTotalPower: Double, standingLFOverHF: Double,
+        standingLF: Double, standingHF: Double,
+        wellnessScore: Int?, isReliable: Bool
+    ) {
+        self.id = id
+        self.athleteId = athleteId
+        self.date = date
+        self.supineMeanHR = supineMeanHR
+        self.supineRMSSD = supineRMSSD
+        self.supineTotalPower = supineTotalPower
+        self.supineLFOverHF = supineLFOverHF
+        self.supineLF = supineLF
+        self.supineHF = supineHF
+        self.standingMeanHR = standingMeanHR
+        self.standingRMSSD = standingRMSSD
+        self.standingTotalPower = standingTotalPower
+        self.standingLFOverHF = standingLFOverHF
+        self.standingLF = standingLF
+        self.standingHF = standingHF
+        self.wellnessScore = wellnessScore
+        self.isReliable = isReliable
     }
 }

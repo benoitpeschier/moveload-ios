@@ -14,6 +14,8 @@ struct SessionDetailView: View {
     @State private var rpeValue: Double = 5
     @State private var boatType: BoatType = .k1
     @State private var isTest: Bool = false
+    @State private var isConditioning: Bool = false
+    @State private var isConfirmingConditioningChange = false
     @State private var name: String = ""
     /// Read from the raw file rather than stored on the session: the beat
     /// stream is far too large for SwiftData rows, which is why it lives on
@@ -26,37 +28,44 @@ struct SessionDetailView: View {
             VStack(alignment: .leading, spacing: 24) {
                 header
 
-                if !recordWindows.isEmpty {
+                if !isConditioning, !recordWindows.isEmpty {
                     confettiBanner
                 }
 
-                if let pendingAnchor {
+                if !isConditioning, let pendingAnchor {
                     newRecordBanner(anchor: pendingAnchor)
                 }
 
                 nameBanner
 
-                boatTypeBanner
+                if !isConditioning {
+                    boatTypeBanner
+                }
 
                 perceivedExertionBanner
 
                 ZonePieChartView(
-                    title: "Charge cardio",
+                    title: String(localized: "Charge cardio"),
                     slices: hrSlices,
                     helpText: ChartHelp.cardioLoad
                 )
-                ZonePieChartView(
-                    title: "Charge mécanique",
-                    slices: mechSlices,
-                    unavailableMessage: mechZonesUnavailableMessage,
-                    helpText: ChartHelp.mechanicalLoad
-                )
-                TimeAboveAnchorView(
-                    seconds: session.secondsAboveAnchor,
-                    anchor: session.mechZoneAnchorUsed,
-                    countedSeconds: session.mechZone1Seconds + session.mechZone2Seconds + session.mechZone3Seconds
-                )
-                MechanicalCurveChartView(sessionCurve: sessionCurve, records: records)
+                if !isConditioning {
+                    ZonePieChartView(
+                        title: String(localized: "Charge mécanique"),
+                        slices: mechSlices,
+                        unavailableMessage: mechZonesUnavailableMessage,
+                        helpText: ChartHelp.mechanicalLoad(
+                            percentLow: appEnvironment.athlete.settings?.mechZonePercentLow ?? 0.35,
+                            percentHigh: appEnvironment.athlete.settings?.mechZonePercentHigh ?? 0.55
+                        )
+                    )
+                    TimeAboveAnchorView(
+                        seconds: session.secondsAboveAnchor,
+                        anchor: session.mechZoneAnchorUsed,
+                        countedSeconds: session.mechZone1Seconds + session.mechZone2Seconds + session.mechZone3Seconds
+                    )
+                    MechanicalCurveChartView(sessionCurve: sessionCurve, records: records)
+                }
 
                 if let settings = appEnvironment.athlete.settings {
                     HeartRateCurveChartView(
@@ -81,6 +90,7 @@ struct SessionDetailView: View {
         .task {
             boatType = session.boatType ?? .k1
             isTest = session.isTest
+            isConditioning = session.isConditioning
             name = session.name ?? ""
             rpeValue = Double(session.perceivedExertion ?? 5)
             loadRecords()
@@ -141,19 +151,55 @@ struct SessionDetailView: View {
                 try? appEnvironment.modelContext.save()
                 appEnvironment.syncSessionInBackground(session)
             } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: isTest ? "checkmark.square.fill" : "square")
-                        .foregroundStyle(isTest ? Color.accentColor : .secondary)
-                    Text("Séance de test (conditions standardisées)")
-                        .foregroundStyle(.primary)
-                        .font(.subheadline)
-                }
+                checkbox(isTest, String(localized: "Séance de test (conditions standardisées)"))
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                isConfirmingConditioningChange = true
+            } label: {
+                checkbox(isConditioning, String(localized: "Séance PPG (charge cardio uniquement)"))
             }
             .buttonStyle(.plain)
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(bannerBackground)
+        .confirmationDialog(
+            isConditioning ? "Reclasser en séance de pagaie ?" : "Marquer comme séance PPG ?",
+            isPresented: $isConfirmingConditioningChange,
+            titleVisibility: .visible
+        ) {
+            Button(isConditioning ? "Reclasser en pagaie" : "Marquer PPG") {
+                applyConditioningChange(!isConditioning)
+            }
+            Button("Annuler", role: .cancel) {}
+        } message: {
+            Text(isConditioning
+                 ? "La séance sera relue comme du pagayage : la charge mécanique revient, et la marche et les pauses seront à nouveau écartées du cardio."
+                 : "La séance sera relue en cardio seul : la charge mécanique est abandonnée, et la marche, la course et les pauses sont comptées.")
+        }
+    }
+
+    /// Recompute, don't just hide: the cardiac zones were counted over the
+    /// paddling stretches only, and on a run there are none — the walking and
+    /// the pauses are the session.
+    private func applyConditioningChange(_ newValue: Bool) {
+        isConditioning = newValue
+        session.isConditioning = newValue
+        appEnvironment.reanalyseFromDisk(session)
+        loadRecords()
+        loadHeartRate()
+    }
+
+    private func checkbox(_ isOn: Bool, _ label: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: isOn ? "checkmark.square.fill" : "square")
+                .foregroundStyle(isOn ? Color.accentColor : .secondary)
+            Text(label)
+                .foregroundStyle(.primary)
+                .font(.subheadline)
+        }
     }
 
     private var perceivedExertionBanner: some View {
@@ -242,7 +288,7 @@ struct SessionDetailView: View {
 
     private func newRecordBanner(anchor: Double) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Nouveau record 45 s : \(String(format: "%.2f", anchor)) m/s²")
+            Text("Nouveau record 45 s : \(anchor.accelerationLabel) m/s²")
                 .font(.headline)
             Text("Mettre à jour les zones mécaniques avec cette nouvelle référence ?")
                 .font(.subheadline)
@@ -280,7 +326,7 @@ struct SessionDetailView: View {
             ? session.mechZoneAnchorUsed
             : (appEnvironment.athlete.settings?.confirmedMech45sAnchor ?? 0)
         guard anchor <= 0 else { return nil }
-        return "Référence 45 s pas encore définie : les zones mécaniques ne peuvent pas être calculées. Elle se règle en confirmant un record 45 s, ou depuis Réglages."
+        return String(localized: "Référence 45 s pas encore définie : les zones mécaniques ne peuvent pas être calculées. Elle se règle en confirmant un record 45 s, ou depuis Réglages.")
     }
 
     private var mechSlices: [ZoneSlice] {

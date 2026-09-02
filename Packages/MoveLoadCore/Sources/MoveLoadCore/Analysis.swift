@@ -37,6 +37,15 @@ public struct SessionAnalysisResult: Sendable {
     /// Seconds above the athlete's anchor, on the instantaneous signal — real
     /// seconds of hard work, which the rolling-mean zones cannot express.
     public let secondsAboveAnchor: TimeInterval
+    /// The effort signal over the athlete's best nine seconds, sample for
+    /// sample. Every other figure here is a total or a peak; this is the only
+    /// one that carries a *shape*, which is what a stroke is judged on — how
+    /// the pull builds, where it peaks, how clean the recovery is. Empty when
+    /// the session was too short to hold a nine-second window.
+    public let bestNineSecondsSignal: [Double]
+    /// Sample rate of `bestNineSecondsSignal`, so it can be plotted against
+    /// time without assuming the session's rate elsewhere.
+    public let bestNineSecondsRateHz: Double
 
     public init(
         hrZoneSeconds: [HRZone: TimeInterval],
@@ -45,6 +54,8 @@ public struct SessionAnalysisResult: Sendable {
         mechZoneAnchorUsed: Double,
         excludedWalkingSeconds: TimeInterval = 0,
         inactiveSeconds: TimeInterval = 0,
+        bestNineSecondsSignal: [Double] = [],
+        bestNineSecondsRateHz: Double = 0,
         // Deliberately no default: this was computed and then dropped from the
         // call for a whole build, and a default of zero made it compile
         // silently and read as "no hard work" rather than as a mistake.
@@ -57,6 +68,8 @@ public struct SessionAnalysisResult: Sendable {
         self.mechZoneAnchorUsed = mechZoneAnchorUsed
         self.excludedWalkingSeconds = excludedWalkingSeconds
         self.inactiveSeconds = inactiveSeconds
+        self.bestNineSecondsSignal = bestNineSecondsSignal
+        self.bestNineSecondsRateHz = bestNineSecondsRateHz
     }
 
     public var peak45s: Double? {

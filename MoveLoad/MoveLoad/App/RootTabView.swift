@@ -29,6 +29,11 @@ struct RootTabView: View {
             .tabItem { Label("Tendances", systemImage: "chart.line.uptrend.xyaxis") }
 
             NavigationStack {
+                HRVTestView()
+            }
+            .tabItem { Label("HRV", systemImage: "heart.text.square") }
+
+            NavigationStack {
                 SettingsView()
             }
             .tabItem { Label("Réglages", systemImage: "gearshape") }

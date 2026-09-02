@@ -64,3 +64,93 @@ final class FirestoreValueTests: XCTestCase {
         XCTAssertTrue(threeMin["nullValue"] is NSNull)
     }
 }
+
+/// Arrays reach Firestore as individually wrapped values — the REST API has no
+/// packed numeric form. The stroke waveform is the first thing here to use one,
+/// and getting the shape wrong would be rejected by the server rather than
+/// caught locally.
+final class FirestoreArrayEncodingTests: XCTestCase {
+
+    func testAnArrayWrapsEveryElement() throws {
+        let encoded = FirestoreValue.array([.double(1.5), .double(-0.25)]).encoded()
+        let arrayValue = try XCTUnwrap(encoded["arrayValue"] as? [String: Any])
+        let values = try XCTUnwrap(arrayValue["values"] as? [[String: Any]])
+
+        XCTAssertEqual(values.count, 2)
+        XCTAssertEqual(values[0]["doubleValue"] as? Double, 1.5)
+        XCTAssertEqual(values[1]["doubleValue"] as? Double, -0.25)
+    }
+
+    func testAnEmptyArrayStillCarriesAValuesKey() throws {
+        let encoded = FirestoreValue.array([]).encoded()
+        let arrayValue = try XCTUnwrap(encoded["arrayValue"] as? [String: Any])
+        XCTAssertNotNil(arrayValue["values"] as? [[String: Any]])
+    }
+
+    /// It has to survive JSONSerialization, which is what actually goes on the
+    /// wire — an encoding that only looks right in a dictionary is no use.
+    func testItSerialisesAsJSON() throws {
+        let payload = ["fields": ["signal": FirestoreValue.array([.double(0.5)]).encoded()]]
+        let data = try JSONSerialization.data(withJSONObject: payload)
+        let text = try XCTUnwrap(String(data: data, encoding: .utf8))
+        XCTAssertTrue(text.contains("arrayValue"))
+        XCTAssertTrue(text.contains("doubleValue"))
+    }
+}
+
+/// Reading back from Firestore — the app's first read, and the one place where
+/// a wrong assumption about the wire format would silently substitute the
+/// coach's thresholds with nothing.
+final class FirestoreFetchNumbersTests: XCTestCase {
+
+    private func numbers(from json: String, status: Int = 200) async throws -> [String: Double]? {
+        StubProtocol.status = status
+        StubProtocol.body = Data(json.utf8)
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [StubProtocol.self]
+        let client = FirestoreClient(projectID: "p", idToken: "t", session: URLSession(configuration: config))
+        return try await client.fetchNumbers(pathComponents: ["a", "b"])
+    }
+
+    func testDoublesAreRead() async throws {
+        let result = try await numbers(from: #"{"fields":{"x":{"doubleValue":-48.5}}}"#)
+        XCTAssertEqual(result?["x"], -48.5)
+    }
+
+    /// Firestore sends int64 as a JSON *string* to survive parsing, and a
+    /// threshold typed as "-48" in the browser is stored as an integer — so
+    /// reading only doubles would drop exactly the values a coach sets by hand.
+    func testIntegersArriveAsStringsAndAreStillRead() async throws {
+        let result = try await numbers(from: #"{"fields":{"x":{"integerValue":"-48"}}}"#)
+        XCTAssertEqual(result?["x"], -48)
+    }
+
+    /// A coach who has set nothing is an ordinary answer, not a failure: the
+    /// defaults stand.
+    func testAMissingDocumentIsNilRatherThanAnError() async throws {
+        let result = try await numbers(from: "{}", status: 404)
+        XCTAssertNil(result)
+    }
+
+    func testADocumentWithNoFieldsIsEmptyNotNil() async throws {
+        let result = try await numbers(from: #"{"name":"projects/p/documents/a/b"}"#)
+        XCTAssertEqual(result, [:])
+    }
+}
+
+/// Serves a canned response so the read can be tested without a project.
+final class StubProtocol: URLProtocol, @unchecked Sendable {
+    nonisolated(unsafe) static var status = 200
+    nonisolated(unsafe) static var body = Data()
+
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func startLoading() {
+        let response = HTTPURLResponse(url: request.url!, statusCode: Self.status,
+                                       httpVersion: nil, headerFields: nil)!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: Self.body)
+        client?.urlProtocolDidFinishLoading(self)
+    }
+    override func stopLoading() {}
+}

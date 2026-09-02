@@ -7,9 +7,9 @@ public enum SyncError: Error, LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .notConfigured:
-            "La synchronisation n'est pas configurée (code d'équipe, projet ou clé API manquants)."
+            String(localized: "La synchronisation n'est pas configurée (code d'équipe, projet ou clé API manquants).", bundle: .module)
         case .requestFailed(let message):
-            "Échec de la requête réseau : \(message)"
+            String(localized: "Échec de la requête réseau : \(message)", bundle: .module)
         }
     }
 

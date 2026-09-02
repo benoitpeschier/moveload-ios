@@ -19,15 +19,17 @@ struct HelpButton: View {
         }
         .buttonStyle(.plain)
         .popover(isPresented: $isPresented) {
-            // A definite width, not a maximum: without one the popover cannot
-            // work out where the text wraps, so it measures its own height
-            // wrongly and clips the last lines.
+            // The width has to be set *before* the padding, not after. The
+            // other way round, the text wraps at 270 − 28 while the popover
+            // is sized at 270, so it reserves too little height and clips the
+            // last lines — invisibly, and only for text long enough to wrap
+            // more than the shortest bubble.
             Text(text)
                 .font(.callout)
                 .multilineTextAlignment(.leading)
+                .frame(width: 270, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(14)
-                .frame(width: 270)
                 // Without this the popover becomes a full sheet on iPhone,
                 // which is far too much ceremony for two sentences.
                 .presentationCompactAdaptation(.popover)
@@ -37,30 +39,34 @@ struct HelpButton: View {
 
 /// The explanations themselves, kept together so their wording can be read and
 /// revised as a set rather than hunted through the views.
+///
+/// These are plain `String`, not `Text`, so the compiler does not extract them
+/// the way it extracts every `Text("…")` in a view — they need `String(localized:)`
+/// to reach the catalogue at all. The French text is the key.
 enum ChartHelp {
-    static let cardioLoad = """
-        Temps passé dans chaque zone de fréquence cardiaque, d'après les seuils \
-        réglés dans Réglages. La marche et les moments sans effort ne sont pas comptés.
-        """
+    static var cardioLoad: String {
+        String(localized: "Temps passé dans chaque zone de fréquence cardiaque, d'après les seuils réglés dans Réglages. La marche et les moments sans effort ne sont pas comptés.")
+    }
 
-    static let mechanicalLoad = """
-        Temps passé dans chaque zone d'intensité de pagaie. Les seuils valent 70 % \
-        et 90 % de ta référence 45 s confirmée — des pourcentages modifiables dans \
-        Réglages. Cette charge est calculée à partir de l'accélération de ton buste \
-        — sa variation de vitesse d'un instant à l'autre — mesurée par le capteur, \
-        gravité retirée.
-        """
+    /// Takes the thresholds rather than quoting them, because they are
+    /// settings: a figure written into the sentence goes stale the first time
+    /// the athlete changes one, and help that contradicts the screen is worse
+    /// than none.
+    static func mechanicalLoad(percentLow: Double, percentHigh: Double) -> String {
+        let low = Int((percentLow * 100).rounded())
+        let high = Int((percentHigh * 100).rounded())
+        return String(localized: "Temps passé dans chaque zone d'intensité de pagaie. Cette charge est calculée à partir de l'accélération de ton buste — sa variation de vitesse d'un instant à l'autre — mesurée par le capteur, gravité retirée.")
+            + "\n\n"
+            + String(localized: "Les seuils valent \(low) % et \(high) % de ta référence 45 s confirmée, modifiables dans Réglages. Ils s'appliquent à une moyenne glissante de 15 secondes, bien plus basse que les pics qu'elle lisse — d'où des pourcentages bas.")
+    }
 
-    static let timeAboveAnchor = """
-        Temps passé à pagayer plus fort que ta référence 45 s confirmée. \
-        Compté seconde par seconde sur le signal brut : les zones lissent sur \
-        15 secondes et ne peuvent pas voir un effort plus court, celui-ci si.
-        """
+    static var timeAboveAnchor: String {
+        String(localized: "Temps passé à pagayer plus fort que ta référence 45 s confirmée. Compté seconde par seconde sur le signal brut : les zones lissent sur 15 secondes et ne peuvent pas voir un effort plus court, celui-ci si.")
+    }
 
-    static let accelerationCurve = """
-        Ton meilleur effort moyen sur chaque durée, de 3 secondes à 3 minutes. \
-        La courbe verte est ton record sur la période d'historique choisie dans Réglages.
-        """
+    static var accelerationCurve: String {
+        String(localized: "Ton meilleur effort moyen sur chaque durée, de 3 secondes à 3 minutes. La courbe verte est ton record sur la période d'historique choisie dans Réglages.")
+    }
 }
 
 /// Seconds above the athlete's anchor, beside the zone pies.
@@ -122,6 +128,17 @@ struct TimeAboveAnchorView: View {
 
     private func formatted(_ s: Double) -> String {
         let total = Int(s.rounded())
-        return total >= 60 ? "\(total / 60) min \(String(format: "%02d", total % 60)) s" : "\(total) s"
+        return total >= 60
+            ? String(localized: "\(total / 60) min \(String(format: "%02d", total % 60)) s")
+            : String(localized: "\(total) s")
+    }
+}
+
+/// Two decimals in the reader's own notation — 1,58 in French, 1.58 in English.
+/// `String(format:)` is fixed to a dot whatever the locale, which was invisible
+/// while the app only spoke French.
+extension Double {
+    var accelerationLabel: String {
+        formatted(.number.precision(.fractionLength(2)))
     }
 }

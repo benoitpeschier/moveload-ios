@@ -68,7 +68,7 @@ enum CSVExporter {
     }
 
     private static func summaryCSV(for sessions: [Session]) -> String {
-        var csv = "date,name,duration_s,boat_type,is_test,perceived_exertion,excluded_walking_s,hr_zone_i1_s,hr_zone_i2_s,hr_zone_i3_s,mech_zone_1_s,mech_zone_2_s,mech_zone_3_s"
+        var csv = "date,name,duration_s,boat_type,is_test,is_conditioning,perceived_exertion,excluded_walking_s,hr_zone_i1_s,hr_zone_i2_s,hr_zone_i3_s,mech_zone_1_s,mech_zone_2_s,mech_zone_3_s"
         for window in MechanicalWindow.allCases {
             csv += ",peak_\(Int(window.seconds))s"
         }
@@ -81,6 +81,7 @@ enum CSVExporter {
             csv += ",\(session.duration)"
             csv += ",\(session.boatType?.rawValue ?? "")"
             csv += ",\(session.isTest)"
+            csv += ",\(session.isConditioning)"
             csv += ",\(session.perceivedExertion.map(String.init) ?? "")"
             csv += ",\(session.excludedWalkingSeconds)"
             csv += ",\(session.hrZoneI1Seconds),\(session.hrZoneI2Seconds),\(session.hrZoneI3Seconds)"

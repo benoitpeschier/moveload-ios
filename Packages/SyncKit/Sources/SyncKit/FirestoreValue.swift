@@ -11,6 +11,7 @@ public indirect enum FirestoreValue: Equatable {
     case timestamp(Date)
     case null
     case map([String: FirestoreValue])
+    case array([FirestoreValue])
 
     /// Encodes to the raw `[String: Any]` shape Firestore's REST API expects,
     /// suitable for `JSONSerialization.data(withJSONObject:)`.
@@ -32,6 +33,10 @@ public indirect enum FirestoreValue: Equatable {
             return ["nullValue": NSNull()]
         case .map(let fields):
             return ["mapValue": ["fields": fields.mapValues { $0.encoded() }]]
+        case .array(let values):
+            // Firestore wraps every element individually, even in an array of
+            // one type — there is no packed numeric form in the REST API.
+            return ["arrayValue": ["values": values.map { $0.encoded() }]]
         }
     }
 

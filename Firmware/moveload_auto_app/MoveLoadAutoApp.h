@@ -62,9 +62,40 @@ private:
     void stopRecordingWatchdog();
     void indicateBriefly();
 
+    /// Blinks `count` times, so the sensor can say *which* thing happened
+    /// rather than only that something did. There is one LED and no screen, so
+    /// the count is the whole vocabulary — and it doubles as the only way to
+    /// observe the automatic stop from outside.
+    void blink(uint8_t count);
+    void blinkStep();
+
+    /// A damp strap conducts across the studs and the heart rate service goes
+    /// on emitting a plausible average from it, so "the average is between 30
+    /// and 220 bpm" is not evidence of a body. What a wet strap cannot fake is
+    /// **variation**: real R-R intervals move by tens of milliseconds from beat
+    /// to beat, an artefact repeats itself. These count the changes.
+    uint16_t mLastRRms;
+    /// Beat-to-beat changes that look like a heart: moved, but not by more
+    /// than a heart can move. Counted against those that do not.
+    uint8_t mAliveTransitionsThisTick;
+    uint8_t mWildTransitionsThisTick;
+
+    uint8_t mBlinksLeft;
+    bool mBlinkOn;
+
     /// Mirrors the standard HR profile's notification switch: only measure
     /// heart rate while a watch is actually listening for it.
     void hrsNotificationChanged(bool enabled);
+
+    /// Hands the single BLE link back when a watch takes it outside a session.
+    ///
+    /// The sensor has one peripheral link (see App.cpp), and a link that is
+    /// held is a sensor that stops advertising entirely — so a watch still
+    /// paired after the session makes the phone unable to find the sensor at
+    /// all, which is exactly when the athlete wants to download. Serving the
+    /// heart rate profile only while recording keeps both uses without either
+    /// standing on the other: the watch during the session, the phone after.
+    void releaseLinkToWatch();
 
     /// Heart rate is wanted by the watch, by the arming gate, or by neither.
     /// Subscribing twice and unsubscribing once would leave it running, so

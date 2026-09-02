@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import PersistenceKit
 
 /// Sessions laid out on a calendar, each day filled with the colours of the
@@ -8,10 +9,21 @@ import PersistenceKit
 /// to recognise a month's shape at a glance, not to read exact values off it.
 struct SessionCalendarView: View {
     let sessions: [Session]
+    /// Morning tests, so a day can show both what was trained and how the
+    /// athlete woke up. The two belong on the same square: the eye compares
+    /// yesterday's load with this morning's reading without changing screen.
+    @Query(sort: \HRVTest.date) private var hrvTests: [HRVTest]
 
     enum Span: String, CaseIterable {
         case month = "Mois"
         case week = "Semaine"
+
+        var label: String {
+            switch self {
+            case .month: String(localized: "Mois")
+            case .week: String(localized: "Semaine")
+            }
+        }
     }
 
     @State private var span: Span = .month
@@ -47,7 +59,7 @@ struct SessionCalendarView: View {
     private var header: some View {
         VStack(spacing: 8) {
             Picker("Période", selection: $span) {
-                ForEach(Span.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                ForEach(Span.allCases, id: \.self) { Text($0.label).tag($0) }
             }
             .pickerStyle(.segmented)
 
@@ -62,16 +74,27 @@ struct SessionCalendarView: View {
         }
     }
 
+    private func hasHRVTest(on day: Date) -> Bool {
+        hrvTests.contains { calendar.isDate($0.date, inSameDayAs: day) }
+    }
+
     private func dayCell(_ day: Date) -> some View {
         let daySessions = sessions(on: day)
         let isSelected = selectedDay.map { calendar.isDate($0, inSameDayAs: day) } ?? false
         let inPeriod = span == .week || calendar.isDate(day, equalTo: anchorDate, toGranularity: .month)
 
         return VStack(alignment: .leading, spacing: 2) {
-            Text("\(calendar.component(.day, from: day))")
-                .font(.caption)
-                .fontWeight(isSelected ? .bold : .regular)
-                .foregroundStyle(inPeriod ? .primary : .secondary)
+            HStack(spacing: 3) {
+                Text("\(calendar.component(.day, from: day))")
+                    .font(.caption)
+                    .fontWeight(isSelected ? .bold : .regular)
+                    .foregroundStyle(inPeriod ? .primary : .secondary)
+                if hasHRVTest(on: day) {
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 8))
+                        .foregroundStyle(.pink)
+                }
+            }
 
             ForEach(daySessions, id: \.id) { session in
                 if span == .week {

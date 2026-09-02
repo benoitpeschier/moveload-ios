@@ -21,12 +21,18 @@ struct MechanicalCurveChartView: View {
                 Text("Courbe d'accélération").font(.headline)
                 HelpButton(text: ChartHelp.accelerationCurve)
                 Spacer()
-                // Reserve the row even when nothing is selected, so the chart
-                // doesn't jump as values appear and disappear.
-                Text(selectionSummary ?? " ")
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
             }
+
+            // Its own line rather than the end of the title row: the readout
+            // runs to "45 s · séance 1,03 · record 1,58", and beside the title
+            // that width has to come from somewhere — SwiftUI took it from the
+            // title, which wrapped the moment a point was touched. Reserved
+            // even when nothing is selected, so the chart doesn't jump.
+            Text(selectionSummary ?? " ")
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             if points.isEmpty {
                 Text("Séance trop courte pour tracer la courbe").foregroundStyle(.secondary)
@@ -60,10 +66,10 @@ struct MechanicalCurveChartView: View {
 
         var parts: [String] = [selectedLabel]
         if let value = sessionCurve[window] ?? nil {
-            parts.append(String(format: "séance %.2f", value))
+            parts.append(String(localized: "séance \(value.accelerationLabel)"))
         }
         if let record = records[window] {
-            parts.append(String(format: "record %.2f", record))
+            parts.append(String(localized: "record \(record.accelerationLabel)"))
         }
         return parts.joined(separator: " · ")
     }
@@ -72,10 +78,10 @@ struct MechanicalCurveChartView: View {
         var result: [CurvePoint] = []
         for window in MechanicalWindow.allCases {
             if let value = sessionCurve[window] ?? nil {
-                result.append(CurvePoint(window: window, value: value, series: "Séance"))
+                result.append(CurvePoint(window: window, value: value, series: String(localized: "Séance")))
             }
             if let record = records[window] {
-                result.append(CurvePoint(window: window, value: record, series: "Record"))
+                result.append(CurvePoint(window: window, value: record, series: String(localized: "Record")))
             }
         }
         return result

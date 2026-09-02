@@ -36,6 +36,8 @@ public struct SessionRepository {
         session.excludedWalkingSeconds = analysis.excludedWalkingSeconds
         session.inactiveSeconds = analysis.inactiveSeconds
         session.secondsAboveAnchor = analysis.secondsAboveAnchor
+        session.bestNineSecondsSignal = analysis.bestNineSecondsSignal
+        session.bestNineSecondsRateHz = analysis.bestNineSecondsRateHz
         session.analysisVersion = AnalysisGeneration.current
 
         context.insert(session)

@@ -57,6 +57,10 @@ public final class MovesenseSensorService: NSObject, SensorService {
     /// hello response. Read to tell the stock firmware from ours, and shown
     /// in the sensor screen so a flash can be confirmed at a glance.
     public private(set) var connectedFirmwareName: String?
+    /// Shown beside the name because two images that behave differently and
+    /// report the same version cannot be told apart once flashed — which is
+    /// exactly the position this got into.
+    public private(set) var connectedFirmwareVersion: String?
 
     /// Our own firmware brackets sessions itself, from strap contact, and
     /// keeps the state that decides it in RAM.
@@ -102,6 +106,7 @@ public final class MovesenseSensorService: NSObject, SensorService {
             self.connectedSerial = nil
             self.connectedSensor = nil
             self.connectedFirmwareName = nil
+            self.connectedFirmwareVersion = nil
             self.batteryPercent = nil
             self.state = .disconnected
         }
@@ -195,6 +200,7 @@ public final class MovesenseSensorService: NSObject, SensorService {
             let serial = hello.serialNumber.isEmpty ? sensor.id : hello.serialNumber
             connectedSerial = serial
             connectedFirmwareName = hello.appName
+            connectedFirmwareVersion = hello.appVersion
             batteryPercent = try? await gsp.getBatteryPercent()
             let resolvedSensor = DiscoveredSensor(id: serial, name: serial, rssi: sensor.rssi)
             connectedSensor = resolvedSensor
@@ -314,14 +320,73 @@ public final class MovesenseSensorService: NSObject, SensorService {
         }
     }
 
+    /// What the last logbook download actually cost over the air.
+    ///
+    /// The custom firmware compiles `MOVESENSE_BLE_CONFIG_2PERIPHERALS`, which
+    /// pins the MTU at 23 — the BLE minimum, 20 bytes of payload per packet.
+    /// The stock default is inside the prebuilt core library and cannot be read
+    /// from the headers, so the cost of that choice **can only be measured**:
+    /// time the same download before flashing and after. Logbook entries run to
+    /// tens of megabytes, so a large penalty would be disqualifying.
+    public struct TransferStats: Sendable {
+        public let bytes: Int
+        /// Wire time only. Decoding is deliberately excluded — it runs on the
+        /// phone and has nothing to do with the link.
+        public let seconds: TimeInterval
+        public var bytesPerSecond: Double { seconds > 0 ? Double(bytes) / seconds : 0 }
+    }
+
+    public private(set) var lastTransfer: TransferStats?
+
+    /// Switches the sensor into firmware-update mode, where it exposes the
+    /// Nordic DFU service. `SystemMode` 12 is `FwUpdateMode` in the SDK's
+    /// `system/mode.yaml`; running the application it offers no DFU service at
+    /// all, so nRF Connect reports the device as unsupported rather than as
+    /// being in the wrong mode.
+    ///
+    /// The sensor drops the connection on its way into the bootloader, so the
+    /// write is expected to be the last thing this link carries.
+    /// Subscribes to the live heart-rate stream, decoded.
+    ///
+    /// This is what the HRV test reads: `rrIntervalsMs` is the measurement,
+    /// `bpm` is the sensor's own smoothed figure and is only good for showing a
+    /// number while the test runs. Returns the reference to close it with.
+    public func subscribeHeartRate(
+        onSample: @escaping @Sendable (HeartRateStreamSample) -> Void
+    ) async throws -> UInt8 {
+        try await gsp.subscribe(path: "/Meas/HR") { payload in
+            if let sample = HeartRateStreamSample(payload: payload) { onSample(sample) }
+        }
+    }
+
+    public func unsubscribeHeartRate(reference: UInt8) async {
+        await gsp.unsubscribe(reference: reference)
+    }
+
+    public func enterFirmwareUpdateMode() async throws {
+        // Deliberately not awaiting the status. The sensor acts on this write
+        // at once and reboots into its bootloader, so the acknowledgement it
+        // owes us is never sent — waiting for it left the app spinning on a
+        // response that could not arrive while the sensor had already gone.
+        // The same reasoning is why stopLogging()'s reboot uses `try?`.
+        Task { try? await gsp.putSystemMode(12) }
+        try? await Task.sleep(nanoseconds: 2_000_000_000)
+        await gsp.disconnect()
+    }
+
     public func downloadEntry(_ entry: LogbookEntryInfo, progress: @escaping (Double) -> Void) async throws -> RawSessionData {
         guard let logId = UInt32(entry.id) else {
             throw SensorError.transferFailed("Identifiant de log invalide : \(entry.id)")
         }
         let totalSize = max(entry.sizeBytes ?? 1, 1)
+        let startedAt = Date()
         let sbemData = try await gsp.fetchLog(id: logId) { bytesReceived in
             DispatchQueue.main.async { progress(min(0.95, Double(bytesReceived) / Double(totalSize))) }
         }
+        // Measured on the bytes that actually arrived, not on the listing's
+        // announced size: the two disagree, and the announced one is the less
+        // trustworthy of the pair.
+        lastTransfer = TransferStats(bytes: sbemData.count, seconds: Date().timeIntervalSince(startedAt))
         let data = try MovesenseSBEMDecoder.decode(sbemData, startDate: entry.startDate)
         progress(1.0)
         return data

@@ -30,8 +30,12 @@ public enum AnalysisGeneration {
     /// Every stored zone time from before this is on a different scale and
     /// cannot be compared with anything after it.
     public static let rollingMeanZones = 3
+    /// Sessions analysed before the stroke waveform existed carry none, so the
+    /// coach sees nothing for tests recorded earlier. Recomputing gives them
+    /// one from the raw samples still on disk.
+    public static let strokeWaveform = 4
 
-    public static let current = rollingMeanZones
+    public static let current = strokeWaveform
 }
 
 /// Boat class the session was recorded in — used to compare an athlete's
@@ -92,6 +96,23 @@ public final class AthleteSettings {
     /// whichever sensor answers first, which in a clubhouse means somebody
     /// else's.
     public var pairedSensorSerial: String = ""
+
+    /// Which past test the morning's deltas are measured against. Stored as a
+    /// raw value so the choice survives a schema change.
+    ///   0 = N-1, 1 = N-3, 2 = N-6, 3 = médiane des six derniers
+    public var hrvReferenceMode: Int = 3
+
+    /// Schmidt's thresholds, as percentages — settings rather than constants:
+    /// they are one author's calibration and a squad may need to move them.
+    public var hrvEnergyCollapseHFSupine: Double = -48
+    public var hrvEnergyCollapseLFStanding: Double = -30
+    public var hrvAcuteStressLFSupine: Double = 80
+    public var hrvAcuteStressLFStanding: Double = -70
+    public var hrvActivationBrakeHFSupine: Double = -50
+    public var hrvActivationBrakeHFStanding: Double = 200
+    public var hrvExtremeFatigueHFSupine: Double = 500
+    public var hrvPeripheralRegulationLFStanding: Double = -80
+    public var hrvSmallBasePower: Double = 50
 
     public var recordsHistoryUnit: HistoryUnit {
         get { HistoryUnit(rawValue: recordsHistoryUnitRaw) ?? .days }
@@ -163,6 +184,13 @@ public final class Session {
     /// Seconds above the athlete's anchor, from the instantaneous signal —
     /// the hard-work figure the rolling-mean zones cannot express.
     public var secondsAboveAnchor: Double = 0
+
+    /// The effort signal over the athlete's best nine seconds, and its rate.
+    /// Kept so the coach can look at the *shape* of the stroke rather than at
+    /// another total — 9 s at ~52 Hz is about 470 values, small enough to store
+    /// and to sync beside the rest of the session.
+    public var bestNineSecondsSignal: [Double] = []
+    public var bestNineSecondsRateHz: Double = 0
     public var excludedWalkingSeconds: Double = 0
 
     /// Which generation of the analysis produced this session's numbers, so a
@@ -194,6 +222,11 @@ public final class Session {
     /// to regular training) — lets records/comparisons be isolated to
     /// comparable-effort sessions later, rather than mixing test and training data.
     public var isTest: Bool = false
+
+    /// Préparation physique générale — running, gym, circuits. Read for its
+    /// cardiac load only: the mechanical figures are not produced at all, and
+    /// walking, running and standing still are all kept rather than stripped.
+    public var isConditioning: Bool = false
 
     /// Optional athlete-given label ("Test 45s", "Fractionné 8x2min"). Nil or
     /// empty means the session is identified by its date, as before.
@@ -253,5 +286,47 @@ public final class MechanicalCurvePoint {
 
     public var window: MechanicalWindow? {
         MechanicalWindow.allCases.first { $0.seconds == windowSeconds }
+    }
+}
+
+
+/// One morning orthostatic test: five minutes lying, five standing.
+///
+/// The R-R intervals are kept, not just the computed figures. The metrics can
+/// be recomputed from intervals; intervals cannot be recovered from metrics,
+/// and every decision about how to trim, correct or transform them has already
+/// been revised once. Two five-minute positions are on the order of 700
+/// intervals — a few kilobytes.
+@Model
+public final class HRVTest {
+    public var id: UUID = UUID()
+    public var athlete: Athlete?
+    public var date: Date = Date()
+
+    public var supineRRms: [Int] = []
+    public var standingRRms: [Int] = []
+
+    /// The five Wellness answers (McLean et al. 2010), each 1–5, in the order
+    /// fatigue, sleep, soreness, stress, mood. **Kept on the phone only** — the
+    /// coach receives `wellnessScore` and never these: an athlete who knows
+    /// their "stress 2/5" is read stops answering honestly, and the
+    /// questionnaire is only worth having as an honest contradiction of the
+    /// measurement.
+    public var wellnessAnswers: [Int] = []
+
+    public init(athlete: Athlete? = nil, date: Date = Date()) {
+        self.id = UUID()
+        self.athlete = athlete
+        self.date = date
+    }
+
+    /// Out of 25, as a percentage — what the coach sees.
+    public var wellnessScore: Int? {
+        guard wellnessAnswers.count == 5 else { return nil }
+        return Int((Double(wellnessAnswers.reduce(0, +)) / 25.0 * 100).rounded())
+    }
+
+    public var isComplete: Bool {
+        !supineRRms.isEmpty && !standingRRms.isEmpty
     }
 }

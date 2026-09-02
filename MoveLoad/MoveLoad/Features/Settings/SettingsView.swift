@@ -92,15 +92,38 @@ struct SettingsView: View {
                         upperBound: 2.0
                     )
                     HStack {
-                        Text("Ancre confirmée")
+                        Text("Référence 45 s")
                         Spacer()
-                        Text(String(format: "%.2f m/s²", settings.confirmedMech45sAnchor))
+                        Text("\(settings.confirmedMech45sAnchor.accelerationLabel) m/s²")
                             .foregroundStyle(.secondary)
+                    }
+
+                    // The proposal at import happens once and is easy to miss.
+                    // Without this the athlete keeps a reference lower than
+                    // something they have already done, and every zone since
+                    // reads a notch too hard, with nothing on screen saying so.
+                    if let better = appEnvironment.recordBeyondConfirmedAnchor {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Ta séance du \(better.session.startDate.formatted(date: .abbreviated, time: .omitted)) atteint \(better.peak.accelerationLabel) m/s², au-dessus de ta référence actuelle.")
+                                .font(.footnote)
+                            Button("Adopter \(better.peak.accelerationLabel) comme référence") {
+                                adoptRecord(better)
+                            }
+                        }
+                        .padding(.vertical, 2)
                     }
                 } header: {
                     Text("Zones mécaniques")
                 } footer: {
-                    Text("Les seuils sont une part de ta référence 45 s confirmée. Ils s'appliquent à une moyenne glissante de 15 secondes, pas à l'accélération instantanée — c'est pourquoi ils valent 35 et 55 % et non 70 et 90. Modifier une valeur recalcule aussitôt toutes tes séances.")
+                    Text("Les seuils sont une part de ta référence 45 s confirmée. Ils s'appliquent à une moyenne glissante de 15 secondes, pas à l'accélération instantanée — c'est pourquoi ils valent 35 et 55 % et non 70 et 90. Modifier un pourcentage recalcule aussitôt toutes tes séances : c'est la définition des zones qui change, elle doit être la même partout.")
+                }
+
+                Section {
+                    Button("Recalculer l'historique") {
+                        appEnvironment.recomputeStoredSessions()
+                    }
+                } footer: {
+                    Text("Changer de référence ne touche pas aux séances déjà enregistrées : elles gardent celle avec laquelle elles ont été lues, sinon une séance dure d'il y a six mois deviendrait facile le jour où tu progresses. À n'utiliser que si la référence était fausse, pas quand elle monte.")
                 }
 
                 Section("Historique des records") {
@@ -221,7 +244,7 @@ struct SettingsView: View {
                     // looks set up and never syncs is harder to diagnose than
                     // one that is plainly empty.
                     guard let scanned = SyncSettings(shareablePayload: payload) else {
-                        scanErrorMessage = "Ce QR code n'est pas un code de réglages MoveLoad. Rien n'a été modifié."
+                        scanErrorMessage = String(localized: "Ce QR code n'est pas un code de réglages MoveLoad. Rien n'a été modifié.")
                         return
                     }
                     syncSettings = scanned
@@ -253,9 +276,9 @@ struct SettingsView: View {
         syncStatusMessage = nil
         do {
             try await appEnvironment.syncAllSessionsNow()
-            syncStatusMessage = "Synchronisé à \(Date().formatted(date: .omitted, time: .shortened))"
+            syncStatusMessage = String(localized: "Synchronisé à \(Date().formatted(date: .omitted, time: .shortened))")
         } catch {
-            syncStatusMessage = "Échec : \(error.localizedDescription)"
+            syncStatusMessage = String(localized: "Échec : \(error.localizedDescription)")
         }
         isSyncing = false
     }
@@ -296,16 +319,16 @@ struct SettingsView: View {
 
     private func genderLabel(_ gender: Gender) -> String {
         switch gender {
-        case .male: "Homme"
-        case .female: "Femme"
+        case .male: String(localized: "Homme")
+        case .female: String(localized: "Femme")
         }
     }
 
     private func unitLabel(_ unit: HistoryUnit) -> String {
         switch unit {
-        case .days: "jours"
-        case .weeks: "semaines"
-        case .months: "mois"
+        case .days: String(localized: "jours")
+        case .weeks: String(localized: "semaines")
+        case .months: String(localized: "mois")
         }
     }
 
@@ -320,5 +343,15 @@ struct SettingsView: View {
     private func saveAndRecompute() {
         save()
         appEnvironment.recomputeStoredSessions()
+    }
+
+    /// Adopts a reference the history already justifies. Forward-only, like
+    /// every other change of reference: the sessions behind it keep what they
+    /// were read with, and `Recalculer l'historique` is there for the case
+    /// where the reference was simply wrong.
+    private func adoptRecord(_ record: (session: Session, peak: Double)) {
+        try? appEnvironment.confirmMechanicalZoneUpdate(
+            newAnchor: record.peak, sessionID: record.session.id)
+        settings = appEnvironment.athlete.settings
     }
 }

@@ -11,6 +11,15 @@ struct SessionListView: View {
     enum ViewMode: String, CaseIterable {
         case list = "Liste"
         case calendar = "Calendrier"
+
+        /// The raw value is the tag, not the label: it must stay put while the
+        /// text on screen follows the reader's language.
+        var label: String {
+            switch self {
+            case .list: String(localized: "Liste")
+            case .calendar: String(localized: "Calendrier")
+            }
+        }
     }
 
     private var listView: some View {
@@ -59,7 +68,7 @@ struct SessionListView: View {
                 // read two ways. Two tabs for one set of data only makes the
                 // athlete remember which one they were last in.
                 Picker("Affichage", selection: $viewMode) {
-                    ForEach(ViewMode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    ForEach(ViewMode.allCases, id: \.self) { Text($0.label).tag($0) }
                 }
                 .pickerStyle(.segmented)
                 .frame(width: 200)
@@ -108,7 +117,7 @@ struct SessionListView: View {
         } catch {
             // Say plainly that nothing was deleted, rather than leaving the
             // athlete to assume the coach can no longer see the session.
-            deleteErrorMessage = "La séance n'a pas pu être retirée du tableau de bord de l'entraîneur, elle a donc été conservée. Vérifie ta connexion et réessaie.\n\n(\(error.localizedDescription))"
+            deleteErrorMessage = String(localized: "La séance n'a pas pu être retirée du tableau de bord de l'entraîneur, elle a donc été conservée. Vérifie ta connexion et réessaie.\n\n(\(error.localizedDescription))")
         }
     }
 

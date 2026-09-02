@@ -258,6 +258,9 @@ final class AppEnvironment {
             name: session.name ?? "",
             perceivedExertion: session.perceivedExertion,
             isTest: session.isTest,
+            isConditioning: session.isConditioning,
+            bestNineSecondsSignal: session.bestNineSecondsSignal,
+            bestNineSecondsRateHz: session.bestNineSecondsRateHz,
             hrZone1Seconds: session.hrZoneI1Seconds,
             hrZone2Seconds: session.hrZoneI2Seconds,
             hrZone3Seconds: session.hrZoneI3Seconds,
@@ -267,6 +270,18 @@ final class AppEnvironment {
             secondsAboveAnchor: session.secondsAboveAnchor,
             mechanicalPeaks: peaks
         )
+    }
+
+    /// Re-reads one session after the athlete changed what kind of session it
+    /// is. Ticking the PPG box has to recompute rather than merely hide: the
+    /// mechanical figures were produced with walking stripped out, and the
+    /// cardiac ones were counted over the surviving stretches only.
+    func reanalyseFromDisk(_ session: Session) {
+        let directory = PersistenceContainer.documentsSessionsDirectory()
+            .appendingPathComponent(session.rawSampleDirectory)
+        guard let raw = try? RawSampleFileStore.read(startDate: session.startDate, from: directory) else { return }
+        reanalyse(session, from: raw)
+        try? modelContext.save()
     }
 
     /// Recomputes one session in place from its raw samples.
@@ -280,7 +295,8 @@ final class AppEnvironment {
                 mechZonePercentLow: settings.mechZonePercentLow,
                 mechZonePercentHigh: settings.mechZonePercentHigh,
                 confirmedMech45sAnchor: settings.confirmedMech45sAnchor
-            )
+            ),
+            isConditioning: session.isConditioning
         )
 
         session.hrZoneI1Seconds = result.hrZoneSeconds[.i1] ?? 0
@@ -291,6 +307,8 @@ final class AppEnvironment {
         session.mechZone3Seconds = result.mechZoneSeconds[.zone3] ?? 0
         session.mechZoneAnchorUsed = result.mechZoneAnchorUsed
         session.secondsAboveAnchor = result.secondsAboveAnchor
+        session.bestNineSecondsSignal = result.bestNineSecondsSignal
+        session.bestNineSecondsRateHz = result.bestNineSecondsRateHz
         session.excludedWalkingSeconds = result.excludedWalkingSeconds
         session.inactiveSeconds = result.inactiveSeconds
         session.analysisVersion = AnalysisGeneration.current
@@ -301,11 +319,14 @@ final class AppEnvironment {
 
     /// Re-reads every stored session against the current settings.
     ///
-    /// Zone times and the seconds above the reference are computed from the
-    /// signal when a session is imported, so changing the reference afterwards
-    /// leaves them describing thresholds that no longer exist. Confirming a new
-    /// 45 s reference used to change nothing an athlete could see: the setting
-    /// moved, every stored figure stayed put.
+    /// Called when the *percentages* move, because those define the zones and
+    /// the definition has to be the same across the history to compare two
+    /// weeks. Deliberately **not** called when the 45 s reference moves: that
+    /// one measures the athlete, and recomputing on it would turn a hard
+    /// session from six months ago into an easy one the day they get stronger.
+    /// Each session carries the reference it was read with in
+    /// `mechZoneAnchorUsed`. Settings offers this explicitly for the one case
+    /// that does justify rewriting the past — a reference that was wrong.
     func recomputeStoredSessions() {
         guard let sessions = try? allSessions() else { return }
         for session in sessions {
@@ -323,11 +344,89 @@ final class AppEnvironment {
         settings.confirmedMech45sAnchorDate = .now
         settings.confirmedMech45sAnchorSessionID = sessionID
         try modelContext.save()
+    }
 
-        // The reference is what the thresholds are a share of, so every stored
-        // zone time is now stale. Recompute rather than leave the athlete
-        // looking at figures from the previous reference.
-        recomputeStoredSessions()
+    /// A session in the history whose 45 s peak beats the confirmed reference.
+    ///
+    /// The app offers a new reference at import and never again, so a proposal
+    /// declined or missed that day is gone: the athlete keeps a reference lower
+    /// than something they have already done, and every zone reads a notch too
+    /// hard for the rest of time. This is what surfaces it afterwards.
+    var recordBeyondConfirmedAnchor: (session: Session, peak: Double)? {
+        guard let settings = athlete.settings else { return nil }
+        let best = (try? allSessions())?
+            .compactMap { session -> (Session, Double)? in
+                guard !session.isConditioning else { return nil }
+                guard let peak = session.curvePoints
+                    .first(where: { $0.windowSeconds == 45 })?.peakValue else { return nil }
+                return (session, peak)
+            }
+            .max(by: { $0.1 < $1.1 })
+        guard let best, best.1 > settings.confirmedMech45sAnchor + 0.001 else { return nil }
+        return best
+    }
+
+    /// Pulls the fatigue thresholds the coach set for this athlete.
+    ///
+    /// **The coach owns them.** They are stored in a document the phone never
+    /// writes, so this is a one-way read and there is nothing to reconcile —
+    /// which is the whole point: without it the athlete's screen and the
+    /// coach's could show different verdicts on the same test, and neither
+    /// would be wrong from where it stood.
+    ///
+    /// Silent on failure. A coach who has set nothing, an athlete offline in a
+    /// changing room — both leave the defaults standing, which is the right
+    /// answer, not an error worth a banner.
+    func refreshHRVThresholds() async {
+        guard let settings = athlete.settings else { return }
+        guard let coachValues = try? await syncService.fetchHRVThresholds(
+            athleteId: athlete.id.uuidString), !coachValues.isEmpty
+        else { return }
+
+        // Each is applied only if the coach actually set it, so a partial
+        // document leaves the rest at their defaults rather than at zero.
+        func apply(_ key: String, _ assign: (Double) -> Void) {
+            if let value = coachValues[key] { assign(value) }
+        }
+        apply("energyCollapseHFSupine") { settings.hrvEnergyCollapseHFSupine = $0 }
+        apply("energyCollapseLFStanding") { settings.hrvEnergyCollapseLFStanding = $0 }
+        apply("acuteStressLFSupine") { settings.hrvAcuteStressLFSupine = $0 }
+        apply("acuteStressLFStanding") { settings.hrvAcuteStressLFStanding = $0 }
+        apply("activationBrakeHFSupine") { settings.hrvActivationBrakeHFSupine = $0 }
+        apply("activationBrakeHFStanding") { settings.hrvActivationBrakeHFStanding = $0 }
+        apply("extremeFatigueHFSupine") { settings.hrvExtremeFatigueHFSupine = $0 }
+        apply("peripheralRegulationLFStanding") { settings.hrvPeripheralRegulationLFStanding = $0 }
+        apply("smallBasePower") { settings.hrvSmallBasePower = $0 }
+        try? modelContext.save()
+    }
+
+    /// Sends a morning test to the coach. Best-effort like the session push:
+    /// the measurement is already safe on the phone whatever the network does.
+    func syncHRVTestInBackground(_ test: HRVTest) {
+        guard let supine = HeartRateVariability.analyse(rrIntervalsMs: test.supineRRms.map(Double.init)),
+              let standing = HeartRateVariability.analyse(rrIntervalsMs: test.standingRRms.map(Double.init))
+        else { return }
+
+        let payload = HRVTestSyncPayload(
+            id: test.id.uuidString,
+            athleteId: athlete.id.uuidString,
+            date: test.date,
+            supineMeanHR: supine.meanHRbpm,
+            supineRMSSD: supine.rmssdMs,
+            supineTotalPower: supine.totalPower,
+            supineLFOverHF: supine.lfOverHf,
+            supineLF: supine.lf,
+            supineHF: supine.hf,
+            standingMeanHR: standing.meanHRbpm,
+            standingRMSSD: standing.rmssdMs,
+            standingTotalPower: standing.totalPower,
+            standingLFOverHF: standing.lfOverHf,
+            standingLF: standing.lf,
+            standingHF: standing.hf,
+            wellnessScore: test.wellnessScore,
+            isReliable: supine.isFrequencyDomainReliable && standing.isFrequencyDomainReliable
+        )
+        Task { try? await syncService.pushHRVTest(payload) }
     }
 
     func allSessions() throws -> [Session] {

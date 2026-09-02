@@ -57,10 +57,14 @@ public enum SensorError: Error, Sendable {
 extension SensorError: LocalizedError {
     public var errorDescription: String? {
         switch self {
-        case .notConnected: return "Capteur non connecté."
-        case .scanTimedOut: return "Recherche du capteur expirée."
-        case .connectionFailed(let reason): return "Connexion au capteur échouée : \(reason)"
-        case .transferFailed(let reason): return "Échec de la communication avec le capteur : \(reason)"
+        case .notConnected:
+            return String(localized: "Capteur non connecté.", bundle: .module)
+        case .scanTimedOut:
+            return String(localized: "Recherche du capteur expirée.", bundle: .module)
+        case .connectionFailed(let reason):
+            return String(localized: "Connexion au capteur échouée : \(reason)", bundle: .module)
+        case .transferFailed(let reason):
+            return String(localized: "Échec de la communication avec le capteur : \(reason)", bundle: .module)
         }
     }
 }

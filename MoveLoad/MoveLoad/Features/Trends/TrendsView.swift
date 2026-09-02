@@ -42,10 +42,10 @@ struct TrendsView: View {
                     .frame(height: 200)
 
                     if let nearest = nearestCurvePoint {
-                        Text("\(nearest.date.formatted(date: .abbreviated, time: .shortened)) : \(String(format: "%.2f", nearest.value)) m/s²")
+                        Text("\(nearest.date.formatted(date: .abbreviated, time: .shortened)) : \(nearest.value.accelerationLabel) m/s²")
                             .font(.caption.monospacedDigit())
                     } else if let record = records[selectedWindow] {
-                        Text("Record actuel : \(String(format: "%.2f", record)) m/s²")
+                        Text("Record actuel : \(record.accelerationLabel) m/s²")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

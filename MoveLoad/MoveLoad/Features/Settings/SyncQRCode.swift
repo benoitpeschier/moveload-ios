@@ -97,7 +97,7 @@ final class QRScannerViewController: UIViewController, AVCaptureMetadataOutputOb
               let input = try? AVCaptureDeviceInput(device: device),
               session.canAddInput(input)
         else {
-            showMessage("Caméra indisponible.")
+            showMessage(String(localized: "Caméra indisponible."))
             return
         }
         session.addInput(input)

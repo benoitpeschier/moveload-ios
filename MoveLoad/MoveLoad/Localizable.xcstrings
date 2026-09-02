@@ -1,0 +1,4358 @@
+{
+  "sourceLanguage": "fr",
+  "strings": {
+    "%@ : %@ m/s²": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@: %@ m/s²"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ : %@ m/s²"
+          }
+        }
+      }
+    },
+    "%@ m/s²": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ m/s²"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ m/s²"
+          }
+        }
+      }
+    },
+    "%lld %% du temps compté": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld%% of counted time"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld %% du temps compté"
+          }
+        }
+      }
+    },
+    "%lld battements enregistrés": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld beats recorded"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld battements enregistrés"
+          }
+        }
+      }
+    },
+    "%lld bpm": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld bpm"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld bpm"
+          }
+        }
+      }
+    },
+    "%lld min": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min"
+          }
+        }
+      }
+    },
+    "%lld min %@ s": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min %@ s"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min %@ s"
+          }
+        }
+      }
+    },
+    "%lld min de marche exclus de l'analyse": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min of walking excluded from the analysis"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min de marche exclus de l'analyse"
+          }
+        }
+      }
+    },
+    "%lld min sans effort non comptés dans les zones": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min with no effort, not counted in the zones"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min sans effort non comptés dans les zones"
+          }
+        }
+      }
+    },
+    "%lld s": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld s"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld s"
+          }
+        }
+      }
+    },
+    "%lld séance(s) récupérée(s) avant l'erreur.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld session(s) retrieved before the error."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld séance(s) récupérée(s) avant l'erreur."
+          }
+        }
+      }
+    },
+    "%lld séance(s) récupérée(s) et importée(s).": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld session(s) retrieved and imported."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld séance(s) récupérée(s) et importée(s)."
+          }
+        }
+      }
+    },
+    "%lld séance(s) sur le capteur, dont %lld que tu n'as pas téléchargée(s) depuis cet écran. Les effacer quand même ?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld session(s) on the sensor, %lld of which you have not downloaded from this screen. Erase them anyway?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld séance(s) sur le capteur, dont %lld que tu n'as pas téléchargée(s) depuis cet écran. Les effacer quand même ?"
+          }
+        }
+      }
+    },
+    "Accès refusé à %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Access denied to %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accès refusé à %@."
+          }
+        }
+      }
+    },
+    "Accélération": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acceleration"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accélération"
+          }
+        }
+      }
+    },
+    "Adopter %@ comme référence": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use %@ as the reference"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adopter %@ comme référence"
+          }
+        }
+      }
+    },
+    "Affichage": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "View"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affichage"
+          }
+        }
+      }
+    },
+    "Allongé": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lying down"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allongé"
+          }
+        }
+      }
+    },
+    "Allongé, au fil des tests": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lying down, test by test"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allongé, au fil des tests"
+          }
+        }
+      }
+    },
+    "Annuler": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annuler"
+          }
+        }
+      }
+    },
+    "Arrêter l'enregistrement": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop recording"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêter l'enregistrement"
+          }
+        }
+      }
+    },
+    "Arrêter l'écoute": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop listening"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêter l'écoute"
+          }
+        }
+      }
+    },
+    "Athlète": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Athlete"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Athlète"
+          }
+        }
+      }
+    },
+    "Attention : l'arrêt n'a produit aucun nouvel enregistrement dans le capteur. La séance n'a probablement pas été sauvegardée. Vérifie que le capteur est resté en contact avec la sangle pendant toute la séance.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Warning: stopping produced no new recording on the sensor. The session was probably not saved. Check that the sensor stayed in contact with the strap throughout."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attention : l'arrêt n'a produit aucun nouvel enregistrement dans le capteur. La séance n'a probablement pas été sauvegardée. Vérifie que le capteur est resté en contact avec la sangle pendant toute la séance."
+          }
+        }
+      }
+    },
+    "au-dessus de %@ m/s²": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "above %@ m/s²"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "au-dessus de %@ m/s²"
+          }
+        }
+      }
+    },
+    "Aucun capteur appairé": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No sensor paired"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun capteur appairé"
+          }
+        }
+      }
+    },
+    "Aucun capteur trouvé. Vérifie que le Bluetooth est activé, que MoveLoad y a accès (Réglages > MoveLoad > Bluetooth), et que le capteur est porté et à proximité.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No sensor found. Check that Bluetooth is on, that MoveLoad has access to it (Settings > MoveLoad > Bluetooth), and that the sensor is being worn and nearby."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun capteur trouvé. Vérifie que le Bluetooth est activé, que MoveLoad y a accès (Réglages > MoveLoad > Bluetooth), et que le capteur est porté et à proximité."
+          }
+        }
+      }
+    },
+    "Aucun enregistrement": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No recordings"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun enregistrement"
+          }
+        }
+      }
+    },
+    "Aucun enregistrement masqué au-delà du %u.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hidden recording beyond %u."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun enregistrement masqué au-delà du %u."
+          }
+        }
+      }
+    },
+    "Aucun fichier acc_stream.json reconnu parmi les fichiers sélectionnés.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No acc_stream.json file recognised among the selected files."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun fichier acc_stream.json reconnu parmi les fichiers sélectionnés."
+          }
+        }
+      }
+    },
+    "Aucune séance": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No sessions"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune séance"
+          }
+        }
+      }
+    },
+    "Batterie": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Battery"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Batterie"
+          }
+        }
+      }
+    },
+    "bpm": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bpm"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bpm"
+          }
+        }
+      }
+    },
+    "Calendrier": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calendar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calendrier"
+          }
+        }
+      }
+    },
+    "Caméra indisponible.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Camera unavailable."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caméra indisponible."
+          }
+        }
+      }
+    },
+    "Capteur": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sensor"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capteur"
+          }
+        }
+      }
+    },
+    "Capteur appairé": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paired sensor"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capteur appairé"
+          }
+        }
+      }
+    },
+    "Capteur en mode mise à jour. Il s'est déconnecté : envoie le paquet DFU depuis nRF Connect.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sensor in update mode. It has disconnected: send the DFU package from nRF Connect."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capteur en mode mise à jour. Il s'est déconnecté : envoie le paquet DFU depuis nRF Connect."
+          }
+        }
+      }
+    },
+    "Capteurs à portée": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sensors in range"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capteurs à portée"
+          }
+        }
+      }
+    },
+    "Ce code contient le code d'équipe : quiconque le photographie peut accéder aux données de l'équipe.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This code contains the team code: anyone who photographs it can reach the team’s data."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce code contient le code d'équipe : quiconque le photographie peut accéder aux données de l'équipe."
+          }
+        }
+      }
+    },
+    "Ce QR code n'est pas un code de réglages MoveLoad. Rien n'a été modifié.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This QR code is not a MoveLoad settings code. Nothing was changed."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce QR code n'est pas un code de réglages MoveLoad. Rien n'a été modifié."
+          }
+        }
+      }
+    },
+    "Cette séance est encore en cours d'enregistrement : le capteur ne peut pas la relire tant qu'elle est ouverte. Arrête l'enregistrement, puis rafraîchis la liste.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This session is still being recorded: the sensor cannot read an entry it is still writing to. Stop the recording, then refresh the list."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette séance est encore en cours d'enregistrement : le capteur ne peut pas la relire tant qu'elle est ouverte. Arrête l'enregistrement, puis rafraîchis la liste."
+          }
+        }
+      }
+    },
+    "Changer de référence ne touche pas aux séances déjà enregistrées : elles gardent celle avec laquelle elles ont été lues, sinon une séance dure d'il y a six mois deviendrait facile le jour où tu progresses. À n'utiliser que si la référence était fausse, pas quand elle monte.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changing the reference leaves recorded sessions alone: each keeps the one it was read with, otherwise a hard session from six months ago would turn easy the day you get stronger. Use this only if the reference was wrong, not when it goes up."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changer de référence ne touche pas aux séances déjà enregistrées : elles gardent celle avec laquelle elles ont été lues, sinon une séance dure d'il y a six mois deviendrait facile le jour où tu progresses. À n'utiliser que si la référence était fausse, pas quand elle monte."
+          }
+        }
+      }
+    },
+    "Charge cardio": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cardio load"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Charge cardio"
+          }
+        }
+      }
+    },
+    "Charge globale ressentie": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Perceived exertion"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Charge globale ressentie"
+          }
+        }
+      }
+    },
+    "Charge globale ressentie (RPE)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Perceived exertion (RPE)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Charge globale ressentie (RPE)"
+          }
+        }
+      }
+    },
+    "Charge mécanique": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mechanical load"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Charge mécanique"
+          }
+        }
+      }
+    },
+    "Choisis le tien : compare les derniers chiffres avec ceux inscrits sur ton capteur. L'app ne se connectera plus qu'à celui-là, et refusera d'importer une séance venue d'un autre. Tu pourras en changer dans Réglages.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick yours: match the last digits against the ones printed on your sensor. The app will then connect to that one only, and refuse to import a session from any other. You can change it in Settings."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisis le tien : compare les derniers chiffres avec ceux inscrits sur ton capteur. L'app ne se connectera plus qu'à celui-là, et refusera d'importer une séance venue d'un autre. Tu pourras en changer dans Réglages."
+          }
+        }
+      }
+    },
+    "Cinq minutes allongé, puis cinq minutes debout. À faire au réveil, avant le café et avant de consulter quoi que ce soit — c'est la régularité qui rend la série lisible, pas la précision d'un matin.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Five minutes lying down, then five standing. Do it on waking, before coffee and before looking at anything — it is the regularity that makes the series readable, not the precision of any one morning."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cinq minutes allongé, puis cinq minutes debout. À faire au réveil, avant le café et avant de consulter quoi que ce soit — c'est la régularité qui rend la série lisible, pas la précision d'un matin."
+          }
+        }
+      }
+    },
+    "Clé API Web": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Web API key"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clé API Web"
+          }
+        }
+      }
+    },
+    "Code d'équipe": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Team code"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code d'équipe"
+          }
+        }
+      }
+    },
+    "Connexion": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connection"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connexion"
+          }
+        }
+      }
+    },
+    "Connexion...": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecting…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connexion..."
+          }
+        }
+      }
+    },
+    "Courbatures": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muscle soreness"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Courbatures"
+          }
+        }
+      }
+    },
+    "Courbe d'accélération": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acceleration curve"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Courbe d'accélération"
+          }
+        }
+      }
+    },
+    "Date": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date"
+          }
+        }
+      }
+    },
+    "Debout": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Standing"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Debout"
+          }
+        }
+      }
+    },
+    "Debout, immobile.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Standing, still."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Debout, immobile."
+          }
+        }
+      }
+    },
+    "Dernier téléchargement : %@ en %@ — %@/s": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last download: %@ in %@ — %@/s"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dernier téléchargement : %@ en %@ — %@/s"
+          }
+        }
+      }
+    },
+    "Durée": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duration"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Durée"
+          }
+        }
+      }
+    },
+    "Durée : %lld min": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duration: %lld min"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Durée : %lld min"
+          }
+        }
+      }
+    },
+    "Durée analysée": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Analysed duration"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Durée analysée"
+          }
+        }
+      }
+    },
+    "Début": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Début"
+          }
+        }
+      }
+    },
+    "Déconnecter": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disconnect"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déconnecter"
+          }
+        }
+      }
+    },
+    "Déconnecté": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disconnected"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déconnecté"
+          }
+        }
+      }
+    },
+    "Déconnexion...": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disconnecting…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déconnexion..."
+          }
+        }
+      }
+    },
+    "Démarre un enregistrement depuis l'onglet Capteur.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start a recording from the Sensor tab."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Démarre un enregistrement depuis l'onglet Capteur."
+          }
+        }
+      }
+    },
+    "Démarrer l'enregistrement": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start recording"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Démarrer l'enregistrement"
+          }
+        }
+      }
+    },
+    "Démarrer le test": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start the test"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Démarrer le test"
+          }
+        }
+      }
+    },
+    "Effacer définitivement": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erase permanently"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effacer définitivement"
+          }
+        }
+      }
+    },
+    "Effacer la mémoire": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erase memory"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effacer la mémoire"
+          }
+        }
+      }
+    },
+    "Effacer la mémoire du capteur…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erase the sensor’s memory…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effacer la mémoire du capteur…"
+          }
+        }
+      }
+    },
+    "Effacer les %lld séance(s) du capteur ? Toutes ont été téléchargées à l'instant.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erase the %lld session(s) from the sensor? All of them were just downloaded."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effacer les %lld séance(s) du capteur ? Toutes ont été téléchargées à l'instant."
+          }
+        }
+      }
+    },
+    "Effacer toute la mémoire du capteur": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erase the sensor’s entire memory"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effacer toute la mémoire du capteur"
+          }
+        }
+      }
+    },
+    "Embarcation": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boat"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Embarcation"
+          }
+        }
+      }
+    },
+    "En attendant que l'enregistrement direct fonctionne : enregistre la séance avec l'app Movesense Showcase, exporte les fichiers acc_stream.json et heartRate_stream.json, puis sélectionne-les ici (les deux à la fois).": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Until direct recording works: record the session with the Movesense Showcase app, export acc_stream.json and heartRate_stream.json, then pick them both here at once."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En attendant que l'enregistrement direct fonctionne : enregistre la séance avec l'app Movesense Showcase, exporte les fichiers acc_stream.json et heartRate_stream.json, puis sélectionne-les ici (les deux à la fois)."
+          }
+        }
+      }
+    },
+    "En attente du signal cardiaque…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting for the heart-rate signal…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En attente du signal cardiaque…"
+          }
+        }
+      }
+    },
+    "En fonctionnement normal, le capteur n'expose pas le service de mise à jour : nRF Connect répond « Not Supported ». Ceci l'y bascule. Il se déconnecte, réapparaît sous un autre nom, et n'enregistre plus tant qu'une mise à jour n'est pas envoyée ou qu'il n'est pas redémarré en le sortant de la sangle.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Running its application, the sensor exposes no update service: nRF Connect answers “Not Supported”. This switches it over. It disconnects, comes back under a different name, and records nothing until an update is sent or it is restarted by taking it off the strap."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En fonctionnement normal, le capteur n'expose pas le service de mise à jour : nRF Connect répond « Not Supported ». Ceci l'y bascule. Il se déconnecte, réapparaît sous un autre nom, et n'enregistre plus tant qu'une mise à jour n'est pas envoyée ou qu'il n'est pas redémarré en le sortant de la sangle."
+          }
+        }
+      }
+    },
+    "Enregistrement": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recording"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrement"
+          }
+        }
+      }
+    },
+    "Enregistrements non listés": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlisted recordings"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrements non listés"
+          }
+        }
+      }
+    },
+    "Enregistrements sur le capteur": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recordings on the sensor"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrements sur le capteur"
+          }
+        }
+      }
+    },
+    "Enregistrer": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrer"
+          }
+        }
+      }
+    },
+    "Explication": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explanation"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explication"
+          }
+        }
+      }
+    },
+    "Exporter": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporter"
+          }
+        }
+      }
+    },
+    "Extrêmement difficile": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maximal"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extrêmement difficile"
+          }
+        }
+      }
+    },
+    "Facile": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Easy"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facile"
+          }
+        }
+      }
+    },
+    "Fatigue": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fatigue"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fatigue"
+          }
+        }
+      }
+    },
+    "FC": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HR"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FC"
+          }
+        }
+      }
+    },
+    "FC (bpm)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HR (bpm)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FC (bpm)"
+          }
+        }
+      }
+    },
+    "FC moyenne": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mean HR"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FC moyenne"
+          }
+        }
+      }
+    },
+    "Femme": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Female"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Femme"
+          }
+        }
+      }
+    },
+    "Fenêtre": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Window"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fenêtre"
+          }
+        }
+      }
+    },
+    "Fin": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "End"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fin"
+          }
+        }
+      }
+    },
+    "Firmware": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Firmware"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Firmware"
+          }
+        }
+      }
+    },
+    "Fréquence cardiaque": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heart rate"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fréquence cardiaque"
+          }
+        }
+      }
+    },
+    "Garder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garder"
+          }
+        }
+      }
+    },
+    "Genre": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gender"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Genre"
+          }
+        }
+      }
+    },
+    "Générer des séances fictives (démo)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generate sample sessions (demo)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Générer des séances fictives (démo)"
+          }
+        }
+      }
+    },
+    "Générer une séance record évidente (démo)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generate an obvious record session (demo)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Générer une séance record évidente (démo)"
+          }
+        }
+      }
+    },
+    "Historique des records": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Records history"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Historique des records"
+          }
+        }
+      }
+    },
+    "Homme": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Male"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Homme"
+          }
+        }
+      }
+    },
+    "HRV": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HRV"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HRV"
+          }
+        }
+      }
+    },
+    "Humeur": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mood"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Humeur"
+          }
+        }
+      }
+    },
+    "ID de projet Firebase": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Firebase project ID"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ID de projet Firebase"
+          }
+        }
+      }
+    },
+    "Ignorer": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dismiss"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ignorer"
+          }
+        }
+      }
+    },
+    "Il faut d'abord confirmer une référence 45 s pour que cette mesure ait un sens.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A 45 s reference has to be confirmed first for this figure to mean anything."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il faut d'abord confirmer une référence 45 s pour que cette mesure ait un sens."
+          }
+        }
+      }
+    },
+    "Il y a 3 tests": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Three tests ago"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il y a 3 tests"
+          }
+        }
+      }
+    },
+    "Il y a 6 tests": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Six tests ago"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il y a 6 tests"
+          }
+        }
+      }
+    },
+    "Import manuel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Manual import"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import manuel"
+          }
+        }
+      }
+    },
+    "Importer depuis Showcase": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import from Showcase"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importer depuis Showcase"
+          }
+        }
+      }
+    },
+    "Indisponible avec le capteur simulé.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not available with the simulated sensor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indisponible avec le capteur simulé."
+          }
+        }
+      }
+    },
+    "jours": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "days"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "jours"
+          }
+        }
+      }
+    },
+    "L'app ne se connecte qu'à ce capteur et refuse d'importer une séance venue d'un autre. Ne l'oublie que si tu changes de capteur : les séances déjà importées ne sont pas touchées.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app connects to this sensor only and refuses to import a session from any other. Forget it only if you change sensor: sessions already imported are untouched."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'app ne se connecte qu'à ce capteur et refuse d'importer une séance venue d'un autre. Ne l'oublie que si tu changes de capteur : les séances déjà importées ne sont pas touchées."
+          }
+        }
+      }
+    },
+    "La liste du capteur est pleine": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The sensor’s list is full"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La liste du capteur est pleine"
+          }
+        }
+      }
+    },
+    "La mémoire du capteur est pleine : il ne peut plus enregistrer. Télécharge tes séances puis utilise « Effacer toute la mémoire du capteur ».": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The sensor’s memory is full: it can no longer record. Download your sessions, then use “Erase the sensor’s entire memory”."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La mémoire du capteur est pleine : il ne peut plus enregistrer. Télécharge tes séances puis utilise « Effacer toute la mémoire du capteur »."
+          }
+        }
+      }
+    },
+    "La séance n'a pas pu être retirée du tableau de bord de l'entraîneur, elle a donc été conservée. Vérifie ta connexion et réessaie.\n\n(%@)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The session could not be removed from the coach’s dashboard, so it was kept. Check your connection and try again.\n\n(%@)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La séance n'a pas pu être retirée du tableau de bord de l'entraîneur, elle a donc été conservée. Vérifie ta connexion et réessaie.\n\n(%@)"
+          }
+        }
+      }
+    },
+    "La séance sera relue comme du pagayage : la charge mécanique revient, et la marche et les pauses seront à nouveau écartées du cardio.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The session will be re-read as paddling: the mechanical load comes back, and walking and pauses are excluded from the cardio figures again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La séance sera relue comme du pagayage : la charge mécanique revient, et la marche et les pauses seront à nouveau écartées du cardio."
+          }
+        }
+      }
+    },
+    "La séance sera relue en cardio seul : la charge mécanique est abandonnée, et la marche, la course et les pauses sont comptées.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The session will be re-read as cardio only: the mechanical load is dropped, and walking, running and pauses all count."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La séance sera relue en cardio seul : la charge mécanique est abandonnée, et la marche, la course et les pauses sont comptées."
+          }
+        }
+      }
+    },
+    "Le capteur cessera d'enregistrer et se déconnectera. Il revient en fonctionnement normal après la mise à jour, ou en le sortant de la sangle pour le redémarrer.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The sensor will stop recording and disconnect. It returns to normal operation after the update, or by taking it off the strap to restart it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le capteur cessera d'enregistrer et se déconnectera. Il revient en fonctionnement normal après la mise à jour, ou en le sortant de la sangle pour le redémarrer."
+          }
+        }
+      }
+    },
+    "Le capteur n'affiche que quatre enregistrements : le vider après chaque sortie évite que les suivants deviennent invisibles.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The sensor shows only four recordings: emptying it after every outing keeps the next ones from becoming invisible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le capteur n'affiche que quatre enregistrements : le vider après chaque sortie évite que les suivants deviennent invisibles."
+          }
+        }
+      }
+    },
+    "Le capteur n'en affiche que quatre. Les enregistrements suivants existent toujours, mais n'apparaissent plus ici : va les chercher avec « Récupérer les séances masquées », puis efface la mémoire.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The sensor shows only four. The recordings after that still exist but no longer appear here: fetch them with “Retrieve hidden sessions”, then erase the memory."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le capteur n'en affiche que quatre. Les enregistrements suivants existent toujours, mais n'apparaissent plus ici : va les chercher avec « Récupérer les séances masquées », puis efface la mémoire."
+          }
+        }
+      }
+    },
+    "Le capteur ne permet pas de supprimer une séance individuellement : ceci efface tout le journal d'un coup. Irréversible.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The sensor cannot delete one session on its own: this erases the whole logbook at once. Irreversible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le capteur ne permet pas de supprimer une séance individuellement : ceci efface tout le journal d'un coup. Irréversible."
+          }
+        }
+      }
+    },
+    "Le capteur ne sait afficher que quatre enregistrements à la fois. Ceci va chercher directement ceux qui suivent, et les importe.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The sensor can only show four recordings at a time. This fetches the ones after that directly and imports them."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le capteur ne sait afficher que quatre enregistrements à la fois. Ceci va chercher directement ceux qui suivent, et les importe."
+          }
+        }
+      }
+    },
+    "Le capteur signale qu'il contient d'autres enregistrements que sa liste ne peut pas afficher (elle plafonne à quatre). Ceci va les chercher directement et les importe.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The sensor reports holding recordings its list cannot show (it caps at four). This fetches them directly and imports them."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le capteur signale qu'il contient d'autres enregistrements que sa liste ne peut pas afficher (elle plafonne à quatre). Ceci va les chercher directement et les importe."
+          }
+        }
+      }
+    },
+    "Le premier capteur auquel tu te connecteras deviendra le tien. L'app ne parlera qu'à celui-là et refusera d'importer une séance venue d'un autre.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The first sensor you connect to becomes yours. The app will talk to that one only and refuse to import a session from any other."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le premier capteur auquel tu te connecteras deviendra le tien. L'app ne parlera qu'à celui-là et refusera d'importer une séance venue d'un autre."
+          }
+        }
+      }
+    },
+    "Le test n'a pas pu démarrer": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The test could not start"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le test n'a pas pu démarrer"
+          }
+        }
+      }
+    },
+    "Les données de cette séance seront définitivement supprimées de l'appareil et du tableau de bord de l'entraîneur.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This session’s data will be permanently deleted from the device and from the coach’s dashboard."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les données de cette séance seront définitivement supprimées de l'appareil et du tableau de bord de l'entraîneur."
+          }
+        }
+      }
+    },
+    "Les réglages de synchronisation ne sont pas complets.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The sync settings are incomplete."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les réglages de synchronisation ne sont pas complets."
+          }
+        }
+      }
+    },
+    "Les seuils sont une part de ta référence 45 s confirmée. Ils s'appliquent à une moyenne glissante de 15 secondes, pas à l'accélération instantanée — c'est pourquoi ils valent 35 et 55 % et non 70 et 90. Modifier un pourcentage recalcule aussitôt toutes tes séances : c'est la définition des zones qui change, elle doit être la même partout.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The thresholds are a share of your confirmed 45 s reference. They apply to a 15-second rolling mean, not to instantaneous acceleration — which is why they are 35 and 55%, not 70 and 90. Changing a percentage recomputes all your sessions at once: it is the definition of the zones that changes, and it has to be the same everywhere."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les seuils sont une part de ta référence 45 s confirmée. Ils s'appliquent à une moyenne glissante de 15 secondes, pas à l'accélération instantanée — c'est pourquoi ils valent 35 et 55 % et non 70 et 90. Modifier un pourcentage recalcule aussitôt toutes tes séances : c'est la définition des zones qui change, elle doit être la même partout."
+          }
+        }
+      }
+    },
+    "Les seuils valent %lld %% et %lld %% de ta référence 45 s confirmée, modifiables dans Réglages. Ils s'appliquent à une moyenne glissante de 15 secondes, bien plus basse que les pics qu'elle lisse — d'où des pourcentages bas.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The thresholds are %lld%% and %lld%% of your confirmed 45 s reference, adjustable in Settings. They apply to a 15-second rolling mean, which sits well below the peaks it smooths — hence the low percentages."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les seuils valent %lld %% et %lld %% de ta référence 45 s confirmée, modifiables dans Réglages. Ils s'appliquent à une moyenne glissante de 15 secondes, bien plus basse que les pics qu'elle lisse — d'où des pourcentages bas."
+          }
+        }
+      }
+    },
+    "Les tests du matin s'accumulent ici. C'est leur suite qui a du sens, pas un matin isolé.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Morning tests collect here. It is the run of them that means something, not any one morning."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les tests du matin s'accumulent ici. C'est leur suite qui a du sens, pas un matin isolé."
+          }
+        }
+      }
+    },
+    "LF / HF": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LF / HF"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LF / HF"
+          }
+        }
+      }
+    },
+    "Liste": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "List"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Liste"
+          }
+        }
+      }
+    },
+    "Marquer comme séance PPG ?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mark as a conditioning session?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marquer comme séance PPG ?"
+          }
+        }
+      }
+    },
+    "Marquer PPG": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mark as conditioning"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marquer PPG"
+          }
+        }
+      }
+    },
+    "McLean et al. (2010) — 1 très mauvais, 5 très bon. Ton coach ne voit que le score, jamais tes réponses.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "McLean et al. (2010) — 1 very poor, 5 very good. Your coach sees the score only, never your answers."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "McLean et al. (2010) — 1 très mauvais, 5 très bon. Ton coach ne voit que le score, jamais tes réponses."
+          }
+        }
+      }
+    },
+    "Mesure": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Measure"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mesure"
+          }
+        }
+      }
+    },
+    "Mets la sangle, connecte le capteur depuis l'onglet Capteur, puis allonge-toi avant de démarrer.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Put the strap on, connect the sensor from the Sensor tab, then lie down before starting."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mets la sangle, connecte le capteur depuis l'onglet Capteur, puis allonge-toi avant de démarrer."
+          }
+        }
+      }
+    },
+    "Mettre à jour": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Update"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mettre à jour"
+          }
+        }
+      }
+    },
+    "Mettre à jour les zones mécaniques avec cette nouvelle référence ?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Update the mechanical zones with this new reference?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mettre à jour les zones mécaniques avec cette nouvelle référence ?"
+          }
+        }
+      }
+    },
+    "minutes": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "minutes"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "minutes"
+          }
+        }
+      }
+    },
+    "Mode d'emploi": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "User guide"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mode d'emploi"
+          }
+        }
+      }
+    },
+    "Mois": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Month"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mois"
+          }
+        }
+      }
+    },
+    "mois": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "months"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "mois"
+          }
+        }
+      }
+    },
+    "Movesense Flash (Bluetooth)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Movesense Flash (Bluetooth)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Movesense Flash (Bluetooth)"
+          }
+        }
+      }
+    },
+    "ms²": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ms²"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ms²"
+          }
+        }
+      }
+    },
+    "Médiane des 6 derniers": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Median of the last six"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Médiane des 6 derniers"
+          }
+        }
+      }
+    },
+    "Nom affiché": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Display name"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nom affiché"
+          }
+        }
+      }
+    },
+    "Nom de la séance": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Session name"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nom de la séance"
+          }
+        }
+      }
+    },
+    "Nouveau record !": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New record!"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouveau record !"
+          }
+        }
+      }
+    },
+    "Nouveau record 45 s : %@ m/s²": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New 45 s record: %@ m/s²"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouveau record 45 s : %@ m/s²"
+          }
+        }
+      }
+    },
+    "OK": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        }
+      }
+    },
+    "Oublier ce capteur": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Forget this sensor"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oublier ce capteur"
+          }
+        }
+      }
+    },
+    "Partager ces réglages": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share these settings"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partager ces réglages"
+          }
+        }
+      }
+    },
+    "Partager les réglages": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share settings"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partager les réglages"
+          }
+        }
+      }
+    },
+    "Pas de données": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No data"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas de données"
+          }
+        }
+      }
+    },
+    "Pas de données cardio pour cette séance": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No heart-rate data for this session"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas de données cardio pour cette séance"
+          }
+        }
+      }
+    },
+    "Pas de motif de fatigue": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No fatigue pattern"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas de motif de fatigue"
+          }
+        }
+      }
+    },
+    "Pas encore assez de séances": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not enough sessions yet"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas encore assez de séances"
+          }
+        }
+      }
+    },
+    "Pas encore de charge ressentie renseignée": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No perceived exertion recorded yet"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas encore de charge ressentie renseignée"
+          }
+        }
+      }
+    },
+    "Pas encore de séance": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No sessions yet"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas encore de séance"
+          }
+        }
+      }
+    },
+    "Pas encore de test": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No test yet"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas encore de test"
+          }
+        }
+      }
+    },
+    "Passer en mode DFU": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch to DFU mode"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Passer en mode DFU"
+          }
+        }
+      }
+    },
+    "Passer en mode mise à jour (DFU)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch to update mode (DFU)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Passer en mode mise à jour (DFU)"
+          }
+        }
+      }
+    },
+    "Passer le capteur en mode mise à jour ?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch the sensor to update mode?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Passer le capteur en mode mise à jour ?"
+          }
+        }
+      }
+    },
+    "Pense à prévoir une pile CR2025 de rechange.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep a spare CR2025 battery to hand."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pense à prévoir une pile CR2025 de rechange."
+          }
+        }
+      }
+    },
+    "Pic": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peak"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pic"
+          }
+        }
+      }
+    },
+    "Progression des records": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record progression"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Progression des records"
+          }
+        }
+      }
+    },
+    "Puissance totale": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Total power"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puissance totale"
+          }
+        }
+      }
+    },
+    "Puissance totale, échelle logarithmique": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Total power, logarithmic scale"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puissance totale, échelle logarithmique"
+          }
+        }
+      }
+    },
+    "Période": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Period"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Période"
+          }
+        }
+      }
+    },
+    "QR code indisponible": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QR code unavailable"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QR code indisponible"
+          }
+        }
+      }
+    },
+    "Qualité du sommeil": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep quality"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Qualité du sommeil"
+          }
+        }
+      }
+    },
+    "Quel capteur est le tien ?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Which sensor is yours?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quel capteur est le tien ?"
+          }
+        }
+      }
+    },
+    "Questionnaire Wellness": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wellness questionnaire"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Questionnaire Wellness"
+          }
+        }
+      }
+    },
+    "Rafraîchir": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rafraîchir"
+          }
+        }
+      }
+    },
+    "Rafraîchir la liste": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh the list"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rafraîchir la liste"
+          }
+        }
+      }
+    },
+    "Recalculer l'historique": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recompute history"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recalculer l'historique"
+          }
+        }
+      }
+    },
+    "Recherche de l'enregistrement %u…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Looking for recording %u…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recherche de l'enregistrement %u…"
+          }
+        }
+      }
+    },
+    "Rechercher": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rechercher"
+          }
+        }
+      }
+    },
+    "Recherche…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanning…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recherche…"
+          }
+        }
+      }
+    },
+    "Reclasser en pagaie": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reclassify as paddling"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reclasser en pagaie"
+          }
+        }
+      }
+    },
+    "Reclasser en séance de pagaie ?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reclassify as a paddling session?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reclasser en séance de pagaie ?"
+          }
+        }
+      }
+    },
+    "Record": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record"
+          }
+        }
+      }
+    },
+    "record %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "record %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "record %@"
+          }
+        }
+      }
+    },
+    "Record actuel : %@ m/s²": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current record: %@ m/s²"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record actuel : %@ m/s²"
+          }
+        }
+      }
+    },
+    "Record sur la séance : %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Best in this session: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record sur la séance : %@"
+          }
+        }
+      }
+    },
+    "Relie cet appareil à la webapp coach. Le code d'équipe doit être identique sur tous les téléphones et dans l'URL de la webapp. Le plus simple est de scanner le QR code d'un appareil déjà configuré plutôt que de recopier les trois valeurs.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Links this device to the coach webapp. The team code must be identical on every phone and in the webapp URL. Scanning the QR code from an already-configured device is easier than retyping the three values."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relie cet appareil à la webapp coach. Le code d'équipe doit être identique sur tous les téléphones et dans l'URL de la webapp. Le plus simple est de scanner le QR code d'un appareil déjà configuré plutôt que de recopier les trois valeurs."
+          }
+        }
+      }
+    },
+    "Remplace la pile (CR2025) avant la prochaine sortie.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replace the battery (CR2025) before the next outing."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remplace la pile (CR2025) avant la prochaine sortie."
+          }
+        }
+      }
+    },
+    "Reste immobile, respire normalement.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stay still, breathe normally."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reste immobile, respire normalement."
+          }
+        }
+      }
+    },
+    "Rien de nouveau : %lld séance(s) masquée(s) déjà importée(s).": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing new: %lld hidden session(s) already imported."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rien de nouveau : %lld séance(s) masquée(s) déjà importée(s)."
+          }
+        }
+      }
+    },
+    "rMSSD": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "rMSSD"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "rMSSD"
+          }
+        }
+      }
+    },
+    "rMSSD %.0f ms": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "rMSSD %.0f ms"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "rMSSD %.0f ms"
+          }
+        }
+      }
+    },
+    "rMSSD (ms)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "rMSSD (ms)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "rMSSD (ms)"
+          }
+        }
+      }
+    },
+    "RPE": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RPE"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RPE"
+          }
+        }
+      }
+    },
+    "Récupérer les séances masquées": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retrieve hidden sessions"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Récupérer les séances masquées"
+          }
+        }
+      }
+    },
+    "Réessayer": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réessayer"
+          }
+        }
+      }
+    },
+    "Référence 45 s": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "45 s reference"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Référence 45 s"
+          }
+        }
+      }
+    },
+    "Référence 45 s pas encore définie : les zones mécaniques ne peuvent pas être calculées. Elle se règle en confirmant un record 45 s, ou depuis Réglages.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No 45 s reference set yet, so the mechanical zones cannot be computed. It is set by confirming a 45 s record, or from Settings."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Référence 45 s pas encore définie : les zones mécaniques ne peuvent pas être calculées. Elle se règle en confirmant un record 45 s, ou depuis Réglages."
+          }
+        }
+      }
+    },
+    "Référence : %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reference: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Référence : %@"
+          }
+        }
+      }
+    },
+    "Réglages": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réglages"
+          }
+        }
+      }
+    },
+    "Scanner le QR code": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan the QR code"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanner le QR code"
+          }
+        }
+      }
+    },
+    "Scanner un QR code": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan a QR code"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanner un QR code"
+          }
+        }
+      }
+    },
+    "Secondes": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seconds"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Secondes"
+          }
+        }
+      }
+    },
+    "Segment": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Segment"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Segment"
+          }
+        }
+      }
+    },
+    "Semaine": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Week"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Semaine"
+          }
+        }
+      }
+    },
+    "semaines": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "weeks"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "semaines"
+          }
+        }
+      }
+    },
+    "signal %lld dBm": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "signal %lld dBm"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "signal %lld dBm"
+          }
+        }
+      }
+    },
+    "Stress": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stress"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stress"
+          }
+        }
+      }
+    },
+    "Suppression impossible": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not delete"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suppression impossible"
+          }
+        }
+      }
+    },
+    "Supprimer": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer"
+          }
+        }
+      }
+    },
+    "Supprimer cette séance ?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete this session?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer cette séance ?"
+          }
+        }
+      }
+    },
+    "Sur %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Over %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur %@"
+          }
+        }
+      }
+    },
+    "Sur %lld %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Over %lld %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur %lld %@"
+          }
+        }
+      }
+    },
+    "Synchronisation": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisation"
+          }
+        }
+      }
+    },
+    "Synchroniser maintenant": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync now"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchroniser maintenant"
+          }
+        }
+      }
+    },
+    "Synchronisé à %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synced at %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisé à %@"
+          }
+        }
+      }
+    },
+    "Séance": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Session"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Séance"
+          }
+        }
+      }
+    },
+    "séance %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "session %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "séance %@"
+          }
+        }
+      }
+    },
+    "Séance de test (conditions standardisées)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test session (standardised conditions)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Séance de test (conditions standardisées)"
+          }
+        }
+      }
+    },
+    "Séance importée : %@, %lld min.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Session imported: %@, %lld min."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Séance importée : %@, %lld min."
+          }
+        }
+      }
+    },
+    "Séance PPG (charge cardio uniquement)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conditioning session (cardio load only)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Séance PPG (charge cardio uniquement)"
+          }
+        }
+      }
+    },
+    "Séance trop courte pour tracer la courbe": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Session too short to plot the curve"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Séance trop courte pour tracer la courbe"
+          }
+        }
+      }
+    },
+    "Séances": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sessions"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Séances"
+          }
+        }
+      }
+    },
+    "Série": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Series"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Série"
+          }
+        }
+      }
+    },
+    "Série trop courte pour que le spectre soit fiable.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Series too short for the spectrum to be reliable."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Série trop courte pour que le spectre soit fiable."
+          }
+        }
+      }
+    },
+    "Ta séance du %@ atteint %@ m/s², au-dessus de ta référence actuelle.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your session on %@ reaches %@ m/s², above your current reference."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ta séance du %@ atteint %@ m/s², au-dessus de ta référence actuelle."
+          }
+        }
+      }
+    },
+    "Temps": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temps"
+          }
+        }
+      }
+    },
+    "Temps au-dessus de la référence": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time above the reference"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temps au-dessus de la référence"
+          }
+        }
+      }
+    },
+    "Temps en zone cardio (toutes séances)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time in cardio zones (all sessions)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temps en zone cardio (toutes séances)"
+          }
+        }
+      }
+    },
+    "Temps en zone mécanique (toutes séances)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time in mechanical zones (all sessions)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temps en zone mécanique (toutes séances)"
+          }
+        }
+      }
+    },
+    "Temps passé dans chaque zone d'intensité de pagaie. Cette charge est calculée à partir de l'accélération de ton buste — sa variation de vitesse d'un instant à l'autre — mesurée par le capteur, gravité retirée.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time spent in each paddling-intensity zone. This load is worked out from the acceleration of your chest — how fast its speed changes from one instant to the next — measured by the sensor, with gravity removed."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temps passé dans chaque zone d'intensité de pagaie. Cette charge est calculée à partir de l'accélération de ton buste — sa variation de vitesse d'un instant à l'autre — mesurée par le capteur, gravité retirée."
+          }
+        }
+      }
+    },
+    "Temps passé dans chaque zone de fréquence cardiaque, d'après les seuils réglés dans Réglages. La marche et les moments sans effort ne sont pas comptés.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time spent in each heart-rate zone, using the thresholds set in Settings. Walking and moments with no effort are not counted."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temps passé dans chaque zone de fréquence cardiaque, d'après les seuils réglés dans Réglages. La marche et les moments sans effort ne sont pas comptés."
+          }
+        }
+      }
+    },
+    "Temps passé à pagayer plus fort que ta référence 45 s confirmée. Compté seconde par seconde sur le signal brut : les zones lissent sur 15 secondes et ne peuvent pas voir un effort plus court, celui-ci si.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time spent paddling harder than your confirmed 45 s reference. Counted second by second on the raw signal: the zones smooth over 15 seconds and cannot see a shorter effort, whereas this can."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temps passé à pagayer plus fort que ta référence 45 s confirmée. Compté seconde par seconde sur le signal brut : les zones lissent sur 15 secondes et ne peuvent pas voir un effort plus court, celui-ci si."
+          }
+        }
+      }
+    },
+    "Tendances": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trends"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tendances"
+          }
+        }
+      }
+    },
+    "Test orthostatique": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Orthostatic test"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test orthostatique"
+          }
+        }
+      }
+    },
+    "Test précédent": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previous test"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test précédent"
+          }
+        }
+      }
+    },
+    "Test terminé": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test finished"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test terminé"
+          }
+        }
+      }
+    },
+    "Tests": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tests"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tests"
+          }
+        }
+      }
+    },
+    "Ton capteur (%@) n'a pas répondu. %lld autre(s) capteur(s) à portée : %@. Vérifie que le tien est porté, sangle en place, et que sa pile n'est pas vide.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your sensor (%@) did not answer. %lld other sensor(s) in range: %@. Check that yours is being worn, strap in place, and that its battery is not flat."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ton capteur (%@) n'a pas répondu. %lld autre(s) capteur(s) à portée : %@. Vérifie que le tien est porté, sangle en place, et que sa pile n'est pas vide."
+          }
+        }
+      }
+    },
+    "Ton meilleur effort moyen sur chaque durée, de 3 secondes à 3 minutes. La courbe verte est ton record sur la période d'historique choisie dans Réglages.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your best average effort over each duration, from 3 seconds to 3 minutes. The green curve is your record over the history window chosen in Settings."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ton meilleur effort moyen sur chaque durée, de 3 secondes à 3 minutes. La courbe verte est ton record sur la période d'historique choisie dans Réglages."
+          }
+        }
+      }
+    },
+    "Tout voir": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show all"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout voir"
+          }
+        }
+      }
+    },
+    "Toutes les séances du capteur sont importées. Effacer sa mémoire ?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Every session on the sensor has been imported. Erase its memory?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les séances du capteur sont importées. Effacer sa mémoire ?"
+          }
+        }
+      }
+    },
+    "Trois séances sur le capteur": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Three sessions on the sensor"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trois séances sur le capteur"
+          }
+        }
+      }
+    },
+    "Télécharger": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Télécharger"
+          }
+        }
+      }
+    },
+    "Unité": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unit"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unité"
+          }
+        }
+      }
+    },
+    "Vérifie que le flux d'intervalles R-R arrive et qu'il est cohérent, avant que le test HRV s'appuie dessus. Chaque ligne est un battement.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checks that the stream of R-R intervals arrives and holds together, before the HRV test relies on it. Each line is one beat."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifie que le flux d'intervalles R-R arrive et qu'il est cohérent, avant que le test HRV s'appuie dessus. Chaque ligne est un battement."
+          }
+        }
+      }
+    },
+    "Wellness %lld %%": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wellness %lld%%"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wellness %lld %%"
+          }
+        }
+      }
+    },
+    "Zone": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zone"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zone"
+          }
+        }
+      }
+    },
+    "Zones cardio (bpm)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cardio zones (bpm)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zones cardio (bpm)"
+          }
+        }
+      }
+    },
+    "Zones mécaniques": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mechanical zones"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zones mécaniques"
+          }
+        }
+      }
+    },
+    "À la quatrième, les suivantes n'apparaîtront plus dans cette liste. Télécharge celles qui manquent, puis efface la mémoire du capteur.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "At the fourth, the ones after it stop appearing in this list. Download what is missing, then erase the sensor’s memory."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À la quatrième, les suivantes n'apparaîtront plus dans cette liste. Télécharge celles qui manquent, puis efface la mémoire du capteur."
+          }
+        }
+      }
+    },
+    "À scanner depuis Réglages > Synchronisation sur le téléphone du nouvel athlète.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan from Settings > Sync on the new athlete’s phone."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À scanner depuis Réglages > Synchronisation sur le téléphone du nouvel athlète."
+          }
+        }
+      }
+    },
+    "Écarts calculés sur une base faible : un grand pourcentage y est surtout de l'arithmétique.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changes measured against a small base: a large percentage there is mostly arithmetic."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écarts calculés sur une base faible : un grand pourcentage y est surtout de l'arithmétique."
+          }
+        }
+      }
+    },
+    "Échec : %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échec : %@"
+          }
+        }
+      }
+    },
+    "Écouter le cardio en direct (diagnostic)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listen to the live heart rate (diagnostic)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écouter le cardio en direct (diagnostic)"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

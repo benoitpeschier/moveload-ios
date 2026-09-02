@@ -77,14 +77,15 @@ public enum ZoneTimeAccumulator {
         sampleRateHz: Double,
         thresholdLow: Double,
         thresholdHigh: Double,
-        keepMask: [Bool]? = nil
+        keepMask: [Bool]? = nil,
+        windowSeconds: Double = mechZoneWindowSeconds
     ) -> [MechZone: TimeInterval] {
         var seconds: [MechZone: TimeInterval] = [.zone1: 0, .zone2: 0, .zone3: 0]
         guard !accelX.isEmpty, sampleRateHz > 0 else { return seconds }
 
         let dt = 1.0 / sampleRateHz
         let mask = keepMask?.count == accelX.count ? keepMask : nil
-        let window = max(1, Int((mechZoneWindowSeconds * sampleRateHz).rounded()))
+        let window = max(1, Int((windowSeconds * sampleRateHz).rounded()))
 
         // Running sum over kept samples: the divisor counts how many of the
         // window's samples were kept, so excluded stretches neither contribute

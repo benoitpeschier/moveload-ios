@@ -12,6 +12,12 @@ public protocol SyncService: Sendable {
     /// session on the phone left it visible to the coach forever, with no way
     /// to retract it from the app.
     func deleteSession(id: String, athleteId: String) async throws
+    func pushHRVTest(_ test: HRVTestSyncPayload) async throws
+
+    /// The fatigue thresholds the coach set for this athlete, or nil when they
+    /// have set none. The coach owns them — the phone reads and never writes
+    /// them — so that both screens read the same test the same way.
+    func fetchHRVThresholds(athleteId: String) async throws -> [String: Double]?
 }
 
 /// Firestore-backed `SyncService`, built entirely on `AuthClient`/`FirestoreClient`'s
@@ -37,6 +43,44 @@ public final class FirestoreSyncService: SyncService {
             settings: settings
         )
         try await upsertSession(session, settings: settings)
+    }
+
+    public func pushHRVTest(_ test: HRVTestSyncPayload) async throws {
+        let settings = try requireSettings()
+        let idToken = try await authClient.validIDToken(webAPIKey: settings.webAPIKey)
+        let client = FirestoreClient(projectID: settings.projectID, idToken: idToken)
+
+        try await client.upsertDocument(
+            pathComponents: ["teams", settings.teamCode, "athletes", test.athleteId, "hrv", test.id],
+            fields: [
+                "athleteId": .string(test.athleteId),
+                "date": .timestamp(test.date),
+                "supineMeanHR": .double(test.supineMeanHR),
+                "supineRMSSD": .double(test.supineRMSSD),
+                "supineTotalPower": .double(test.supineTotalPower),
+                "supineLFOverHF": .double(test.supineLFOverHF),
+                "supineLF": .double(test.supineLF),
+                "supineHF": .double(test.supineHF),
+                "standingMeanHR": .double(test.standingMeanHR),
+                "standingRMSSD": .double(test.standingRMSSD),
+                "standingTotalPower": .double(test.standingTotalPower),
+                "standingLFOverHF": .double(test.standingLFOverHF),
+                "standingLF": .double(test.standingLF),
+                "standingHF": .double(test.standingHF),
+                // The score, never the five answers — see HRVTestSyncPayload.
+                "wellnessScore": test.wellnessScore.map(FirestoreValue.integer) ?? .null,
+                "isReliable": .boolean(test.isReliable),
+            ]
+        )
+    }
+
+    public func fetchHRVThresholds(athleteId: String) async throws -> [String: Double]? {
+        let settings = try requireSettings()
+        let idToken = try await authClient.validIDToken(webAPIKey: settings.webAPIKey)
+        let client = FirestoreClient(projectID: settings.projectID, idToken: idToken)
+        return try await client.fetchNumbers(
+            pathComponents: ["teams", settings.teamCode, "athletes", athleteId, "config", "hrvThresholds"]
+        )
     }
 
     public func deleteSession(id: String, athleteId: String) async throws {
@@ -87,6 +131,18 @@ public final class FirestoreSyncService: SyncService {
                 "durationSeconds": .double(session.durationSeconds),
                 "perceivedExertion": session.perceivedExertion.map(FirestoreValue.integer) ?? .null,
                 "isTest": .boolean(session.isTest),
+                "isConditioning": .boolean(session.isConditioning),
+                // The stroke waveform rides along for test sessions only. It is
+                // ~470 doubles, which is nothing next to Firestore's 1 MB
+                // document limit but adds up over a season of ordinary
+                // training — and it is only on standardised tests that
+                // comparing stroke shape means anything anyway.
+                "bestNineSecondsSignal": session.isTest && !session.bestNineSecondsSignal.isEmpty
+                    ? .array(session.bestNineSecondsSignal.map { .double(($0 * 1000).rounded() / 1000) })
+                    : .null,
+                "bestNineSecondsRateHz": session.isTest && !session.bestNineSecondsSignal.isEmpty
+                    ? .double(session.bestNineSecondsRateHz)
+                    : .null,
                 "name": .string(session.name),
                 "hrZone1Seconds": .double(session.hrZone1Seconds),
                 "hrZone2Seconds": .double(session.hrZone2Seconds),

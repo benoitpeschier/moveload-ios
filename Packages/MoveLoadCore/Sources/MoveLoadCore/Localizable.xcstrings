@@ -1,0 +1,74 @@
+{
+  "sourceLanguage": "fr",
+  "strings": {
+    "Capteur non connecté.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sensor not connected."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capteur non connecté."
+          }
+        }
+      }
+    },
+    "Connexion au capteur échouée : %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not connect to the sensor: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connexion au capteur échouée : %@"
+          }
+        }
+      }
+    },
+    "Recherche du capteur expirée.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Timed out looking for the sensor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recherche du capteur expirée."
+          }
+        }
+      }
+    },
+    "Échec de la communication avec le capteur : %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Communication with the sensor failed: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échec de la communication avec le capteur : %@"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

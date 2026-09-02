@@ -70,6 +70,16 @@ public actor MovesenseGSPClient {
     /// pipelined). Holds the raw notification bytes for the next
     /// COMMAND_RESPONSE.
     private var pendingResponse: CheckedContinuation<Data, Error>?
+    private var pendingResponseTimeoutTask: Task<Void, Never>?
+
+    /// Live subscriptions, by the reference they were opened with.
+    ///
+    /// Subscription data and logbook data share the DATA response code but are
+    /// framed differently — a download inserts a four-byte offset after the
+    /// reference, a subscription puts its payload there directly. The
+    /// reference is the only thing that tells them apart, which is why they
+    /// are routed by it rather than by shape.
+    private var subscriptions: [UInt8: @Sendable (Data) -> Void] = [:]
     /// While a FETCH_LOG is in flight, DATA/DATA_PART2 notifications are
     /// routed here instead of `pendingResponse`.
     private var fetchAccumulator: FetchAccumulator?
@@ -120,6 +130,15 @@ public actor MovesenseGSPClient {
     }
 
     public func disconnect() async {
+        // Close the subscriptions politely while the link is still up, so the
+        // sensor frees its stream slots rather than waiting to notice the
+        // disconnection. It only has four.
+        for reference in subscriptions.keys {
+            _ = try? await send(command: .unsubscribe, reference: reference,
+                                payload: Data(), expectsStatusCode: false)
+        }
+        subscriptions.removeAll()
+
         if let peripheral {
             await delegate.disconnect(peripheral)
         }
@@ -178,6 +197,43 @@ public actor MovesenseGSPClient {
             throw GSPError.unexpectedResponse("Niveau de batterie vide")
         }
         return Int(first)
+    }
+
+    /// Opens a live subscription on `path`, delivering each notification's raw
+    /// payload to `onData`. Returns the reference to close it with.
+    ///
+    /// The payload is SBEM, the same encoding the logbook uses — but without
+    /// the file's leading descriptor table, so `MovesenseSBEMDecoder.decode`
+    /// cannot read it. What the bytes actually contain is deliberately left to
+    /// the caller for now: it will be read off the wire rather than guessed.
+    @discardableResult
+    public func subscribe(path: String, onData: @escaping @Sendable (Data) -> Void) async throws -> UInt8 {
+        let ref = nextReference()
+        subscriptions[ref] = onData
+        var payload = Data(path.utf8)
+        payload.append(0)
+        do {
+            _ = try await send(command: .subscribe, reference: ref, payload: payload, expectsStatusCode: true)
+        } catch {
+            subscriptions[ref] = nil
+            throw error
+        }
+        return ref
+    }
+
+    public func unsubscribe(reference: UInt8) async {
+        subscriptions[reference] = nil
+        // Sent, not awaited. Nothing downstream depends on the answer, and
+        // firmware that does not acknowledge it — as ours did not until 1.6.0 —
+        // would otherwise cost a full command timeout at the very moment the
+        // athlete is waiting for their result.
+        let peripheralRef = peripheral
+        let write = writeCharacteristic
+        if let peripheralRef, let write {
+            let bytes = Data([Command.unsubscribe.rawValue, reference])
+            let delegate = self.delegate
+            Task { await delegate.writeCommand(bytes, to: write, on: peripheralRef) }
+        }
     }
 
     public func get(_ path: String) async throws -> Data {
@@ -351,7 +407,26 @@ public actor MovesenseGSPClient {
             self.pendingResponse = continuation
             let delegate = self.delegate
             Task { await delegate.writeCommand(commandBytes, to: writeCharacteristic, on: peripheral) }
+            // A sensor that accepts the connection and exposes GSP can still
+            // never answer — nothing in BLE obliges it to, and the write
+            // itself succeeds. Without this the app waited for ever on the
+            // very first command after connecting.
+            pendingResponseTimeoutTask = Task { [weak self] in
+                try? await Task.sleep(nanoseconds: UInt64(Self.commandTimeout * 1_000_000_000))
+                await self?.failPendingResponse(command: "\(command)")
+            }
         }
+    }
+
+    /// Seconds allowed for one GSP command to be answered. A logbook download
+    /// is not covered by this — it streams through its own accumulator.
+    private static let commandTimeout: TimeInterval = 15
+
+    private func failPendingResponse(command: String) {
+        guard let continuation = pendingResponse else { return }
+        pendingResponse = nil
+        continuation.resume(throwing: GSPError.timeout(
+            "le capteur n'a pas répondu à \(command). Il est connecté mais ne parle pas — coupe le Bluetooth et rallume-le, ou redémarre le capteur en le sortant de la sangle."))
     }
 
     /// `isPartial` reflects status 100, meaning more entries remain and the
@@ -394,6 +469,11 @@ public actor MovesenseGSPClient {
     fileprivate func handlePeripheralDisconnected() {
         peripheral = nil
         writeCharacteristic = nil
+        // Handlers for a connection that no longer exists. Left in place they
+        // would take delivery of data belonging to the next one, since routing
+        // is by reference and the counter keeps running.
+        subscriptions.removeAll()
+        pendingResponseTimeoutTask?.cancel()
         if let pending = pendingResponse {
             pendingResponse = nil
             pending.resume(throwing: GSPError.connectionFailed("déconnecté"))
@@ -406,11 +486,19 @@ public actor MovesenseGSPClient {
 
         switch responseCode {
         case .commandResponse:
+            pendingResponseTimeoutTask?.cancel()
             if let pending = pendingResponse {
                 pendingResponse = nil
                 pending.resume(returning: data)
             }
         case .data, .dataPart2:
+            guard data.count >= 2 else { return }
+            let reference = data[data.startIndex + 1]
+            if let deliver = subscriptions[reference] {
+                // Subscription framing: payload straight after the reference.
+                deliver(Data(data.suffix(from: data.startIndex + 2)))
+                return
+            }
             guard data.count >= 6 else { return } // responseCode(1) + reference(1) + offset(4)
             let offset = Self.readUInt32LE(data, at: data.startIndex + 2)
             let bytes = data.suffix(from: data.startIndex + 6)
@@ -491,9 +579,18 @@ private final class Delegate: NSObject, CBCentralManagerDelegate, CBPeripheralDe
     private var scanNameSuffix: String?
     private var scanTimeoutTask: Task<Void, Never>?
 
+    // Every step below waits on a CoreBluetooth callback that is not
+    // guaranteed to arrive: a sensor whose links are all taken never answers a
+    // connect, and iOS reports nothing. Without these, the app spun on
+    // "Connexion…" for ever with no message — the worst failure to hand an
+    // athlete, since it says neither what is wrong nor what to try.
     private var connectContinuation: CheckedContinuation<Void, Error>?
+    private var connectTimeoutTask: Task<Void, Never>?
+    private var connectingPeripheral: CBPeripheral?
     private var discoverContinuation: CheckedContinuation<(CBCharacteristic, CBCharacteristic), Error>?
+    private var discoverTimeoutTask: Task<Void, Never>?
     private var notifyContinuation: CheckedContinuation<Void, Error>?
+    private var notifyTimeoutTask: Task<Void, Never>?
     private var pendingWriteChar: CBCharacteristic?
     private var pendingNotifyChar: CBCharacteristic?
 
@@ -555,11 +652,44 @@ private final class Delegate: NSObject, CBCentralManagerDelegate, CBPeripheralDe
         peripheral.delegate = self
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             self.connectContinuation = continuation
+            self.connectingPeripheral = peripheral
             centralManager?.connect(peripheral, options: nil)
+            connectTimeoutTask = Task { [weak self] in
+                try? await Task.sleep(nanoseconds: UInt64(Delegate.stepTimeout * 1_000_000_000))
+                await self?.failConnect()
+            }
+        }
+    }
+
+    /// Seconds allowed for one CoreBluetooth step. Generous: a first connect
+    /// after a firmware change can be slow while iOS rebuilds its GATT cache.
+    static let stepTimeout: TimeInterval = 20
+
+    private func failConnect() {
+        if let continuation = connectContinuation {
+            connectContinuation = nil
+            if let connectingPeripheral { centralManager?.cancelPeripheralConnection(connectingPeripheral) }
+            continuation.resume(throwing: MovesenseGSPClient.GSPError.timeout(
+                "connexion au capteur. Un autre appareil le tient peut-être déjà — montre, nRF Connect, ou l'app restée ouverte en arrière-plan."))
+        }
+    }
+
+    private func failDiscover() {
+        if let continuation = discoverContinuation {
+            discoverContinuation = nil
+            continuation.resume(throwing: MovesenseGSPClient.GSPError.timeout("découverte des services GSP"))
+        }
+    }
+
+    private func failNotify() {
+        if let continuation = notifyContinuation {
+            notifyContinuation = nil
+            continuation.resume(throwing: MovesenseGSPClient.GSPError.timeout("activation des notifications GSP"))
         }
     }
 
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
+        connectTimeoutTask?.cancel()
         if let continuation = connectContinuation {
             connectContinuation = nil
             continuation.resume()
@@ -628,11 +758,16 @@ private final class Delegate: NSObject, CBCentralManagerDelegate, CBPeripheralDe
         try await withCheckedThrowingContinuation { continuation in
             self.discoverContinuation = continuation
             peripheral.discoverServices([MovesenseGSPClient.serviceUUID])
+            discoverTimeoutTask = Task { [weak self] in
+                try? await Task.sleep(nanoseconds: UInt64(Delegate.stepTimeout * 1_000_000_000))
+                await self?.failDiscover()
+            }
         }
     }
 
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         guard let service = peripheral.services?.first(where: { $0.uuid == MovesenseGSPClient.serviceUUID }) else {
+            discoverTimeoutTask?.cancel()
             discoverContinuation?.resume(throwing: MovesenseGSPClient.GSPError.connectionFailed("service GSP introuvable"))
             discoverContinuation = nil
             return
@@ -644,6 +779,7 @@ private final class Delegate: NSObject, CBCentralManagerDelegate, CBPeripheralDe
         guard service.uuid == MovesenseGSPClient.serviceUUID else { return }
         let write = service.characteristics?.first { $0.uuid.uuidString == "34800001-7185-4D5D-B431-630E7050E8F0" }
         let notify = service.characteristics?.first { $0.uuid.uuidString == "34800002-7185-4D5D-B431-630E7050E8F0" }
+        discoverTimeoutTask?.cancel()
         guard let write, let notify else {
             discoverContinuation?.resume(throwing: MovesenseGSPClient.GSPError.connectionFailed("caractéristiques GSP introuvables"))
             discoverContinuation = nil
@@ -661,13 +797,39 @@ private final class Delegate: NSObject, CBCentralManagerDelegate, CBPeripheralDe
         guard let notifyChar = pendingNotifyChar else {
             throw MovesenseGSPClient.GSPError.connectionFailed("caractéristique de notification manquante")
         }
+
+        // Turn it off first when iOS believes it is already on.
+        //
+        // CoreBluetooth skips writing the descriptor if its own cached view
+        // says the characteristic is already notifying — so the app is told
+        // notifications are enabled while the sensor never saw the write, and
+        // every answer it sends goes nowhere. That is what a reconnection after
+        // an automatic recording looked like: connect fine, then the first
+        // command times out with no reply, and quitting the app "fixed" it
+        // because that is what clears the cached view.
+        if notifyChar.isNotifying {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                self.notifyContinuation = continuation
+                peripheral.setNotifyValue(false, for: notifyChar)
+                notifyTimeoutTask = Task { [weak self] in
+                    try? await Task.sleep(nanoseconds: UInt64(Delegate.stepTimeout * 1_000_000_000))
+                    await self?.failNotify()
+                }
+            }
+        }
+
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             self.notifyContinuation = continuation
             peripheral.setNotifyValue(true, for: notifyChar)
+            notifyTimeoutTask = Task { [weak self] in
+                try? await Task.sleep(nanoseconds: UInt64(Delegate.stepTimeout * 1_000_000_000))
+                await self?.failNotify()
+            }
         }
     }
 
     func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
+        notifyTimeoutTask?.cancel()
         if let error {
             notifyContinuation?.resume(throwing: MovesenseGSPClient.GSPError.connectionFailed(error.localizedDescription))
         } else {

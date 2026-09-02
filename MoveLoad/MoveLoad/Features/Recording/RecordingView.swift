@@ -17,6 +17,10 @@ struct RecordingView: View {
     @State private var errorMessage: String?
     @State private var isErasingMemory = false
     @State private var showEraseConfirmation = false
+    @State private var showDfuConfirmation = false
+    @State private var isEnteringDfu = false
+    @State private var hrProbeReference: UInt8?
+    @State private var hrProbeLines: [String] = []
     @State private var isRecoveringHidden = false
     @State private var recoveryStatus: String?
     @State private var hasUnlistedEntries = false
@@ -79,13 +83,17 @@ struct RecordingView: View {
                     }
                 } header: {
                     Text("Enregistrements sur le capteur")
+                } footer: {
+                    if let line = lastTransferLine {
+                        Text(line).monospacedDigit()
+                    }
                 }
 
                 Section {
                     if isRecoveringHidden {
                         VStack(alignment: .leading, spacing: 4) {
                             ProgressView()
-                            Text(recoveryStatus ?? "Recherche…")
+                            Text(recoveryStatus ?? String(localized: "Recherche…"))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -120,6 +128,33 @@ struct RecordingView: View {
                     }
                 } footer: {
                     Text("Le capteur ne permet pas de supprimer une séance individuellement : ceci efface tout le journal d'un coup. Irréversible.")
+                }
+
+                // Temporary: the HRV work needs to know what a live /Meas/HR
+                // notification actually contains before anything can decode it.
+                Section {
+                    Button(hrProbeReference == nil
+                           ? "Écouter le cardio en direct (diagnostic)"
+                           : "Arrêter l'écoute") {
+                        Task { await toggleHeartRateProbe() }
+                    }
+                    ForEach(hrProbeLines, id: \.self) { line in
+                        Text(line).font(.caption.monospaced()).textSelection(.enabled)
+                    }
+                } footer: {
+                    Text("Vérifie que le flux d'intervalles R-R arrive et qu'il est cohérent, avant que le test HRV s'appuie dessus. Chaque ligne est un battement.")
+                }
+
+                Section {
+                    if isEnteringDfu {
+                        ProgressView()
+                    } else {
+                        Button("Passer en mode mise à jour (DFU)") {
+                            showDfuConfirmation = true
+                        }
+                    }
+                } footer: {
+                    Text("En fonctionnement normal, le capteur n'expose pas le service de mise à jour : nRF Connect répond « Not Supported ». Ceci l'y bascule. Il se déconnecte, réapparaît sous un autre nom, et n'enregistre plus tant qu'une mise à jour n'est pas envoyée ou qu'il n'est pas redémarré en le sortant de la sangle.")
                 }
             }
 
@@ -173,6 +208,18 @@ struct RecordingView: View {
                 Task { await eraseMemory() }
             }
             Button("Annuler", role: .cancel) {}
+        }
+        .confirmationDialog(
+            "Passer le capteur en mode mise à jour ?",
+            isPresented: $showDfuConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Passer en mode DFU") {
+                Task { await enterDfuMode() }
+            }
+            Button("Annuler", role: .cancel) {}
+        } message: {
+            Text("Le capteur cessera d'enregistrer et se déconnectera. Il revient en fonctionnement normal après la mise à jour, ou en le sortant de la sangle pour le redémarrer.")
         }
         .confirmationDialog(
             "Toutes les séances du capteur sont importées. Effacer sa mémoire ?",
@@ -229,6 +276,68 @@ struct RecordingView: View {
         .padding(.vertical, 4)
     }
 
+    /// Puts the sensor into firmware-update mode.
+    ///
+    /// `SystemMode` 12 is `FwUpdateMode` in the SDK's `system/mode.yaml`. It is
+    /// needed because a Movesense running its application does **not** expose
+    /// the Nordic DFU service — nRF Connect answers "this device does not
+    /// support Nordic nor McuMgr DFU update mechanisms", which reads like the
+    /// wrong hardware rather than the wrong mode. The switch itself is only
+    /// reachable over GSP, so it has to happen here rather than in nRF Connect.
+    private func toggleHeartRateProbe() async {
+        guard let movesense = appEnvironment.sensorService as? MovesenseSensorService else {
+            errorMessage = String(localized: "Indisponible avec le capteur simulé.")
+            return
+        }
+        if let reference = hrProbeReference {
+            await movesense.unsubscribeHeartRate(reference: reference)
+            hrProbeReference = nil
+            return
+        }
+        hrProbeLines = []
+        do {
+            hrProbeReference = try await movesense.subscribeHeartRate { sample in
+                Task { @MainActor in
+                    for rr in sample.rrIntervalsMs {
+                        // Shows the interval and the rate it implies beside the
+                        // sensor's own averaged figure: the two disagreeing by
+                        // more than a couple of bpm would mean the decode is
+                        // wrong, and that is worth seeing while it streams.
+                        let line = String(
+                            format: "%4d ms · %.0f bpm   (moy. %.1f)",
+                            rr, 60_000.0 / Double(max(rr, 1)), sample.bpm)
+                        hrProbeLines.append(line)
+                        if hrProbeLines.count > 10 { hrProbeLines.removeFirst() }
+                    }
+                }
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func enterDfuMode() async {
+        isEnteringDfu = true
+        defer { isEnteringDfu = false }
+        guard let movesense = appEnvironment.sensorService as? MovesenseSensorService else {
+            errorMessage = String(localized: "Indisponible avec le capteur simulé.")
+            return
+        }
+        do {
+            try await movesense.enterFirmwareUpdateMode()
+            // It drops the link on the way out, which is the expected ending
+            // rather than a failure — say so, since a disconnection right
+            // after a tap otherwise reads as one.
+            importStatusMessage = String(localized: "Capteur en mode mise à jour. Il s'est déconnecté : envoie le paquet DFU depuis nRF Connect.")
+            entries = []
+            // The sensor is gone; leaving the screen showing it as connected is
+            // what made this look like the switch had failed.
+            await appEnvironment.sensorService.disconnect()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     /// Recordings this run has actually downloaded and imported.
     ///
     /// Safety before erasing cannot be inferred from the stored sessions: the
@@ -248,9 +357,9 @@ struct RecordingView: View {
             // Says "not downloaded here", not "not in the app": the app cannot
             // tell whether a recording it never fetched is already stored, and
             // claiming otherwise is what would get one erased.
-            return "\(entries.count) séance(s) sur le capteur, dont \(missing) que tu n'as pas téléchargée(s) depuis cet écran. Les effacer quand même ?"
+            return String(localized: "\(entries.count) séance(s) sur le capteur, dont \(missing) que tu n'as pas téléchargée(s) depuis cet écran. Les effacer quand même ?")
         }
-        return "Effacer les \(entries.count) séance(s) du capteur ? Toutes ont été téléchargées à l'instant."
+        return String(localized: "Effacer les \(entries.count) séance(s) du capteur ? Toutes ont été téléchargées à l'instant.")
     }
 
     /// Shown once, the first time a sensor is connected. Picking is the
@@ -354,7 +463,7 @@ struct RecordingView: View {
             HStack {
                 Text("Firmware").foregroundStyle(.secondary)
                 Spacer()
-                Text(name).foregroundStyle(.secondary)
+                Text(firmwareLabel(name)).foregroundStyle(.secondary)
             }
             .font(.caption)
         }
@@ -376,10 +485,10 @@ struct RecordingView: View {
 
     private var connectionLabel: String {
         switch connectionState {
-        case .disconnected: "Déconnecté"
-        case .connecting: "Connexion..."
+        case .disconnected: String(localized: "Déconnecté")
+        case .connecting: String(localized: "Connexion...")
         case .connected(let sensor): sensor.name
-        case .disconnecting: "Déconnexion..."
+        case .disconnecting: String(localized: "Déconnexion...")
         }
     }
 
@@ -465,7 +574,7 @@ struct RecordingView: View {
         let found = await collectSensors(seconds: paired == nil ? 6 : 15, stoppingAt: paired)
 
         guard !found.isEmpty else {
-            var message = "Aucun capteur trouvé. Vérifie que le Bluetooth est activé, que MoveLoad y a accès (Réglages > MoveLoad > Bluetooth), et que le capteur est porté et à proximité."
+            var message = String(localized: "Aucun capteur trouvé. Vérifie que le Bluetooth est activé, que MoveLoad y a accès (Réglages > MoveLoad > Bluetooth), et que le capteur est porté et à proximité.")
             if let movesense = appEnvironment.sensorService as? MovesenseSensorService {
                 message += "\n(\(movesense.diagnosticStateDescription))"
                 message += "\n\n" + (await movesense.debugScanBroad())
@@ -486,7 +595,7 @@ struct RecordingView: View {
             // Say what did answer: it is how the athlete works out their
             // sensor is flat, not worn, or left at home.
             let others = found.map(\.name).joined(separator: ", ")
-            errorMessage = "Ton capteur (\(paired)) n'a pas répondu. \(found.count) autre(s) capteur(s) à portée : \(others). Vérifie que le tien est porté, sangle en place, et que sa pile n'est pas vide."
+            errorMessage = String(localized: "Ton capteur (\(paired)) n'a pas répondu. \(found.count) autre(s) capteur(s) à portée : \(others). Vérifie que le tien est porté, sangle en place, et que sa pile n'est pas vide.")
             return
         }
 
@@ -524,7 +633,7 @@ struct RecordingView: View {
                 // later it is simply lost.
                 if let movesense = appEnvironment.sensorService as? MovesenseSensorService,
                    movesense.lastStopProducedNewEntry == false {
-                    errorMessage = "Attention : l'arrêt n'a produit aucun nouvel enregistrement dans le capteur. La séance n'a probablement pas été sauvegardée. Vérifie que le capteur est resté en contact avec la sangle pendant toute la séance."
+                    errorMessage = String(localized: "Attention : l'arrêt n'a produit aucun nouvel enregistrement dans le capteur. La séance n'a probablement pas été sauvegardée. Vérifie que le capteur est resté en contact avec la sangle pendant toute la séance.")
                 }
                 // stopLogging reboots the sensor (per the official tool's
                 // flow), which disconnects it — don't refresh entries here,
@@ -533,7 +642,7 @@ struct RecordingView: View {
                 // A sensor that has halted on a full logbook would accept the
                 // start and record nothing, which is only discovered afterwards.
                 if let full = try? await appEnvironment.sensorService.isStorageFull(), full == true {
-                    errorMessage = "La mémoire du capteur est pleine : il ne peut plus enregistrer. Télécharge tes séances puis utilise « Effacer toute la mémoire du capteur »."
+                    errorMessage = String(localized: "La mémoire du capteur est pleine : il ne peut plus enregistrer. Télécharge tes séances puis utilise « Effacer toute la mémoire du capteur ».")
                     return
                 }
                 try await appEnvironment.sensorService.startLogging(config: LoggingConfig())
@@ -549,7 +658,7 @@ struct RecordingView: View {
     /// nothing is downloaded twice.
     private func recoverHiddenSessions() async {
         guard let movesense = appEnvironment.sensorService as? MovesenseSensorService else {
-            recoveryStatus = "Indisponible avec le capteur simulé."
+            recoveryStatus = String(localized: "Indisponible avec le capteur simulé.")
             return
         }
         isRecoveringHidden = true
@@ -564,7 +673,7 @@ struct RecordingView: View {
         do {
             // Bounded so a sensor that answered forever couldn't trap the UI.
             while nextID <= highestListed + 16 {
-                recoveryStatus = "Recherche de l'enregistrement \(nextID)…"
+                recoveryStatus = String(localized: "Recherche de l'enregistrement \(nextID)…")
                 guard let raw = try await movesense.downloadEntry(id: nextID, progress: { _ in }) else {
                     break
                 }
@@ -584,16 +693,16 @@ struct RecordingView: View {
 
             switch (recovered, skipped) {
             case (0, 0):
-                recoveryStatus = "Aucun enregistrement masqué au-delà du \(highestListed)."
+                recoveryStatus = String(localized: "Aucun enregistrement masqué au-delà du \(highestListed).")
             case (0, _):
-                recoveryStatus = "Rien de nouveau : \(skipped) séance(s) masquée(s) déjà importée(s)."
+                recoveryStatus = String(localized: "Rien de nouveau : \(skipped) séance(s) masquée(s) déjà importée(s).")
             default:
-                recoveryStatus = "\(recovered) séance(s) récupérée(s) et importée(s)."
+                recoveryStatus = String(localized: "\(recovered) séance(s) récupérée(s) et importée(s).")
             }
             await refreshEntries()
         } catch {
             errorMessage = error.localizedDescription
-            recoveryStatus = recovered > 0 ? "\(recovered) séance(s) récupérée(s) avant l'erreur." : nil
+            recoveryStatus = recovered > 0 ? String(localized: "\(recovered) séance(s) récupérée(s) avant l'erreur.") : nil
         }
     }
 
@@ -621,6 +730,33 @@ struct RecordingView: View {
         }
     }
 
+    /// Debit of the last logbook download, over the air.
+    ///
+    /// Here because the cost of the custom firmware's pinned MTU cannot be
+    /// read from the headers — it has to be timed on the same recording before
+    /// flashing and after. A stopwatch impression is not comparable; this is.
+    /// "MoveLoad Auto 1.1.0" rather than just the name. Two images that behave
+    /// differently and report the same version cannot be told apart once
+    /// flashed, which is exactly the position this got into.
+    private func firmwareLabel(_ name: String) -> String {
+        let version = (appEnvironment.sensorService as? MovesenseSensorService)?.connectedFirmwareVersion ?? ""
+        return version.isEmpty ? name : "\(name) \(version)"
+    }
+
+    private var lastTransferLine: String? {
+        guard let movesense = appEnvironment.sensorService as? MovesenseSensorService,
+              let last = movesense.lastTransfer, last.seconds > 0
+        else { return nil }
+
+        let size = ByteCountFormatter.string(fromByteCount: Int64(last.bytes), countStyle: .file)
+        let rate = ByteCountFormatter.string(fromByteCount: Int64(last.bytesPerSecond.rounded()), countStyle: .file)
+        let seconds = Int(last.seconds.rounded())
+        let duration = seconds >= 60
+            ? String(localized: "\(seconds / 60) min \(String(format: "%02d", seconds % 60)) s")
+            : String(localized: "\(seconds) s")
+        return String(localized: "Dernier téléchargement : \(size) en \(duration) — \(rate)/s")
+    }
+
     private func download(_ entry: LogbookEntryInfo) async {
         do {
             let data = try await appEnvironment.sensorService.downloadEntry(entry) { progress in
@@ -642,7 +778,16 @@ struct RecordingView: View {
                 showEraseAfterImportPrompt = true
             }
         } catch {
-            errorMessage = error.localizedDescription
+            // 409 is the sensor refusing to read a logbook entry it is still
+            // writing to. That is correct behaviour and a normal thing to walk
+            // into — the recording starts by itself, so the entry at the top of
+            // the list is often the one in progress. "Commande GSP fetchLog a
+            // échoué (code 409)" said nothing about what to do.
+            if case MovesenseGSPClient.GSPError.commandFailed(_, 409) = error {
+                errorMessage = String(localized: "Cette séance est encore en cours d'enregistrement : le capteur ne peut pas la relire tant qu'elle est ouverte. Arrête l'enregistrement, puis rafraîchis la liste.")
+            } else {
+                errorMessage = error.localizedDescription
+            }
             downloadProgress[entry.id] = nil
         }
     }
@@ -662,7 +807,7 @@ struct RecordingView: View {
 
             for url in urls {
                 guard url.startAccessingSecurityScopedResource() else {
-                    throw SensorError.transferFailed("Accès refusé à \(url.lastPathComponent).")
+                    throw SensorError.transferFailed(String(localized: "Accès refusé à \(url.lastPathComponent)."))
                 }
                 defer { url.stopAccessingSecurityScopedResource() }
                 let data = try Data(contentsOf: url)
@@ -674,7 +819,7 @@ struct RecordingView: View {
             }
 
             guard let accelFile else {
-                throw SensorError.transferFailed("Aucun fichier acc_stream.json reconnu parmi les fichiers sélectionnés.")
+                throw SensorError.transferFailed(String(localized: "Aucun fichier acc_stream.json reconnu parmi les fichiers sélectionnés."))
             }
 
             let (axes, sampleRateHz) = try MovesenseShowcaseJSON.parseAcceleration(accelFile.data)
@@ -688,7 +833,7 @@ struct RecordingView: View {
                 hrSamples: hrSamples
             )
             _ = try appEnvironment.importSession(raw: raw, logbookEntryID: "showcase-\(UUID().uuidString)")
-            importStatusMessage = "Séance importée : \(startDate.formatted(date: .abbreviated, time: .shortened)), \(Int(raw.duration / 60)) min."
+            importStatusMessage = String(localized: "Séance importée : \(startDate.formatted(date: .abbreviated, time: .shortened)), \(Int(raw.duration / 60)) min.")
         } catch {
             errorMessage = error.localizedDescription
         }
