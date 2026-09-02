@@ -1,26 +1,86 @@
+// MoveLoad Firestore rules.
+//
+// Kept in the repository so they stop being invisible state that only exists
+// in a console. They are NOT deployed from here — paste the whole file into
+// Firebase > Firestore Database > Rules, and update it in the same change so
+// the two never drift.
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /teams/{teamCode}/athletes/{athleteId} {
-      allow read, write: if request.auth != null;
 
-      // Firestore rules do not cascade: a rule on the athlete document says
-      // nothing about what lives underneath it. Naming `sessions` explicitly
-      // meant `hrv` and `config` were never allowed at all — every morning
-      // test refused on the way up, every threshold refused on the way down.
+    // --- Helpers ---------------------------------------------------------
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // The teams the caller belongs to, denormalised onto their own user
+    // document so a membership check is one read rather than a scan of
+    // teams/{id}/members. Returns an empty list — never an error — for a
+    // caller who has no user document yet, so a missing doc denies access
+    // instead of failing rule evaluation.
+    function myTeams() {
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+      return userDoc == null ? [] : userDoc.data.get('teamIds', []);
+    }
+
+    function sharesATeam(teamIds) {
+      return signedIn() && teamIds != null && myTeams().hasAny(teamIds);
+    }
+
+    function athleteTeams(athleteId) {
+      let doc = get(/databases/$(database)/documents/athletes/$(athleteId));
+      return doc == null ? [] : doc.data.get('teamIds', []);
+    }
+
+    // --- Identity --------------------------------------------------------
+    // Your own document and nobody else's. `teamIds` is self-asserted here,
+    // which is the same protection as today: knowing the team code is what
+    // gets you in. Invitations replace that in step 3.
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    match /teams/{teamId} {
+      allow read, write: if signedIn();
+
+      match /members/{uid} {
+        allow read: if signedIn();
+        allow write: if signedIn() && request.auth.uid == uid;
+      }
+
+      // --- Legacy path, phase A only ------------------------------------
+      // The pre-migration shape, still readable and writable so that
+      // publishing these rules breaks nothing before the clients move.
+      // Deleted in phase C, together with the documents themselves.
+      match /athletes/{athleteId} {
+        allow read, write: if signedIn();
+        match /{document=**} {
+          allow read, write: if signedIn();
+        }
+      }
+    }
+
+    // --- Athletes and their data ----------------------------------------
+    // Stored once, whatever the memberships: an athlete in two teams has one
+    // copy of their sessions, not one copy per team prefix.
+    match /athletes/{athleteId} {
+      allow read: if sharesATeam(resource.data.get('teamIds', []));
+      // On create there is no `resource` yet, so the incoming document is what
+      // must place the athlete in one of the caller's teams.
+      allow create: if sharesATeam(request.resource.data.get('teamIds', []));
+      // Both sides checked on update: without the second test, a member could
+      // move an athlete into a team they do not belong to, or out of every one.
+      allow update: if sharesATeam(resource.data.get('teamIds', []))
+                    && sharesATeam(request.resource.data.get('teamIds', []));
+      allow delete: if sharesATeam(resource.data.get('teamIds', []));
+
+      // Sessions, HRV tests and the coach's thresholds. Rules do not cascade,
+      // so this recursive match is what covers them — the lesson of the rule
+      // that named `sessions` and silently refused `hrv` and `config`.
       match /{document=**} {
-        allow read, write: if request.auth != null;
+        allow read, write: if sharesATeam(athleteTeams(athleteId));
       }
     }
   }
 }
-
-// Kept in the repository so the rules stop being invisible state that only
-// exists in a console. They are NOT deployed from here — paste them into
-// Firebase > Firestore Database > Rules, and update this file in the same
-// change so the two never drift.
-//
-// Security note, true before and after this change: any signed-in account can
-// read and write any team. The team code is obscurity, not access control.
-// Real per-team rules arrive with the team model (step 2), which is what the
-// uid in `request.auth` will finally have something to be checked against.

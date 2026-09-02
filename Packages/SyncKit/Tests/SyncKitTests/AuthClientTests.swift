@@ -193,3 +193,43 @@ final class AuthClientAccountTests: XCTestCase {
         XCTAssertNil(current)
     }
 }
+
+final class FirebaseIDTokenTests: XCTestCase {
+    /// Builds a token shaped like Firebase's: three base64url segments, no
+    /// padding, and a payload this code has to survive without verifying.
+    private func token(claims: [String: Any]) -> String {
+        let payload = try! JSONSerialization.data(withJSONObject: claims)
+        let encoded = payload.base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+        return "header.\(encoded).signature"
+    }
+
+    func testReadsUserIDClaim() {
+        XCTAssertEqual(
+            FirebaseIDToken.uid(from: token(claims: ["user_id": "abc123", "sub": "abc123"])),
+            "abc123")
+    }
+
+    func testFallsBackToSubject() {
+        XCTAssertEqual(
+            FirebaseIDToken.uid(from: token(claims: ["sub": "xyz789"])),
+            "xyz789")
+    }
+
+    func testSurvivesPayloadsWhoseLengthNeedsPadding() {
+        // base64url strips "=", so a payload of any length must still decode.
+        for filler in ["a", "ab", "abc", "abcd", "abcde"] {
+            let uid = FirebaseIDToken.uid(from: token(claims: ["sub": "u", "pad": filler]))
+            XCTAssertEqual(uid, "u", "failed for padding filler \(filler)")
+        }
+    }
+
+    func testRejectsNonTokens() {
+        XCTAssertNil(FirebaseIDToken.uid(from: ""))
+        XCTAssertNil(FirebaseIDToken.uid(from: "not.a.token"))
+        XCTAssertNil(FirebaseIDToken.uid(from: "onlytwo.segments"))
+        XCTAssertNil(FirebaseIDToken.uid(from: token(claims: ["email": "a@b.c"])))
+    }
+}

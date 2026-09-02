@@ -76,6 +76,30 @@ public struct FirestoreClient: Sendable {
         return numbers
     }
 
+    /// One array-of-strings field, or an empty array when the document, the
+    /// field or the array is absent. Used for `teamIds`, which has to be read
+    /// before it is written: a phone knows the one team it is configured for,
+    /// and overwriting the list with that single value would drop an athlete
+    /// out of every other team they belong to.
+    public func fetchStringArray(pathComponents: [String], field: String) async throws -> [String] {
+        var request = URLRequest(url: documentURL(pathComponents: pathComponents))
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+
+        let (data, response) = try await session.data(for: request)
+        if let http = response as? HTTPURLResponse, http.statusCode == 404 { return [] }
+        try SyncError.validate(response, data: data)
+
+        guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let fields = root["fields"] as? [String: Any],
+              let wrapped = fields[field] as? [String: Any],
+              let arrayValue = wrapped["arrayValue"] as? [String: Any],
+              let values = arrayValue["values"] as? [[String: Any]]
+        else { return [] }
+
+        return values.compactMap { $0["stringValue"] as? String }
+    }
+
     private func documentURL(pathComponents: [String]) -> URL {
         let encodedPath = pathComponents
             .map { $0.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? $0 }
