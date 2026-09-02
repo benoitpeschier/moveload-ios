@@ -27,6 +27,13 @@ const char* const MoveLoadAutoApp::LAUNCHABLE_NAME = "MoveLoadAuto";
 #define BLINKS_RECORDING_STARTED 3
 #define BLINKS_RECORDING_STOPPED 5
 
+// Two when the arming window closes without a pulse. The steady light already
+// says "strap noticed"; without this, the silence that follows means either
+// "still listening" or "gave up minutes ago", and those are different faults.
+// It repeats every retry, so a sensor that cannot read the wearer says so
+// about every eight minutes instead of looking asleep.
+#define BLINKS_NO_PULSE_FOUND 2
+
 // How long the strap must stay off the body *and* the sensor stay still
 // before the recording is closed. Losing skin contact mid-session is common
 // enough that stopping on contact alone would cut sessions in two; requiring
@@ -744,6 +751,7 @@ void MoveLoadAutoApp::onTimer(wb::TimerId timerId)
         }
 
         DEBUGLOG("No pulse yet — pausing before another attempt");
+        blink(BLINKS_NO_PULSE_FOUND);
         mArming = false;
         mArmingBackoff = true;
         updateHeartRateSubscription();

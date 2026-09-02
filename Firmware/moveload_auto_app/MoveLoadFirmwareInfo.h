@@ -30,4 +30,9 @@
 //          was restarting a recording in the middle of the HRV test
 //   1.7.0  the same guard where it counts — at the moment logging starts, not
 //          only when arming begins: the strap goes on before the app opens
-#define MOVELOAD_APP_VERSION "1.7.0"
+//   1.8.0  2 blinks when arming gives up without finding a pulse. A session
+//          that failed to start on someone else's chest left nothing at all
+//          to look at: the steady light said the strap was noticed, and
+//          silence afterwards meant either "still listening" or "gave up
+//          twelve minutes ago", which are not the same problem
+#define MOVELOAD_APP_VERSION "1.8.0"
