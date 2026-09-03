@@ -449,6 +449,23 @@ final class AppEnvironment {
         Task { await pushInBackground { try await self.syncService.pushHRVTest(payload) } }
     }
 
+    /// Deletes a morning test, retracting it from the coach's dashboard first.
+    ///
+    /// Same order and same reason as `deleteSession`: once the local copy is
+    /// gone there is nothing left to retry from, and a trial run left standing
+    /// on the dashboard keeps skewing the median every later verdict is read
+    /// against.
+    func deleteHRVTest(_ test: HRVTest) async throws {
+        do {
+            try await syncService.deleteHRVTest(
+                id: test.id.uuidString, athleteId: athlete.id.uuidString)
+        } catch SyncError.notConfigured {
+            // Nothing was ever pushed.
+        }
+        modelContext.delete(test)
+        try modelContext.save()
+    }
+
     func allSessions() throws -> [Session] {
         try sessionRepository.allSessions(in: modelContext)
     }

@@ -14,6 +14,11 @@ public protocol SyncService: Sendable {
     func deleteSession(id: String, athleteId: String) async throws
     func pushHRVTest(_ test: HRVTestSyncPayload) async throws
 
+    /// Retracts a morning test. Same reasoning as `deleteSession`: a trial run
+    /// deleted on the phone but left standing on the dashboard would go on
+    /// shifting the coach's six-test median for weeks.
+    func deleteHRVTest(id: String, athleteId: String) async throws
+
     /// The fatigue thresholds the coach set for this athlete, or nil when they
     /// have set none. The coach owns them — the phone reads and never writes
     /// them — so that both screens read the same test the same way.
@@ -136,6 +141,13 @@ public final class FirestoreSyncService: SyncService {
         let connection = try await connect()
         try await connection.client.deleteDocument(
             pathComponents: ["athletes", athleteId, "sessions", id]
+        )
+    }
+
+    public func deleteHRVTest(id: String, athleteId: String) async throws {
+        let connection = try await connect()
+        try await connection.client.deleteDocument(
+            pathComponents: ["athletes", athleteId, "hrv", id]
         )
     }
 

@@ -10,9 +10,54 @@ import PersistenceKit
 /// athlete's own history, not against a population. This is the view that makes
 /// the daily ritual worth doing.
 struct HRVHistoryView: View {
+    @Environment(AppEnvironment.self) private var appEnvironment
     @Query(sort: \HRVTest.date, order: .reverse) private var tests: [HRVTest]
+    @State private var testPendingDelete: HRVTest?
+    @State private var deleteErrorMessage: String?
 
     var body: some View {
+        content
+            .alert(
+                "Supprimer ce test ?",
+                isPresented: Binding(
+                    get: { testPendingDelete != nil },
+                    set: { if !$0 { testPendingDelete = nil } }
+                )
+            ) {
+                Button("Annuler", role: .cancel) {}
+                Button("Supprimer", role: .destructive) {
+                    guard let test = testPendingDelete else { return }
+                    testPendingDelete = nil
+                    Task { await delete(test) }
+                }
+            } message: {
+                Text("Le test disparaîtra aussi du tableau de bord du coach. Les tests d'essai faussent la médiane contre laquelle les suivants sont lus.")
+            }
+            .alert(
+                "Suppression impossible",
+                isPresented: Binding(
+                    get: { deleteErrorMessage != nil },
+                    set: { if !$0 { deleteErrorMessage = nil } }
+                )
+            ) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(deleteErrorMessage ?? "")
+            }
+    }
+
+    /// Retracted from the coach's dashboard first — see AppEnvironment. The
+    /// error is surfaced rather than swallowed: a test that stays visible to
+    /// the coach after being deleted here is the failure worth knowing about.
+    private func delete(_ test: HRVTest) async {
+        do {
+            try await appEnvironment.deleteHRVTest(test)
+        } catch {
+            deleteErrorMessage = error.localizedDescription
+        }
+    }
+
+    @ViewBuilder private var content: some View {
         if tests.isEmpty {
             ContentUnavailableView(
                 "Pas encore de test",
@@ -69,8 +114,19 @@ struct HRVHistoryView: View {
     private var list: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Tests").font(.headline)
+            Text("Appui long sur un test pour le supprimer.")
+                .font(.caption).foregroundStyle(.secondary)
             ForEach(tests) { test in
                 row(test)
+                    // A context menu rather than a swipe: this is a VStack, not
+                    // a List, and swipe actions do not exist outside one.
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            testPendingDelete = test
+                        } label: {
+                            Label("Supprimer", systemImage: "trash")
+                        }
+                    }
                 Divider()
             }
         }
