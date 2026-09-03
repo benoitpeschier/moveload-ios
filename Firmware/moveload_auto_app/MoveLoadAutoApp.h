@@ -57,6 +57,9 @@ private:
     void startLogging();
     void stopLogging();
     void armStopTimer();
+    /// Clears the external-stop inhibition and its timer together, so the two
+    /// cannot disagree.
+    void forgetExternalStop();
     void cancelStopTimer();
     void startRecordingWatchdog();
     void stopRecordingWatchdog();
@@ -142,4 +145,7 @@ private:
     /// and re-reads the DataLogger state, which cannot be subscribed to.
     wb::TimerId mWatchdogTimer;
     wb::TimerId mIndicationTimer;
+    /// Bounds mExternalStopHonoured. Without it the flag outlived its purpose
+    /// by a whole day — see EXTERNAL_STOP_RESPECT_MS.
+    wb::TimerId mExternalStopTimer;
 };

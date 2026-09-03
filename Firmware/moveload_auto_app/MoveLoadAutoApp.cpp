@@ -101,6 +101,23 @@ const char* const MoveLoadAutoApp::LAUNCHABLE_NAME = "MoveLoadAuto";
 #define RR_ALIVE_MAX_DELTA_MS 250
 #define RR_ALIVE_TRANSITIONS_NEEDED 5
 
+// How long an externally requested stop keeps the sensor from re-arming.
+//
+// The flag it bounds means "a human just told me to stop, do not undo it",
+// and that intent lasts minutes. It used to be cleared by one thing only —
+// the strap losing contact — which a strap that stays damp suppresses
+// indefinitely, because a wet strap bridges the studs exactly like skin. So
+// the morning's HRV test, which stops the recording the sensor had started on
+// its own, inhibited every recording for the rest of the day: no arming, no
+// LED, nothing to see.
+//
+// Twenty minutes: the test itself is ten, the flag is set at its start, so
+// this expires about ten minutes after it ends — by which time the strap is
+// off — while still being far longer than a deliberate tap needs respecting.
+// Nothing is at risk on expiry: re-arming still has to find a heart-like
+// pulse, which a strap on a bench does not have.
+#define EXTERNAL_STOP_RESPECT_MS 1200000
+
 #define HR_MIN_BPM 30
 #define HR_MAX_BPM 220
 
@@ -118,6 +135,7 @@ MoveLoadAutoApp::MoveLoadAutoApp():
     mTicksWithoutHeartRate(0),
     mStopRequested(false),
     mExternalStopHonoured(false),
+    mExternalStopTimer(wb::ID_INVALID_TIMER),
     mArmingBackoff(false),
     mStopTimer(wb::ID_INVALID_TIMER),
     mArmingTimer(wb::ID_INVALID_TIMER),
@@ -243,9 +261,16 @@ void MoveLoadAutoApp::onGetResult(whiteboard::RequestId requestId,
                     // the athlete may well still be wearing the strap with a
                     // perfectly good pulse, and re-arming would undo the tap
                     // they just made.
-                    DEBUGLOG("Recording stopped from outside — not restarting until the strap comes off");
+                    DEBUGLOG("Recording stopped from outside — not restarting for now");
                     mExternalStopHonoured = true;
                     abandonArming();
+                    // Bounded, because the clearing condition can never come:
+                    // see EXTERNAL_STOP_RESPECT_MS.
+                    if (mExternalStopTimer != wb::ID_INVALID_TIMER)
+                    {
+                        stopTimer(mExternalStopTimer);
+                    }
+                    mExternalStopTimer = startTimer(EXTERNAL_STOP_RESPECT_MS, false);
                 }
             }
             else if (!wasLogging && isLogging())
@@ -441,7 +466,7 @@ void MoveLoadAutoApp::evaluateRecordingState()
             // Nothing is needed to bound it: if the strap really is off, no
             // pulse arrives and the arming timer ends the attempt on its own.
             mArmingBackoff = false;
-            mExternalStopHonoured = false;
+            forgetExternalStop();
             return;
         }
 
@@ -544,6 +569,16 @@ void MoveLoadAutoApp::cancelStopTimer()
     }
     stopTimer(mStopTimer);
     mStopTimer = wb::ID_INVALID_TIMER;
+}
+
+void MoveLoadAutoApp::forgetExternalStop()
+{
+    if (mExternalStopTimer != wb::ID_INVALID_TIMER)
+    {
+        stopTimer(mExternalStopTimer);
+        mExternalStopTimer = wb::ID_INVALID_TIMER;
+    }
+    mExternalStopHonoured = false;
 }
 
 void MoveLoadAutoApp::beginArming()
@@ -734,6 +769,18 @@ void MoveLoadAutoApp::onTimer(wb::TimerId timerId)
         {
             DEBUGLOG("No pulse for %d minutes — closing the recording", mTicksWithoutHeartRate);
             stopLogging();
+        }
+        return;
+    }
+
+    if (timerId == mExternalStopTimer)
+    {
+        mExternalStopTimer = wb::ID_INVALID_TIMER;
+        if (mExternalStopHonoured)
+        {
+            DEBUGLOG("The external stop has been respected long enough — listening again");
+            mExternalStopHonoured = false;
+            evaluateRecordingState();
         }
         return;
     }

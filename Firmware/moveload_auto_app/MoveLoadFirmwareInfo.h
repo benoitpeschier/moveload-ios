@@ -35,4 +35,9 @@
 //          to look at: the steady light said the strap was noticed, and
 //          silence afterwards meant either "still listening" or "gave up
 //          twelve minutes ago", which are not the same problem
-#define MOVELOAD_APP_VERSION "1.8.0"
+//   1.9.0  the external-stop inhibition is time-bounded. It was cleared only
+//          by a loss of contact, which a damp strap suppresses indefinitely,
+//          so the morning HRV test — which stops the recording the sensor had
+//          started on its own — inhibited every recording for the rest of the
+//          day, silently and with no LED
+#define MOVELOAD_APP_VERSION "1.9.0"
