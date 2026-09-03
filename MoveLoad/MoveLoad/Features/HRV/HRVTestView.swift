@@ -151,7 +151,12 @@ struct HRVTestView: View {
         if let settings = appEnvironment.athlete.settings,
            let recorder,
            !allTests.isEmpty {
-            let provisional = HRVTest(athlete: appEnvironment.athlete, date: Date())
+            // Deliberately without the athlete: this object exists only to
+            // carry the intervals into the verdict, it is never inserted, and
+            // hanging it off a managed relationship is how SwiftData is
+            // persuaded to insert something nobody asked it to — once per body
+            // evaluation, which is often.
+            let provisional = HRVTest(date: Date())
             let outcome: HRVVerdict.Outcome? = {
                 provisional.supineRRms = recorder.supineRR
                 provisional.standingRRms = recorder.standingRR

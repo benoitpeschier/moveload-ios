@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SensorKit
+import SwiftData
 
 @main
 struct MoveLoadApp: App {
@@ -17,6 +18,14 @@ struct MoveLoadApp: App {
         WindowGroup {
             RootTabView()
                 .environment(appEnvironment)
+                // Without this, every `@Query` in the app reads a container
+                // that is not the one the app writes to, and returns nothing —
+                // for ever, whatever accumulates. It cost the HRV history, the
+                // calendar's heart pills, and the fatigue verdict, which is
+                // gated on the query being non-empty and so had never once
+                // been shown. Nothing crashed and nothing was logged: the
+                // screens simply said there was no data.
+                .modelContainer(appEnvironment.modelContainer)
                 .task {
                     try? appEnvironment.bootstrap()
                 }
