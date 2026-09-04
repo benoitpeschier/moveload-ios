@@ -23,6 +23,22 @@ public enum FatiguePatterns {
         case peripheralRegulation = "F(LF-st)"
 
         /// What the pattern says about the athlete — **a description, never a
+        /// The short name, without the physiological half.
+        ///
+        /// The athlete's screen shows this and nothing more: "hypotonie para et
+        /// orthosympathique couché" is a sentence for the person who can weigh
+        /// it, and half-understood it invites a training decision nobody should
+        /// take from a phone.
+        public var name: String {
+            switch self {
+            case .energyCollapse:       "Effondrement de l'énergie"
+            case .acuteStress:          "Stress aigu"
+            case .activationBrake:      "Frein à l'activation"
+            case .extremeFatigue:       "Fatigue extrême"
+            case .peripheralRegulation: "Régulation de la pression périphérique"
+            }
+        }
+
         /// prescription.** What session to do depends on the week's plan, the
         /// water and how the athlete feels, none of which this knows.
         public var reading: String {

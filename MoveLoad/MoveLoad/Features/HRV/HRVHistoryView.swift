@@ -67,6 +67,7 @@ struct HRVHistoryView: View {
         } else {
             VStack(alignment: .leading, spacing: 24) {
                 trend
+                patterns
                 list
             }
         }
@@ -74,40 +75,153 @@ struct HRVHistoryView: View {
 
     // MARK: -
 
-    private var points: [(date: Date, rmssd: Double, totalPower: Double, restingHR: Double)] {
+    /// One row per test, both positions, for the charts below.
+    private struct Point: Identifiable {
+        let id: Date
+        let date: Date
+        let supine: HeartRateVariability.Result
+        let standing: HeartRateVariability.Result?
+    }
+
+    private var points: [Point] {
         tests.reversed().compactMap { test in
             guard let supine = HeartRateVariability.analyse(
                 rrIntervalsMs: test.supineRRms.map(Double.init)) else { return nil }
-            return (test.date, supine.rmssdMs, supine.totalPower, supine.meanHRbpm)
+            return Point(
+                id: test.date, date: test.date, supine: supine,
+                standing: HeartRateVariability.analyse(
+                    rrIntervalsMs: test.standingRRms.map(Double.init)))
         }
     }
 
     private var trend: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Allongé, au fil des tests").font(.headline)
-
-            Chart(points, id: \.date) { point in
-                LineMark(x: .value("Date", point.date), y: .value("rMSSD", point.rmssd))
-                    .foregroundStyle(by: .value("Mesure", "rMSSD (ms)"))
-                PointMark(x: .value("Date", point.date), y: .value("rMSSD", point.rmssd))
-                    .foregroundStyle(by: .value("Mesure", "rMSSD (ms)"))
-
-                LineMark(x: .value("Date", point.date), y: .value("FC", point.restingHR))
-                    .foregroundStyle(by: .value("Mesure", "FC (bpm)"))
-                PointMark(x: .value("Date", point.date), y: .value("FC", point.restingHR))
-                    .foregroundStyle(by: .value("Mesure", "FC (bpm)"))
+        VStack(alignment: .leading, spacing: 20) {
+            section("Allongé") {
+                chart("FC et rMSSD", series: [
+                    ("FC (bpm)", { $0.supine.meanHRbpm }),
+                    ("rMSSD (ms)", { $0.supine.rmssdMs }),
+                ])
+                chart("LF et HF (ms²)", series: [
+                    ("LF", { $0.supine.lf }),
+                    ("HF", { $0.supine.hf }),
+                ])
             }
-            .frame(height: 180)
-
-            // Total power is plotted apart and on a log scale: one 9452 against
-            // a usual 700–1500 flattens every other point into the axis.
-            Text("Puissance totale, échelle logarithmique").font(.subheadline)
-            Chart(points, id: \.date) { point in
-                LineMark(x: .value("Date", point.date), y: .value("ms²", max(point.totalPower, 1)))
-                PointMark(x: .value("Date", point.date), y: .value("ms²", max(point.totalPower, 1)))
+            section("Debout") {
+                chart("LF et FC", series: [
+                    ("LF (ms²)", { $0.standing?.lf ?? 0 }),
+                    ("FC (bpm)", { $0.standing?.meanHRbpm ?? 0 }),
+                ])
             }
-            .chartYScale(type: .log)
-            .frame(height: 140)
+        }
+    }
+
+    @ViewBuilder
+    private func section(_ title: LocalizedStringKey, @ViewBuilder content: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title).font(.headline)
+            content()
+        }
+    }
+
+    /// A morning is a day, so the axis is a day.
+    ///
+    /// The default date axis reaches for hours as soon as two tests fall close
+    /// together, and "06:40" on the x-axis of a series taken one morning per
+    /// day says nothing anyone needs.
+    private func chart(_ title: LocalizedStringKey,
+                       series: [(String, (Point) -> Double)]) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title).font(.subheadline).foregroundStyle(.secondary)
+            Chart {
+                ForEach(series, id: \.0) { name, value in
+                    ForEach(points) { point in
+                        LineMark(x: .value("Jour", point.date, unit: .day),
+                                 y: .value("Valeur", value(point)))
+                            .foregroundStyle(by: .value("Mesure", name))
+                        PointMark(x: .value("Jour", point.date, unit: .day),
+                                  y: .value("Valeur", value(point)))
+                            .foregroundStyle(by: .value("Mesure", name))
+                    }
+                }
+            }
+            .chartXAxis {
+                AxisMarks(values: .automatic(desiredCount: 4)) { value in
+                    AxisGridLine()
+                    AxisValueLabel(format: .dateTime.day().month(.abbreviated))
+                }
+            }
+            .frame(height: 160)
+        }
+    }
+
+    // MARK: - Fatigue patterns
+
+    private var outcome: HRVVerdict.Outcome? {
+        guard let settings = appEnvironment.athlete.settings,
+              let current = tests.first else { return nil }
+        return HRVVerdict.evaluate(
+            current: current, earlier: Array(tests.dropFirst()).reversed(), settings: settings)
+    }
+
+    private func colour(for pattern: FatiguePatterns.Pattern) -> Color {
+        switch pattern {
+        case .energyCollapse:       Color(red: 0.75, green: 0.22, blue: 0.17)
+        case .acuteStress:          Color(red: 0.85, green: 0.49, blue: 0.05)
+        case .activationBrake:      Color(red: 0.48, green: 0.32, blue: 0.19)
+        case .extremeFatigue:       Color.primary
+        case .peripheralRegulation: Color(red: 0.48, green: 0.31, blue: 0.66)
+        }
+    }
+
+    /// The reading, named and nothing else.
+    ///
+    /// No thresholds, no deltas, no editing: those belong to the coach, who
+    /// reads them against a whole squad and a season. Here the athlete gets the
+    /// name of what the morning looks like and the instruction to take it to
+    /// their coach — which is the only action this screen should produce.
+    private var patterns: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Motif du jour").font(.headline)
+
+            if let outcome {
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(outcome.pattern.map(colour(for:)) ?? .green)
+                        .frame(width: 10, height: 10)
+                    Text(outcome.pattern?.name ?? String(localized: "Équilibre physiologique"))
+                        .font(.callout).fontWeight(.medium)
+                }
+
+                DisclosureGroup("Les cinq motifs") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(FatiguePatterns.Pattern.allCases, id: \.self) { pattern in
+                            HStack(spacing: 8) {
+                                Circle().fill(colour(for: pattern)).frame(width: 8, height: 8)
+                                Text(pattern.name).font(.callout)
+                                Spacer()
+                            }
+                        }
+                        HStack(spacing: 8) {
+                            Circle().fill(.green).frame(width: 8, height: 8)
+                            Text("Équilibre physiologique").font(.callout)
+                            Spacer()
+                        }
+                    }
+                    .padding(.top, 6)
+                }
+                .font(.subheadline)
+            } else {
+                Text("Il faut au moins deux tests pour situer le matin par rapport aux précédents.")
+                    .font(.callout).foregroundStyle(.secondary)
+            }
+
+            Label {
+                Text("Quel que soit le motif, fais-le valider par ton coach : ce sont des repères, pas un diagnostic, et la décision d'entraînement lui revient.")
+                    .font(.caption)
+            } icon: {
+                Image(systemName: "person.2")
+            }
+            .foregroundStyle(.secondary)
         }
     }
 
