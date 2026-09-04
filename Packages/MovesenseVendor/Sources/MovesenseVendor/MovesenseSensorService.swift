@@ -206,6 +206,16 @@ public final class MovesenseSensorService: NSObject, SensorService {
             connectedSensor = resolvedSensor
             state = .connected(resolvedSensor)
         } catch {
+            // Hand the link back before giving up.
+            //
+            // Saying `.disconnected` without doing it left CoreBluetooth
+            // holding the peripheral: the sensor stayed connected, and a
+            // connected sensor stops advertising. Every later scan then found
+            // nothing at all, while the screen said "Déconnecté" — which is
+            // also why quitting the app had always "fixed" it, that being what
+            // finally dropped the link. Seen 2026-09-05 after a command timed
+            // out mid-connect.
+            await gsp.disconnect()
             state = .disconnected
             throw error
         }
