@@ -664,6 +664,23 @@
         }
       }
     },
+    "Capteur déconnecté. Il pourra redémarrer un enregistrement tout seul quand tu remettras la sangle.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sensor disconnected. It will be free to start a recording on its own when you put the strap back on."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capteur déconnecté. Il pourra redémarrer un enregistrement tout seul quand tu remettras la sangle."
+          }
+        }
+      }
+    },
     "Capteur en mode mise à jour. Il s'est déconnecté : envoie le paquet DFU depuis nRF Connect.": {
       "extractionState": "manual",
       "localizations": {

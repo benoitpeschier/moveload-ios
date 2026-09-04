@@ -30,6 +30,9 @@ final class HRVTestRecorder {
     private(set) var currentBpm: Double?
     private(set) var supineRR: [Int] = []
     private(set) var standingRR: [Int] = []
+    /// Set once the link has actually been given back, so the screen can say so
+    /// rather than announce a disconnection that is still in flight.
+    private(set) var didDisconnect = false
 
     /// Five minutes a position. The analyser trims 30 s from each end, which is
     /// what leaves four clean minutes — see HeartRateVariability.
@@ -62,6 +65,7 @@ final class HRVTestRecorder {
         supineRR = []
         standingRR = []
         elapsed = 0
+        didDisconnect = false
 
         // Ten minutes lying still is exactly how long iOS waits before dimming
         // and locking, and a locked screen takes the timer and the position
@@ -155,5 +159,24 @@ final class HRVTestRecorder {
             try? await sensor.startLogging(config: LoggingConfig())
         }
         phase = newPhase
+
+        // Hang up. Nothing past this point needs the sensor: the intervals are
+        // already in memory, and the questionnaire and the save are the phone's
+        // business alone.
+        //
+        // Not merely tidiness. A connected sensor does not advertise, and the
+        // firmware refuses to arm while a phone is on the line — deliberately,
+        // since a connected phone means someone is using the sensor rather than
+        // putting a strap on to train. So a link left open after the morning
+        // test is a link that stops the session an hour later from recording
+        // itself, and the athlete has no reason to suspect the two are related.
+        //
+        // Only on a finished test: a cancel is usually followed by another
+        // attempt straight away, and hanging up would make the athlete
+        // reconnect to make it.
+        if newPhase == .finished {
+            await sensor.disconnect()
+            didDisconnect = true
+        }
     }
 }

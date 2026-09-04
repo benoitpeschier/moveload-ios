@@ -106,6 +106,19 @@ struct HRVTestView: View {
         VStack(alignment: .leading, spacing: 20) {
             Text("Test terminé").font(.title2.bold())
 
+            // Said rather than left to be discovered: the athlete connected the
+            // sensor themselves a moment ago, and a link that closes on its own
+            // without a word is the kind of thing that gets reported as a bug.
+            if recorder?.didDisconnect == true {
+                Label {
+                    Text("Capteur déconnecté. Il pourra redémarrer un enregistrement tout seul quand tu remettras la sangle.")
+                        .font(.caption)
+                } icon: {
+                    Image(systemName: "antenna.radiowaves.left.and.right.slash")
+                }
+                .foregroundStyle(.secondary)
+            }
+
             verdict
 
             if let supine = analyse(recorder?.supineRR ?? []) {
