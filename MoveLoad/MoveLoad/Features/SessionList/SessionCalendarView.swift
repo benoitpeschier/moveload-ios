@@ -6,7 +6,7 @@ import PersistenceKit
 /// mechanical zones in proportion to the time spent in each.
 ///
 /// The fill is kept faint so the date stays readable on top of it; the point is
-/// to recognise a month's shape at a glance, not to read exact values off it.
+/// to recognise a week's shape at a glance, not to read exact values off it.
 struct SessionCalendarView: View {
     let sessions: [Session]
     /// Morning tests, so a day can show both what was trained and how the
@@ -14,24 +14,25 @@ struct SessionCalendarView: View {
     /// yesterday's load with this morning's reading without changing screen.
     @Query(sort: \HRVTest.date) private var hrvTests: [HRVTest]
 
+    /// Week first, and the default: the training week is the unit an athlete
+    /// plans and reads in. The month is the step back taken afterwards, and
+    /// opening on it meant a screen where no session carried its name.
     enum Span: String, CaseIterable {
-        case month = "Mois"
         case week = "Semaine"
+        case month = "Mois"
 
         var label: String {
             switch self {
-            case .month: String(localized: "Mois")
             case .week: String(localized: "Semaine")
+            case .month: String(localized: "Mois")
             }
         }
     }
 
-    @State private var span: Span = .month
+    @State private var span: Span = .week
     @State private var anchorDate: Date = .now
-    @State private var selectedDay: Date?
 
     private let calendar = Calendar.current
-    private static let zoneOpacity: Double = 0.30
 
     var body: some View {
         VStack(spacing: 12) {
@@ -44,15 +45,20 @@ struct SessionCalendarView: View {
                         .foregroundStyle(.secondary)
                 }
                 ForEach(displayedDays, id: \.self) { day in
-                    dayCell(day)
+                    // The whole square, rather than the bars inside it: a
+                    // month cell's 9-point sliver is far below a usable tap
+                    // target, and one target per day behaves the same in both
+                    // spans instead of changing under the finger.
+                    NavigationLink(value: CalendarDay(date: day)) {
+                        dayCell(day)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
 
-            // The month grid has no room for names — a column is about 45
-            // points wide — so the selected day's sessions are listed under it.
-            if span == .month, let selectedDay {
-                selectedDayList(selectedDay)
-            }
+            Text("Touche un jour pour l'ouvrir.")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -80,14 +86,14 @@ struct SessionCalendarView: View {
 
     private func dayCell(_ day: Date) -> some View {
         let daySessions = sessions(on: day)
-        let isSelected = selectedDay.map { calendar.isDate($0, inSameDayAs: day) } ?? false
+        let isToday = calendar.isDateInToday(day)
         let inPeriod = span == .week || calendar.isDate(day, equalTo: anchorDate, toGranularity: .month)
 
         return VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 3) {
                 Text("\(calendar.component(.day, from: day))")
                     .font(.caption)
-                    .fontWeight(isSelected ? .bold : .regular)
+                    .fontWeight(isToday ? .bold : .regular)
                     .foregroundStyle(inPeriod ? .primary : .secondary)
                 if hasHRVTest(on: day) {
                     Image(systemName: "heart.fill")
@@ -97,18 +103,8 @@ struct SessionCalendarView: View {
             }
 
             ForEach(daySessions, id: \.id) { session in
-                if span == .week {
-                    // Only in week view: there the bar is 20 points tall and
-                    // carries its name, so it is a real target. A month cell's
-                    // 9-point sliver is far below a usable one — selecting the
-                    // day and listing its sessions underneath is the way in.
-                    NavigationLink(value: session.id) {
-                        sessionBar(session, showName: true)
-                    }
-                    .buttonStyle(.plain)
-                } else {
-                    sessionBar(session, showName: false)
-                }
+                // Only the week's bars are tall enough to carry a name.
+                SessionZoneBar(session: session, showsName: span == .week)
             }
             Spacer(minLength: 0)
         }
@@ -116,69 +112,9 @@ struct SessionCalendarView: View {
         .frame(maxWidth: .infinity, minHeight: span == .month ? 52 : 104, alignment: .topLeading)
         .background(
             RoundedRectangle(cornerRadius: 6)
-                .strokeBorder(isSelected ? Color.accentColor : Color(.separator), lineWidth: isSelected ? 1.5 : 0.5)
+                .strokeBorder(isToday ? Color.accentColor : Color(.separator), lineWidth: isToday ? 1.5 : 0.5)
         )
         .contentShape(Rectangle())
-        .onTapGesture {
-            // In week view the bars handle their own taps; a cell-wide gesture
-            // would swallow them.
-            if span == .month { selectedDay = day }
-        }
-    }
-
-    private func sessionBar(_ session: Session, showName: Bool) -> some View {
-        ZStack(alignment: .leading) {
-            GeometryReader { geometry in
-                HStack(spacing: 0) {
-                    ForEach(Array(zoneShares(session).enumerated()), id: \.offset) { index, share in
-                        Rectangle()
-                            .fill(zoneColor(index).opacity(Self.zoneOpacity))
-                            .frame(width: geometry.size.width * share)
-                    }
-                }
-            }
-            if showName {
-                Text(session.displayTitle)
-                    .font(.system(size: 10))
-                    .lineLimit(1)
-                    .padding(.horizontal, 3)
-            }
-        }
-        .frame(height: showName ? 20 : 9)
-        .clipShape(RoundedRectangle(cornerRadius: 3))
-    }
-
-    private func selectedDayList(_ day: Date) -> some View {
-        let daySessions = sessions(on: day)
-        return VStack(alignment: .leading, spacing: 6) {
-            Text(day.formatted(date: .complete, time: .omitted))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            if daySessions.isEmpty {
-                Text("Aucune séance").font(.subheadline).foregroundStyle(.secondary)
-            } else {
-                ForEach(daySessions, id: \.id) { session in
-                    NavigationLink(value: session.id) {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(session.displayTitle).font(.subheadline)
-                                Text("\(Int(session.duration / 60)) min")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundStyle(.tertiary)
-                        }
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: - Data
@@ -187,24 +123,6 @@ struct SessionCalendarView: View {
         sessions
             .filter { calendar.isDate($0.startDate, inSameDayAs: day) }
             .sorted { $0.startDate < $1.startDate }
-    }
-
-    /// The three zones as fractions of the session's zone time. A session with
-    /// no zone time at all — no confirmed reference yet — gets an even split in
-    /// grey rather than a misleading colour.
-    private func zoneShares(_ session: Session) -> [Double] {
-        let values = [session.mechZone1Seconds, session.mechZone2Seconds, session.mechZone3Seconds]
-        let total = values.reduce(0, +)
-        guard total > 0 else { return [1, 0, 0] }
-        return values.map { $0 / total }
-    }
-
-    private func zoneColor(_ index: Int) -> Color {
-        switch index {
-        case 0: .green
-        case 1: .yellow
-        default: .purple
-        }
     }
 
     // MARK: - Dates
@@ -246,7 +164,61 @@ struct SessionCalendarView: View {
         let component: Calendar.Component = span == .month ? .month : .weekOfYear
         if let moved = calendar.date(byAdding: component, value: amount, to: anchorDate) {
             anchorDate = moved
-            selectedDay = nil
         }
+    }
+}
+
+/// One session's zone time as a single stacked bar.
+///
+/// Shared by the calendar squares and the day view so the same session keeps
+/// the same stripe wherever it is shown.
+struct SessionZoneBar: View {
+    let session: Session
+    var showsName: Bool = false
+    var height: CGFloat = 9
+
+    private static let zoneOpacity: Double = 0.30
+
+    /// A PPG session carries no mechanical figures at all — the app does not
+    /// produce them, because chest acceleration while running is stride. Where
+    /// a mechanical bar would go, show the cardiac one.
+    ///
+    /// Nil when there is no zone time to show: without a confirmed 45 s
+    /// reference the mechanical zones are all zero, and painting that as a
+    /// full zone 1 bar reads as a whole session spent easy rather than as a
+    /// setting that has never been made.
+    private var zones: (seconds: [Double], colours: [Color])? {
+        let seconds = session.isConditioning
+            ? [session.hrZoneI1Seconds, session.hrZoneI2Seconds, session.hrZoneI3Seconds]
+            : [session.mechZone1Seconds, session.mechZone2Seconds, session.mechZone3Seconds]
+        guard seconds.reduce(0, +) > 0 else { return nil }
+        return (seconds, session.isConditioning ? [.blue, .orange, .red] : [.green, .yellow, .purple])
+    }
+
+    var body: some View {
+        ZStack(alignment: .leading) {
+            GeometryReader { geometry in
+                if let zones {
+                    let total = zones.seconds.reduce(0, +)
+                    HStack(spacing: 0) {
+                        ForEach(Array(zones.seconds.enumerated()), id: \.offset) { index, value in
+                            Rectangle()
+                                .fill(zones.colours[index].opacity(Self.zoneOpacity))
+                                .frame(width: geometry.size.width * value / total)
+                        }
+                    }
+                } else {
+                    Rectangle().fill(Color.secondary.opacity(0.18))
+                }
+            }
+            if showsName {
+                Text(session.displayTitle)
+                    .font(.system(size: 10))
+                    .lineLimit(1)
+                    .padding(.horizontal, 3)
+            }
+        }
+        .frame(height: showsName ? 20 : height)
+        .clipShape(RoundedRectangle(cornerRadius: 3))
     }
 }

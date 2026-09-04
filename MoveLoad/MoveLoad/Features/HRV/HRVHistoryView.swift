@@ -163,16 +163,6 @@ struct HRVHistoryView: View {
             current: current, earlier: Array(tests.dropFirst()).reversed(), settings: settings)
     }
 
-    private func colour(for pattern: FatiguePatterns.Pattern) -> Color {
-        switch pattern {
-        case .energyCollapse:       Color(red: 0.75, green: 0.22, blue: 0.17)
-        case .acuteStress:          Color(red: 0.85, green: 0.49, blue: 0.05)
-        case .activationBrake:      Color(red: 0.48, green: 0.32, blue: 0.19)
-        case .extremeFatigue:       Color.primary
-        case .peripheralRegulation: Color(red: 0.48, green: 0.31, blue: 0.66)
-        }
-    }
-
     /// The reading, named and nothing else.
     ///
     /// No thresholds, no deltas, no editing: those belong to the coach, who
@@ -186,9 +176,9 @@ struct HRVHistoryView: View {
             if let outcome {
                 HStack(spacing: 8) {
                     Circle()
-                        .fill(outcome.pattern.map(colour(for:)) ?? .green)
+                        .fill(outcome.pattern?.colour ?? FatigueBalance.colour)
                         .frame(width: 10, height: 10)
-                    Text(outcome.pattern?.name ?? String(localized: "Équilibre physiologique"))
+                    Text(outcome.pattern?.name ?? FatigueBalance.name)
                         .font(.callout).fontWeight(.medium)
                 }
 
@@ -196,14 +186,14 @@ struct HRVHistoryView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         ForEach(FatiguePatterns.Pattern.allCases, id: \.self) { pattern in
                             HStack(spacing: 8) {
-                                Circle().fill(colour(for: pattern)).frame(width: 8, height: 8)
+                                Circle().fill(pattern.colour).frame(width: 8, height: 8)
                                 Text(pattern.name).font(.callout)
                                 Spacer()
                             }
                         }
                         HStack(spacing: 8) {
-                            Circle().fill(.green).frame(width: 8, height: 8)
-                            Text("Équilibre physiologique").font(.callout)
+                            Circle().fill(FatigueBalance.colour).frame(width: 8, height: 8)
+                            Text(FatigueBalance.name).font(.callout)
                             Spacer()
                         }
                     }

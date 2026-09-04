@@ -79,6 +79,9 @@ struct SessionListView: View {
                 SessionDetailView(session: session)
             }
         }
+        .navigationDestination(for: CalendarDay.self) { day in
+            SessionDayView(day: day.date, sessions: sessions)
+        }
         .task { reload() }
         .refreshable { reload() }
         .alert(

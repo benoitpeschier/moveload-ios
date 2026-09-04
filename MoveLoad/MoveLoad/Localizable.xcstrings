@@ -562,6 +562,23 @@
         }
       }
     },
+    "Aucune séance ce jour-là.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No session that day."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune séance ce jour-là."
+          }
+        }
+      }
+    },
     "Batterie": {
       "extractionState": "manual",
       "localizations": {
@@ -2823,6 +2840,23 @@
         }
       }
     },
+    "PPG": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conditioning"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PPG"
+          }
+        }
+      }
+    },
     "Partager ces réglages": {
       "extractionState": "manual",
       "localizations": {
@@ -3227,6 +3261,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "RPE"
+          }
+        }
+      }
+    },
+    "RPE %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RPE %lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RPE %lld"
           }
         }
       }
@@ -4200,6 +4251,23 @@
         }
       }
     },
+    "Test du matin": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Morning test"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test du matin"
+          }
+        }
+      }
+    },
     "Test orthostatique": {
       "extractionState": "manual",
       "localizations": {
@@ -4298,6 +4366,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ton meilleur effort moyen sur chaque durée, de 3 secondes à 3 minutes. La courbe verte est ton record sur la période d'historique choisie dans Réglages."
+          }
+        }
+      }
+    },
+    "Total %lld min": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Total %lld min"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Total %lld min"
+          }
+        }
+      }
+    },
+    "Touche un jour pour l'ouvrir.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap a day to open it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touche un jour pour l'ouvrir."
           }
         }
       }
@@ -4774,6 +4876,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "séance %@"
+          }
+        }
+      }
+    },
+    "À faire valider par ton coach : c'est un repère, pas un diagnostic.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Have your coach confirm it: it is a marker, not a diagnosis."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À faire valider par ton coach : c'est un repère, pas un diagnostic."
           }
         }
       }

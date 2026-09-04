@@ -22,7 +22,6 @@ public enum FatiguePatterns {
         case extremeFatigue       = "F(HF+SU)"
         case peripheralRegulation = "F(LF-st)"
 
-        /// What the pattern says about the athlete — **a description, never a
         /// The short name, without the physiological half.
         ///
         /// The athlete's screen shows this and nothing more: "hypotonie para et
@@ -39,6 +38,7 @@ public enum FatiguePatterns {
             }
         }
 
+        /// What the pattern says about the athlete — **a description, never a
         /// prescription.** What session to do depends on the week's plan, the
         /// water and how the athlete feels, none of which this knows.
         public var reading: String {
