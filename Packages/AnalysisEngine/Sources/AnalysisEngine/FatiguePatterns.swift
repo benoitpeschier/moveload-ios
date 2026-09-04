@@ -35,7 +35,7 @@ public enum FatiguePatterns {
             case .acuteStress:          "Stress aigu"
             case .activationBrake:      "Frein à l'activation"
             case .extremeFatigue:       "Fatigue extrême"
-            case .peripheralRegulation: "Régulation de la pression périphérique"
+            case .peripheralRegulation: "Trouble de régulation de la pression périphérique"
             }
         }
 
@@ -52,7 +52,7 @@ public enum FatiguePatterns {
             case .extremeFatigue:
                 "Fatigue extrême — hypertonie parasympathique couché"
             case .peripheralRegulation:
-                "Régulation de la pression périphérique — hypotonie orthosympathique debout"
+                "Trouble de régulation de la pression périphérique — hypotonie orthosympathique debout"
             }
         }
     }
