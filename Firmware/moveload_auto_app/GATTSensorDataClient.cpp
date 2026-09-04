@@ -806,6 +806,17 @@ void GATTSensorDataClient::onNotify(wb::ResourceId resourceId,
                 {
                     // if connection is dropped, unsubscribe all data streams so that sensor does not stay on for no reason
                     unsubscribeAllStreams();
+
+                    // The notification flag is driven by the CCCD, and a link
+                    // that simply drops writes no CCCD — the phone pocketed,
+                    // out of range, the app killed. Without this it stays true
+                    // for ever, and since MoveLoadAutoApp reads it as "somebody
+                    // is deliberately using the sensor", the strap going on
+                    // never arms anything again: no LED, no recording, no clue.
+                    // Seen 2026-09-05, after the app began releasing the link
+                    // on every move to the background.
+                    mNotificationsEnabled = false;
+                    g_gspClientActive = false;
                 }
             }
 

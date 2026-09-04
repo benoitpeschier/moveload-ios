@@ -590,6 +590,10 @@ private final class Delegate: NSObject, CBCentralManagerDelegate, CBPeripheralDe
     private var discoverContinuation: CheckedContinuation<(CBCharacteristic, CBCharacteristic), Error>?
     private var discoverTimeoutTask: Task<Void, Never>?
     private var notifyContinuation: CheckedContinuation<Void, Error>?
+    /// Separate from `notifyContinuation`: disabling notifications on the way
+    /// out must not fail a disconnect, so it never throws and always finishes.
+    private var notifyOffContinuation: CheckedContinuation<Void, Never>?
+    private var notifyOffTimeoutTask: Task<Void, Never>?
     private var notifyTimeoutTask: Task<Void, Never>?
     private var pendingWriteChar: CBCharacteristic?
     private var pendingNotifyChar: CBCharacteristic?
@@ -726,8 +730,25 @@ private final class Delegate: NSObject, CBCentralManagerDelegate, CBPeripheralDe
             return
         }
 
+        // Wait for the descriptor write to land before tearing the link down.
+        //
+        // Fire-and-forget, the cancel below happened in the same turn and the
+        // write usually never reached the sensor. That matters more than it
+        // looks: the firmware reads this very descriptor as "a phone is using
+        // me", and a link dropped without it left the sensor believing so for
+        // ever — the strap going on armed nothing, with no LED and no
+        // recording. Firmware 1.10.0 also clears the flag on disconnect, for
+        // the drops no app can be polite about; this is the near half of the
+        // same fix, and it works on a sensor that has not been reflashed.
         if let notify = pendingNotifyChar, notify.isNotifying {
-            peripheral.setNotifyValue(false, for: notify)
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                notifyOffContinuation = continuation
+                peripheral.setNotifyValue(false, for: notify)
+                notifyOffTimeoutTask = Task { [weak self] in
+                    try? await Task.sleep(nanoseconds: 1_000_000_000)
+                    await self?.finishNotifyOff()
+                }
+            }
         }
 
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
@@ -828,7 +849,18 @@ private final class Delegate: NSObject, CBCentralManagerDelegate, CBPeripheralDe
         }
     }
 
+    private func finishNotifyOff() {
+        notifyOffTimeoutTask?.cancel()
+        notifyOffTimeoutTask = nil
+        notifyOffContinuation?.resume()
+        notifyOffContinuation = nil
+    }
+
     func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
+        if notifyOffContinuation != nil {
+            finishNotifyOff()
+            return
+        }
         notifyTimeoutTask?.cancel()
         if let error {
             notifyContinuation?.resume(throwing: MovesenseGSPClient.GSPError.connectionFailed(error.localizedDescription))

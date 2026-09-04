@@ -40,4 +40,8 @@
 //          so the morning HRV test — which stops the recording the sensor had
 //          started on its own — inhibited every recording for the rest of the
 //          day, silently and with no LED
-#define MOVELOAD_APP_VERSION "1.9.0"
+//   1.10.0 the GSP client flag is cleared when the BLE link drops. It was
+//          only ever cleared by a CCCD write, which a dropped link does not
+//          send — so the sensor went on believing a phone was using it and
+//          refused to arm for good
+#define MOVELOAD_APP_VERSION "1.10.0"
