@@ -23,10 +23,10 @@ public actor MovesenseGSPClient {
         public var errorDescription: String? {
             switch self {
             case .notFound: return "Capteur GSP introuvable."
-            case .connectionFailed(let reason): return "Connexion GSP échouée : \(reason)"
-            case .commandFailed(let command, let statusCode): return "Commande GSP \(command) a échoué (code \(statusCode))."
-            case .unexpectedResponse(let detail): return "Réponse GSP inattendue : \(detail)"
-            case .timeout(let detail): return "Délai dépassé : \(detail)"
+            case .connectionFailed(let reason): return String(localized: "Connexion GSP échouée : \(reason)", bundle: .module)
+            case .commandFailed(let command, let statusCode): return String(localized: "Commande GSP \(command) a échoué (code \(statusCode)).", bundle: .module)
+            case .unexpectedResponse(let detail): return String(localized: "Réponse GSP inattendue : \(detail)", bundle: .module)
+            case .timeout(let detail): return String(localized: "Délai dépassé : \(detail)", bundle: .module)
             }
         }
     }
@@ -153,7 +153,7 @@ public actor MovesenseGSPClient {
         let ref = nextReference()
         let response = try await send(command: .hello, reference: ref, payload: Data(), expectsStatusCode: false)
         guard response.data.count >= 1 else {
-            throw GSPError.unexpectedResponse("HELLO: réponse trop courte")
+            throw GSPError.unexpectedResponse(String(localized: "HELLO: réponse trop courte", bundle: .module))
         }
         // Byte 0 is the protocol version; the rest is null-terminated UTF-8 strings.
         let stringsData = response.data.dropFirst()
@@ -169,7 +169,7 @@ public actor MovesenseGSPClient {
 
     public func getDataLoggerState() async throws -> UInt8 {
         let data = try await get("/Mem/DataLogger/State")
-        guard let first = data.first else { throw GSPError.unexpectedResponse("État DataLogger vide") }
+        guard let first = data.first else { throw GSPError.unexpectedResponse(String(localized: "État DataLogger vide", bundle: .module)) }
         return first
     }
 
@@ -181,7 +181,7 @@ public actor MovesenseGSPClient {
     public func isLogbookFull() async throws -> Bool {
         let data = try await get("/Mem/Logbook/IsFull")
         guard let first = data.first else {
-            throw GSPError.unexpectedResponse("État IsFull vide")
+            throw GSPError.unexpectedResponse(String(localized: "État IsFull vide", bundle: .module))
         }
         return first != 0
     }
@@ -376,10 +376,10 @@ public actor MovesenseGSPClient {
         let raw = try await sendRaw(command: command, reference: reference, payload: payload)
         // raw layout for COMMAND_RESPONSE: [responseCode, reference, statusCode(2 LE)?, data...]
         guard raw.count >= 2, raw[raw.startIndex] == ResponseCode.commandResponse.rawValue else {
-            throw GSPError.unexpectedResponse("code de réponse inattendu pour \(command)")
+            throw GSPError.unexpectedResponse(String(localized: "code de réponse inattendu pour \(command)", bundle: .module))
         }
         if expectsStatusCode {
-            guard raw.count >= 4 else { throw GSPError.unexpectedResponse("\(command): réponse trop courte") }
+            guard raw.count >= 4 else { throw GSPError.unexpectedResponse(String(localized: "\(command): réponse trop courte", bundle: .module)) }
             let statusCode = UInt16(raw[raw.startIndex + 2]) | (UInt16(raw[raw.startIndex + 3]) << 8)
             guard acceptedStatusCodes.contains(statusCode) else {
                 throw GSPError.commandFailed(command: "\(command)", statusCode: statusCode)
@@ -398,7 +398,7 @@ public actor MovesenseGSPClient {
     /// differs from a generic status+data GET).
     private func sendRaw(command: Command, reference: UInt8, payload: Data) async throws -> Data {
         guard let peripheral, let writeCharacteristic else {
-            throw GSPError.connectionFailed("non connecté")
+            throw GSPError.connectionFailed(String(localized: "non connecté", bundle: .module))
         }
         var commandBytes = Data([command.rawValue, reference])
         commandBytes.append(payload)
@@ -426,7 +426,7 @@ public actor MovesenseGSPClient {
         guard let continuation = pendingResponse else { return }
         pendingResponse = nil
         continuation.resume(throwing: GSPError.timeout(
-            "le capteur n'a pas répondu à \(command). Il est connecté mais ne parle pas — coupe le Bluetooth et rallume-le, ou redémarre le capteur en le sortant de la sangle."))
+            String(localized: "le capteur n'a pas répondu à \(command). Il est connecté mais ne parle pas — coupe le Bluetooth et rallume-le, ou redémarre le capteur en le sortant de la sangle.", bundle: .module)))
     }
 
     /// `isPartial` reflects status 100, meaning more entries remain and the
@@ -476,7 +476,7 @@ public actor MovesenseGSPClient {
         pendingResponseTimeoutTask?.cancel()
         if let pending = pendingResponse {
             pendingResponse = nil
-            pending.resume(throwing: GSPError.connectionFailed("déconnecté"))
+            pending.resume(throwing: GSPError.connectionFailed(String(localized: "déconnecté", bundle: .module)))
         }
         onDisconnect?()
     }
@@ -670,14 +670,14 @@ private final class Delegate: NSObject, CBCentralManagerDelegate, CBPeripheralDe
             connectContinuation = nil
             if let connectingPeripheral { centralManager?.cancelPeripheralConnection(connectingPeripheral) }
             continuation.resume(throwing: MovesenseGSPClient.GSPError.timeout(
-                "connexion au capteur. Un autre appareil le tient peut-être déjà — montre, nRF Connect, ou l'app restée ouverte en arrière-plan."))
+                String(localized: "connexion au capteur. Un autre appareil le tient peut-être déjà — montre, nRF Connect, ou l'app restée ouverte en arrière-plan.", bundle: .module)))
         }
     }
 
     private func failDiscover() {
         if let continuation = discoverContinuation {
             discoverContinuation = nil
-            continuation.resume(throwing: MovesenseGSPClient.GSPError.timeout("découverte des services GSP"))
+            continuation.resume(throwing: MovesenseGSPClient.GSPError.timeout(String(localized: "découverte des services GSP", bundle: .module)))
         }
     }
 
@@ -699,7 +699,7 @@ private final class Delegate: NSObject, CBCentralManagerDelegate, CBPeripheralDe
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
         if let continuation = connectContinuation {
             connectContinuation = nil
-            continuation.resume(throwing: MovesenseGSPClient.GSPError.connectionFailed(error?.localizedDescription ?? "échec inconnu"))
+            continuation.resume(throwing: MovesenseGSPClient.GSPError.connectionFailed(error?.localizedDescription ?? String(localized: "échec inconnu", bundle: .module)))
         }
     }
 
@@ -781,7 +781,7 @@ private final class Delegate: NSObject, CBCentralManagerDelegate, CBPeripheralDe
         let notify = service.characteristics?.first { $0.uuid.uuidString == "34800002-7185-4D5D-B431-630E7050E8F0" }
         discoverTimeoutTask?.cancel()
         guard let write, let notify else {
-            discoverContinuation?.resume(throwing: MovesenseGSPClient.GSPError.connectionFailed("caractéristiques GSP introuvables"))
+            discoverContinuation?.resume(throwing: MovesenseGSPClient.GSPError.connectionFailed(String(localized: "caractéristiques GSP introuvables", bundle: .module)))
             discoverContinuation = nil
             return
         }
@@ -795,7 +795,7 @@ private final class Delegate: NSObject, CBCentralManagerDelegate, CBPeripheralDe
 
     func enableNotifications(_ peripheral: CBPeripheral, characteristicUUID: CBUUID) async throws {
         guard let notifyChar = pendingNotifyChar else {
-            throw MovesenseGSPClient.GSPError.connectionFailed("caractéristique de notification manquante")
+            throw MovesenseGSPClient.GSPError.connectionFailed(String(localized: "caractéristique de notification manquante", bundle: .module))
         }
 
         // Turn it off first when iOS believes it is already on.

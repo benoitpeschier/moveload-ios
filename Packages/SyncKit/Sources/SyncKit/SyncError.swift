@@ -15,7 +15,8 @@ public enum SyncError: Error, LocalizedError, Equatable {
 
     static func validate(_ response: URLResponse, data: Data) throws {
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-            let body = String(data: data, encoding: .utf8) ?? "réponse illisible"
+            let body = String(data: data, encoding: .utf8)
+                ?? String(localized: "réponse illisible", bundle: .module)
             throw SyncError.requestFailed(body)
         }
     }

@@ -40,7 +40,7 @@ public enum MovesenseShowcaseJSON {
     public static func parseAcceleration(_ data: Data) throws -> (axes: AccelerationAxes, sampleRateHz: Double) {
         guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let entries = root["data"] as? [[String: Any]] else {
-            throw SensorError.transferFailed("Format JSON Showcase non reconnu (clé \"data\" absente).")
+            throw SensorError.transferFailed(String(localized: "Format JSON Showcase non reconnu (clé \"data\" absente).", bundle: .module))
         }
 
         var accelX: [Double] = []
@@ -67,7 +67,7 @@ public enum MovesenseShowcaseJSON {
         }
 
         guard !accelZ.isEmpty else {
-            throw SensorError.transferFailed("Aucun échantillon d'accélération trouvé dans le fichier.")
+            throw SensorError.transferFailed(String(localized: "Aucun échantillon d'accélération trouvé dans le fichier.", bundle: .module))
         }
 
         var sampleRateHz = 100.0

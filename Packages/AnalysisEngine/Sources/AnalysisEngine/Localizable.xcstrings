@@ -1,206 +1,172 @@
 {
   "sourceLanguage": "fr",
   "strings": {
-    "Adresse e-mail ou mot de passe incorrect.": {
+    "Effondrement de l'énergie": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Incorrect e-mail address or password."
+            "value": "Energy collapse"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Adresse e-mail ou mot de passe incorrect."
+            "value": "Effondrement de l'énergie"
           }
         }
       }
     },
-    "Aucun compte connecté sur cet appareil.": {
+    "Effondrement de l'énergie — hypotonie para et orthosympathique couché": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No account signed in on this device."
+            "value": "Energy collapse — para- and orthosympathetic hypotonia lying"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aucun compte connecté sur cet appareil."
+            "value": "Effondrement de l'énergie — hypotonie para et orthosympathique couché"
           }
         }
       }
     },
-    "Ce compte a été désactivé.": {
+    "Fatigue extrême": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "This account has been disabled."
+            "value": "Extreme fatigue"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ce compte a été désactivé."
+            "value": "Fatigue extrême"
           }
         }
       }
     },
-    "Cette adresse a déjà un compte. Utilisez « Se connecter ».": {
+    "Fatigue extrême — hypertonie parasympathique couché": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "This address already has an account. Use “Sign in”."
+            "value": "Extreme fatigue — parasympathetic hypertonia lying"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cette adresse a déjà un compte. Utilisez « Se connecter »."
+            "value": "Fatigue extrême — hypertonie parasympathique couché"
           }
         }
       }
     },
-    "Cette adresse e-mail n'est pas valide.": {
+    "Frein à l'activation": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "This e-mail address is not valid."
+            "value": "Brake on activation"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cette adresse e-mail n'est pas valide."
+            "value": "Frein à l'activation"
           }
         }
       }
     },
-    "La connexion par e-mail n'est pas activée sur le projet Firebase.": {
+    "Frein à l'activation — hypertonie parasympathique debout": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "E-mail sign-in is not enabled on the Firebase project."
+            "value": "Brake on activation — parasympathetic hypertonia standing"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La connexion par e-mail n'est pas activée sur le projet Firebase."
+            "value": "Frein à l'activation — hypertonie parasympathique debout"
           }
         }
       }
     },
-    "La synchronisation n'est pas configurée (code d'équipe, projet ou clé API manquants).": {
+    "Stress aigu": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sync is not configured (team code, project or API key missing)."
+            "value": "Acute stress"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La synchronisation n'est pas configurée (code d'équipe, projet ou clé API manquants)."
+            "value": "Stress aigu"
           }
         }
       }
     },
-    "Le mot de passe doit faire au moins 6 caractères.": {
+    "Stress aigu — hypertonie orthosympathique couché": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The password must be at least 6 characters."
+            "value": "Acute stress — orthosympathetic hypertonia lying"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le mot de passe doit faire au moins 6 caractères."
+            "value": "Stress aigu — hypertonie orthosympathique couché"
           }
         }
       }
     },
-    "Trop de tentatives. Réessayez dans quelques minutes.": {
+    "Trouble de régulation de la pression périphérique": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Too many attempts. Try again in a few minutes."
+            "value": "Peripheral pressure regulation disorder"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Trop de tentatives. Réessayez dans quelques minutes."
+            "value": "Trouble de régulation de la pression périphérique"
           }
         }
       }
     },
-    "réponse illisible": {
+    "Trouble de régulation de la pression périphérique — hypotonie orthosympathique debout": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "unreadable response"
+            "value": "Peripheral pressure regulation disorder — orthosympathetic hypotonia standing"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "réponse illisible"
-          }
-        }
-      }
-    },
-    "Échec de la connexion : %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sign-in failed: %@"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Échec de la connexion : %@"
-          }
-        }
-      }
-    },
-    "Échec de la requête réseau : %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Network request failed: %@"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Échec de la requête réseau : %@"
+            "value": "Trouble de régulation de la pression périphérique — hypotonie orthosympathique debout"
           }
         }
       }

@@ -31,11 +31,11 @@ public enum FatiguePatterns {
         /// take from a phone.
         public var name: String {
             switch self {
-            case .energyCollapse:       "Effondrement de l'énergie"
-            case .acuteStress:          "Stress aigu"
-            case .activationBrake:      "Frein à l'activation"
-            case .extremeFatigue:       "Fatigue extrême"
-            case .peripheralRegulation: "Trouble de régulation de la pression périphérique"
+            case .energyCollapse:       String(localized: "Effondrement de l'énergie", bundle: .module)
+            case .acuteStress:          String(localized: "Stress aigu", bundle: .module)
+            case .activationBrake:      String(localized: "Frein à l'activation", bundle: .module)
+            case .extremeFatigue:       String(localized: "Fatigue extrême", bundle: .module)
+            case .peripheralRegulation: String(localized: "Trouble de régulation de la pression périphérique", bundle: .module)
             }
         }
 
@@ -44,15 +44,15 @@ public enum FatiguePatterns {
         public var reading: String {
             switch self {
             case .energyCollapse:
-                "Effondrement de l'énergie — hypotonie para et orthosympathique couché"
+                String(localized: "Effondrement de l'énergie — hypotonie para et orthosympathique couché", bundle: .module)
             case .acuteStress:
-                "Stress aigu — hypertonie orthosympathique couché"
+                String(localized: "Stress aigu — hypertonie orthosympathique couché", bundle: .module)
             case .activationBrake:
-                "Frein à l'activation — hypertonie parasympathique debout"
+                String(localized: "Frein à l'activation — hypertonie parasympathique debout", bundle: .module)
             case .extremeFatigue:
-                "Fatigue extrême — hypertonie parasympathique couché"
+                String(localized: "Fatigue extrême — hypertonie parasympathique couché", bundle: .module)
             case .peripheralRegulation:
-                "Trouble de régulation de la pression périphérique — hypotonie orthosympathique debout"
+                String(localized: "Trouble de régulation de la pression périphérique — hypotonie orthosympathique debout", bundle: .module)
             }
         }
     }

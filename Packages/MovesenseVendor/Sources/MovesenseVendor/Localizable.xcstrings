@@ -1,0 +1,652 @@
+{
+  "sourceLanguage": "fr",
+  "strings": {
+    "%@: réponse trop courte": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@: response too short"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@: réponse trop courte"
+          }
+        }
+      }
+    },
+    "(sans nom)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(no name)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(sans nom)"
+          }
+        }
+      }
+    },
+    "Aucun échantillon d'accélération décodé dans ce fichier SBEM.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No acceleration samples decoded in this SBEM file."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun échantillon d'accélération décodé dans ce fichier SBEM."
+          }
+        }
+      }
+    },
+    "Aucun échantillon d'accélération trouvé dans le fichier.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No acceleration samples found in the file."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun échantillon d'accélération trouvé dans le fichier."
+          }
+        }
+      }
+    },
+    "Bluetooth : %@ · Autorisation MoveLoad : %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bluetooth: %@ · MoveLoad permission: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bluetooth : %@ · Autorisation MoveLoad : %@"
+          }
+        }
+      }
+    },
+    "Commande GSP %@ a échoué (code %u).": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GSP command %@ failed (code %u)."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commande GSP %@ a échoué (code %u)."
+          }
+        }
+      }
+    },
+    "Connexion GSP échouée : %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GSP connection failed: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connexion GSP échouée : %@"
+          }
+        }
+      }
+    },
+    "Délai dépassé : %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Timed out: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Délai dépassé : %@"
+          }
+        }
+      }
+    },
+    "En-tête SBEM non reconnu.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unrecognised SBEM header."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En-tête SBEM non reconnu."
+          }
+        }
+      }
+    },
+    "Format JSON Showcase non reconnu (clé \"data\" absente).": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unrecognised Showcase JSON format (no \"data\" key)."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Format JSON Showcase non reconnu (clé \"data\" absente)."
+          }
+        }
+      }
+    },
+    "HELLO: réponse trop courte": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HELLO: response too short"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HELLO: réponse trop courte"
+          }
+        }
+      }
+    },
+    "Réponse GSP inattendue : %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unexpected GSP response: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réponse GSP inattendue : %@"
+          }
+        }
+      }
+    },
+    "Scan large (%llds) : aucun périphérique BLE détecté à proximité.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Broad scan (%llds): no BLE device detected nearby."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan large (%llds) : aucun périphérique BLE détecté à proximité."
+          }
+        }
+      }
+    },
+    "Scan large (%llds), %lld périphérique(s) :\n": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Broad scan (%llds), %lld device(s):\n"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan large (%llds), %lld périphérique(s) :\n"
+          }
+        }
+      }
+    },
+    "Scan large impossible (%@)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Broad scan not possible (%@)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan large impossible (%@)"
+          }
+        }
+      }
+    },
+    "activé": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "on"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "activé"
+          }
+        }
+      }
+    },
+    "aucun UUID de service annoncé": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "no service UUID advertised"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "aucun UUID de service annoncé"
+          }
+        }
+      }
+    },
+    "autorisé": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "granted"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "autorisé"
+          }
+        }
+      }
+    },
+    "caractéristique de notification manquante": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "notification characteristic missing"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "caractéristique de notification manquante"
+          }
+        }
+      }
+    },
+    "caractéristiques GSP introuvables": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GSP characteristics not found"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "caractéristiques GSP introuvables"
+          }
+        }
+      }
+    },
+    "code de réponse inattendu pour %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "unexpected response code for %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "code de réponse inattendu pour %@"
+          }
+        }
+      }
+    },
+    "connexion au capteur. Un autre appareil le tient peut-être déjà — montre, nRF Connect, ou l'app restée ouverte en arrière-plan.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "connecting to the sensor. Another device may already hold it — a watch, nRF Connect, or the app left open in the background."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "connexion au capteur. Un autre appareil le tient peut-être déjà — montre, nRF Connect, ou l'app restée ouverte en arrière-plan."
+          }
+        }
+      }
+    },
+    "déconnecté": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "disconnected"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "déconnecté"
+          }
+        }
+      }
+    },
+    "découverte des services GSP": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "discovering the GSP services"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "découverte des services GSP"
+          }
+        }
+      }
+    },
+    "désactivé": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "off"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "désactivé"
+          }
+        }
+      }
+    },
+    "inconnu": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "unknown"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "inconnu"
+          }
+        }
+      }
+    },
+    "indéterminé": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "undetermined"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "indéterminé"
+          }
+        }
+      }
+    },
+    "le capteur n'a pas répondu à %@. Il est connecté mais ne parle pas — coupe le Bluetooth et rallume-le, ou redémarre le capteur en le sortant de la sangle.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the sensor did not answer %@. It is connected but not talking — turn Bluetooth off and on again, or restart the sensor by taking it off the strap."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "le capteur n'a pas répondu à %@. Il est connecté mais ne parle pas — coupe le Bluetooth et rallume-le, ou redémarre le capteur en le sortant de la sangle."
+          }
+        }
+      }
+    },
+    "non autorisé": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "not authorised"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "non autorisé"
+          }
+        }
+      }
+    },
+    "non connecté": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "not connected"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "non connecté"
+          }
+        }
+      }
+    },
+    "non demandé": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "not asked"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "non demandé"
+          }
+        }
+      }
+    },
+    "non supporté sur cet appareil": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "not supported on this device"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "non supporté sur cet appareil"
+          }
+        }
+      }
+    },
+    "refusé": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "denied"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "refusé"
+          }
+        }
+      }
+    },
+    "restreint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "restricted"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "restreint"
+          }
+        }
+      }
+    },
+    "réinitialisation en cours": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "resetting"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "réinitialisation en cours"
+          }
+        }
+      }
+    },
+    "État DataLogger vide": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empty DataLogger state"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "État DataLogger vide"
+          }
+        }
+      }
+    },
+    "État IsFull vide": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empty IsFull state"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "État IsFull vide"
+          }
+        }
+      }
+    },
+    "échec inconnu": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "unknown failure"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "échec inconnu"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

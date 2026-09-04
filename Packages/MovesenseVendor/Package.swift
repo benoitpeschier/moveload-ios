@@ -3,6 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "MovesenseVendor",
+    defaultLocalization: "fr",
     platforms: [.iOS(.v17)],
     products: [
         .library(name: "MovesenseVendor", targets: ["MovesenseVendor"])
@@ -14,7 +15,8 @@ let package = Package(
     targets: [
         .target(
             name: "MovesenseVendor",
-            dependencies: ["MoveLoadCore", "SensorKit"]
+            dependencies: ["MoveLoadCore", "SensorKit"],
+            resources: [.process("Localizable.xcstrings")]
         )
     ]
 )

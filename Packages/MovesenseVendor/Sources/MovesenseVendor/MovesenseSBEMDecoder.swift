@@ -43,7 +43,7 @@ enum MovesenseSBEMDecoder {
     static func decode(_ data: Data, startDate: Date) throws -> RawSessionData {
         let bytes = [UInt8](data)
         guard bytes.count > 9, bytes[0..<8].elementsEqual(Array("SBEM0112".utf8)) else {
-            throw SensorError.transferFailed("En-tête SBEM non reconnu.")
+            throw SensorError.transferFailed(String(localized: "En-tête SBEM non reconnu.", bundle: .module))
         }
 
         let (descriptors, dataStart) = try parseDescriptors(bytes)
@@ -133,7 +133,7 @@ enum MovesenseSBEMDecoder {
         }
 
         guard !accelZ.isEmpty else {
-            throw SensorError.transferFailed("Aucun échantillon d'accélération décodé dans ce fichier SBEM.")
+            throw SensorError.transferFailed(String(localized: "Aucun échantillon d'accélération décodé dans ce fichier SBEM.", bundle: .module))
         }
 
         var sampleRateHz = 52.0

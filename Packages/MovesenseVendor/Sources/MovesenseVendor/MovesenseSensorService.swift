@@ -119,23 +119,23 @@ public final class MovesenseSensorService: NSObject, SensorService {
     public var diagnosticStateDescription: String {
         let authorization: String
         switch CBCentralManager.authorization {
-        case .allowedAlways: authorization = "autorisé"
-        case .denied: authorization = "refusé"
-        case .restricted: authorization = "restreint"
-        case .notDetermined: authorization = "non demandé"
-        @unknown default: authorization = "inconnu"
+        case .allowedAlways: authorization = String(localized: "autorisé", bundle: .module)
+        case .denied: authorization = String(localized: "refusé", bundle: .module)
+        case .restricted: authorization = String(localized: "restreint", bundle: .module)
+        case .notDetermined: authorization = String(localized: "non demandé", bundle: .module)
+        @unknown default: authorization = String(localized: "inconnu", bundle: .module)
         }
         let managerState: String
         switch centralManager?.state {
-        case .poweredOn: managerState = "activé"
-        case .poweredOff: managerState = "désactivé"
-        case .unauthorized: managerState = "non autorisé"
-        case .unsupported: managerState = "non supporté sur cet appareil"
-        case .resetting: managerState = "réinitialisation en cours"
-        case .unknown, .none: managerState = "indéterminé"
-        @unknown default: managerState = "inconnu"
+        case .poweredOn: managerState = String(localized: "activé", bundle: .module)
+        case .poweredOff: managerState = String(localized: "désactivé", bundle: .module)
+        case .unauthorized: managerState = String(localized: "non autorisé", bundle: .module)
+        case .unsupported: managerState = String(localized: "non supporté sur cet appareil", bundle: .module)
+        case .resetting: managerState = String(localized: "réinitialisation en cours", bundle: .module)
+        case .unknown, .none: managerState = String(localized: "indéterminé", bundle: .module)
+        @unknown default: managerState = String(localized: "inconnu", bundle: .module)
         }
-        return "Bluetooth : \(managerState) · Autorisation MoveLoad : \(authorization)"
+        return String(localized: "Bluetooth : \(managerState) · Autorisation MoveLoad : \(authorization)", bundle: .module)
     }
 
     private var debugDiscoveries: [String: (name: String?, uuids: [String])] = [:]
@@ -146,7 +146,7 @@ public final class MovesenseSensorService: NSObject, SensorService {
     /// connected elsewhere, asleep, out of range, off).
     public func debugScanBroad(duration: TimeInterval = 8) async -> String {
         guard let manager = centralManager, manager.state == .poweredOn else {
-            return "Scan large impossible (\(diagnosticStateDescription))"
+            return String(localized: "Scan large impossible (\(diagnosticStateDescription))", bundle: .module)
         }
         debugDiscoveries.removeAll()
         manager.scanForPeripherals(withServices: nil, options: nil)
@@ -155,14 +155,14 @@ public final class MovesenseSensorService: NSObject, SensorService {
         startScanningIfPossible()
 
         if debugDiscoveries.isEmpty {
-            return "Scan large (\(Int(duration))s) : aucun périphérique BLE détecté à proximité."
+            return String(localized: "Scan large (\(Int(duration))s) : aucun périphérique BLE détecté à proximité.", bundle: .module)
         }
         let lines = debugDiscoveries.values.map { entry -> String in
-            let name = entry.name ?? "(sans nom)"
-            let uuids = entry.uuids.isEmpty ? "aucun UUID de service annoncé" : entry.uuids.joined(separator: ", ")
-            return "• \(name) — \(uuids)"
+            let name = entry.name ?? String(localized: "(sans nom)", bundle: .module)
+            let uuids = entry.uuids.isEmpty ? String(localized: "aucun UUID de service annoncé", bundle: .module) : entry.uuids.joined(separator: ", ")
+            return "• " + name + " — " + uuids
         }
-        return "Scan large (\(Int(duration))s), \(debugDiscoveries.count) périphérique(s) :\n" + lines.joined(separator: "\n")
+        return String(localized: "Scan large (\(Int(duration))s), \(debugDiscoveries.count) périphérique(s) :\n", bundle: .module) + lines.joined(separator: "\n")
     }
 
     // MARK: - SensorConnectivityService
