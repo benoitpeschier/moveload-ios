@@ -73,4 +73,9 @@
 //          entrer — et chacune a coûté une journée de terrain, parce que de
 //          l'extérieur elles se ressemblent toutes : pas de LED, pas de
 //          séance, rien à lire
-#define MOVELOAD_APP_VERSION "1.13.0"
+//   1.14.0 le journal passe à trente-deux entrées, et les changements de
+//          contact rapprochés fusionnent en une seule. La première lecture
+//          réelle a montré que la mise en place d'une sangle consommait dix
+//          des seize entrées : un matin raté serait arrivé avec un anneau
+//          plein de quelqu'un en train de s'équiper
+#define MOVELOAD_APP_VERSION "1.14.0"

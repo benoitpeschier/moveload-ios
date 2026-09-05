@@ -189,11 +189,15 @@ private:
         WbTimestamp at;
         uint8_t code;
     };
-    /// Sixteen decisions is about a morning: the strap going on, an attempt,
-    /// its outcome, and whatever refused it. Older ones fall off the end,
-    /// which is the right end to lose — the question is always what happened
-    /// last.
-    static const size_t JOURNAL_CAPACITY = 16;
+    /// Thirty-two decisions, which is what fits: the answer is capped by the
+    /// GSP frame at 156 bytes, and each entry costs three.
+    ///
+    /// Sixteen was not enough, and the first real reading showed why — ten of
+    /// them went to the contact chattering while a strap was being settled. A
+    /// morning that failed would have arrived with a ring full of that and
+    /// nothing of the failure. Older entries still fall off the end, which is
+    /// the right end to lose: the question is always what happened last.
+    static const size_t JOURNAL_CAPACITY = 32;
     JournalEntry mJournal[JOURNAL_CAPACITY];
     /// How many entries the ring holds, saturating at its capacity.
     uint8_t mJournalCount;

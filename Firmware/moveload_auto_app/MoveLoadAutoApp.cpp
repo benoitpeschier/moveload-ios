@@ -119,6 +119,11 @@ const char* const MoveLoadAutoApp::LAUNCHABLE_NAME = "MoveLoadAuto";
 // pulse, which a strap on a bench does not have.
 #define EXTERNAL_STOP_RESPECT_MS 1200000
 
+// How close two contact changes have to be to count as one handling of the
+// strap rather than two decisions. Ten seconds covers settling it on a chest;
+// a strap genuinely taken off and put back on takes longer than that.
+#define CONTACT_BURST_MS 10000
+
 #define HR_MIN_BPM 30
 #define HR_MAX_BPM 220
 
@@ -608,17 +613,35 @@ void MoveLoadAutoApp::stopLogging()
 
 void MoveLoadAutoApp::note(Note what)
 {
-    // Deduplicated against the last entry only. Connector state chatters
-    // several times a second while a strap is being settled on a chest, and a
-    // ring of sixteen would otherwise hold one second of that and nothing of
-    // the morning.
+    const WbTimestamp now = WbTimestampGet();
+
     if (mJournalCount > 0)
     {
         const size_t lastIndex = (mJournalNext + JOURNAL_CAPACITY - 1) % JOURNAL_CAPACITY;
-        if (mJournal[lastIndex].code == static_cast<uint8_t>(what)) return;
+        JournalEntry &last = mJournal[lastIndex];
+
+        // The same thing twice running is not two decisions.
+        if (last.code == static_cast<uint8_t>(what)) return;
+
+        // A strap being settled on a chest reports contact made and lost
+        // several times a second, and on/off alternating defeats the test
+        // above. Left alone it filled ten of the first sixteen entries, so a
+        // morning that failed would have arrived with a ring full of somebody
+        // putting a strap on. A burst collapses into one entry, updated in
+        // place, which then shows where the burst *ended* — the only part of
+        // it that carries anything.
+        const bool bothAreContact =
+            (what == NOTE_STRAP_ON || what == NOTE_STRAP_OFF) &&
+            (last.code == NOTE_STRAP_ON || last.code == NOTE_STRAP_OFF);
+        if (bothAreContact && WbTimestampDifferenceMs(last.at, now) < CONTACT_BURST_MS)
+        {
+            last.code = static_cast<uint8_t>(what);
+            last.at = now;
+            return;
+        }
     }
 
-    mJournal[mJournalNext].at = WbTimestampGet();
+    mJournal[mJournalNext].at = now;
     mJournal[mJournalNext].code = static_cast<uint8_t>(what);
     mJournalNext = (mJournalNext + 1) % JOURNAL_CAPACITY;
     if (mJournalCount < JOURNAL_CAPACITY) mJournalCount++;
