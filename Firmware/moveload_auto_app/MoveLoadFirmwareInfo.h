@@ -54,4 +54,16 @@
 //          made of, with the retry three minutes later blocked by that same
 //          connected phone. On 2026-09-05 the test kept two minutes of the
 //          lying position and nothing at all standing
-#define MOVELOAD_APP_VERSION "1.11.0"
+//   1.12.0 la pause d'armement ne peut plus devenir un piège. L'identifiant
+//          de minuteur sert à deux choses — la tentative de cinq minutes et
+//          la pause de trois qui la suit — et c'est le drapeau de pause qui
+//          choisit la branche à l'expiration. Une perte de contact effaçait
+//          le drapeau sans arrêter le minuteur : l'expiration suivante était
+//          alors lue comme une tentative sans pouls, clignotait le code à
+//          deux éclats, remettait le drapeau et relançait une pause, sans
+//          jamais armer. Rien n'abonne la fréquence cardiaque dans cet état,
+//          donc aucun pouls ne peut venir en sortir, et chaque nouvelle perte
+//          de contact renouvelait le piège — or une sangle prise, mouillée
+//          puis portée perd le contact plusieurs fois avant d'atteindre une
+//          poitrine. Le contact retrouvé arme désormais aussitôt
+#define MOVELOAD_APP_VERSION "1.12.0"

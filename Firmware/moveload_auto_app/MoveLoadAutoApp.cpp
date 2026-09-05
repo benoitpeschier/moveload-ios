@@ -465,7 +465,28 @@ void MoveLoadAutoApp::evaluateRecordingState()
             //
             // Nothing is needed to bound it: if the strap really is off, no
             // pulse arrives and the arming timer ends the attempt on its own.
+            //
+            // The backoff is a different matter, and clearing the flag alone
+            // was a trap. The timer id is shared between two meanings — the
+            // five-minute attempt and the three-minute pause after it — and
+            // the branch taken when it fires is chosen by this very flag. Clear
+            // the flag without stopping the timer and the next expiry is read
+            // as an attempt that found no pulse: it blinks the two-blink
+            // no-pulse code, sets the flag again, and starts another pause,
+            // all without ever arming. Nothing subscribes the heart rate in
+            // that state, so no pulse can arrive to end it. Every loss of
+            // contact renewed the trap, and a strap picked up, wetted and
+            // carried loses contact several times before it reaches a chest.
+            //
+            // Stopping it here also makes contact-after-loss arm at once
+            // rather than serve out a pause whose reason — a strap left damp
+            // in a bag — has visibly stopped applying.
             mArmingBackoff = false;
+            if (mArmingTimer != wb::ID_INVALID_TIMER)
+            {
+                stopTimer(mArmingTimer);
+                mArmingTimer = wb::ID_INVALID_TIMER;
+            }
             forgetExternalStop();
             return;
         }
