@@ -613,6 +613,23 @@
         }
       }
     },
+    "une commande est déjà en cours": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "a command is already in flight"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "une commande est déjà en cours"
+          }
+        }
+      }
+    },
     "État DataLogger vide": {
       "extractionState": "manual",
       "localizations": {

@@ -233,10 +233,10 @@ public final class MovesenseSensorService: NSObject, SensorService {
     /// this says whether the sensor *sees* the strap, not whether it would
     /// have started while you were holding the phone.
     public func readDiagnostics() async throws -> SensorDiagnostics {
-        async let state = gsp.getMoveLoadState()
-        async let full = gsp.isLogbookFull()
-        guard let diagnostics = SensorDiagnostics(payload: try await state,
-                                                  logbookFull: try await full)
+        // Sequential, not `async let`: GSP carries one command at a time.
+        let state = try await gsp.getMoveLoadState()
+        let full = try await gsp.isLogbookFull()
+        guard let diagnostics = SensorDiagnostics(payload: state, logbookFull: full)
         else { throw SensorError.transferFailed(
             String(localized: "Réponse d'état illisible : firmware trop ancien ?", bundle: .module)) }
         return diagnostics

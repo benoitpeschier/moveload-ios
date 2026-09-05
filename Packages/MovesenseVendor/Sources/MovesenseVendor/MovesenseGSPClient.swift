@@ -197,7 +197,17 @@ public actor MovesenseGSPClient {
     /// Available from firmware 1.13.0. Earlier images answer 404, which
     /// surfaces as an error rather than as an empty journal.
     public func getMoveLoadState() async throws -> Data {
-        try await get("/MoveLoad/State")
+        // Not `get(_:)`: that one expects the status code the firmware puts in
+        // front of a whiteboard resource's answer. This path is answered by our
+        // own firmware from its own memory, like HELLO, and carries no status —
+        // the same split as on the sensor side, where proxied paths go through
+        // onGetResult and ours are served on the spot.
+        let ref = nextReference()
+        var payload = Data("/MoveLoad/State".utf8)
+        payload.append(0)
+        let response = try await send(command: .get, reference: ref,
+                                      payload: payload, expectsStatusCode: false)
+        return response.data
     }
 
     /// Remaining charge, 0–100 %.
@@ -416,6 +426,18 @@ public actor MovesenseGSPClient {
         }
         var commandBytes = Data([command.rawValue, reference])
         commandBytes.append(payload)
+
+        // One command at a time, and say so rather than clobbering. There is a
+        // single pending continuation: a second command issued before the
+        // first answers overwrites it, the first never resumes, and its
+        // timeout task is overwritten too — so the caller waits for ever with
+        // no error. That is exactly what two `async let` reads did to the
+        // diagnostics screen, and a spinner that never stops is the least
+        // diagnosable failure there is.
+        if pendingResponse != nil {
+            throw GSPError.unexpectedResponse(
+                String(localized: "une commande est déjà en cours", bundle: .module))
+        }
 
         return try await withCheckedThrowingContinuation { continuation in
             self.pendingResponse = continuation
