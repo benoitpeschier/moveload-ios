@@ -668,6 +668,20 @@ void MoveLoadAutoApp::updateHeartRateSubscription()
     // pulse to start, or we are watching for one to disappear mid-recording.
     const bool wanted = mHrsEnabled || mArming || (mWatchdogTimer != wb::ID_INVALID_TIMER);
 
+    // Never taken away from under a connected phone. The HRV test streams
+    // /Meas/HR over GSP for ten minutes with the DataLogger deliberately
+    // stopped and no watch listening, so `wanted` is false for the whole of
+    // it — and several paths through here (arming abandoned, the watchdog
+    // ending with the recording the test just stopped) would unsubscribe the
+    // very measurement the test is made of. Releasing it is deferred until the
+    // phone lets go and this runs again — arming beginning or giving up, a
+    // watch appearing, a recording's watchdog starting or ending. Each of
+    // those already calls this, so nothing is stranded.
+    if (!wanted && GATTSensorDataClient::hasActiveClient())
+    {
+        return;
+    }
+
     if (wanted == mHeartRateSubscribed)
     {
         return;
@@ -794,6 +808,21 @@ void MoveLoadAutoApp::onTimer(wb::TimerId timerId)
             // The pause is over: listen again, in case contact has improved.
             mArmingBackoff = false;
             evaluateRecordingState();
+            return;
+        }
+
+        // A phone on the line is why the gate never closed — not a missing
+        // pulse. Arming cannot complete while a GSP client is connected (that
+        // is the guard in the heart rate handler), so after five minutes of a
+        // ten-minute HRV test this branch fired on an athlete lying still with
+        // a perfectly good heartbeat, and did the two worst things it could:
+        // it blinked "no pulse found", which is the signal the auto-start is
+        // read by, and it dropped the heart rate measurement the phone was
+        // streaming. Keep waiting instead; the strap is on someone and the
+        // phone will let go when the test ends.
+        if (GATTSensorDataClient::hasActiveClient())
+        {
+            mArmingTimer = startTimer(ARMING_TIMEOUT_MS, false);
             return;
         }
 

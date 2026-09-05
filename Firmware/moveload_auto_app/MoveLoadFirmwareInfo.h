@@ -44,4 +44,14 @@
 //          only ever cleared by a CCCD write, which a dropped link does not
 //          send — so the sensor went on believing a phone was using it and
 //          refused to arm for good
-#define MOVELOAD_APP_VERSION "1.10.0"
+//   1.11.0 the heart rate measurement is not taken away from a connected
+//          phone, and arming stops declaring "no pulse" at an athlete who has
+//          one. Arming cannot complete while a GSP client is connected, so on
+//          a morning where the strap goes on before the app is opened, the
+//          five-minute arming timeout lands in the middle of the HRV test: it
+//          blinked the two-blink no-pulse code — the signal the auto-start is
+//          read by — and unsubscribed /Meas/HR, the measurement the test is
+//          made of, with the retry three minutes later blocked by that same
+//          connected phone. On 2026-09-05 the test kept two minutes of the
+//          lying position and nothing at all standing
+#define MOVELOAD_APP_VERSION "1.11.0"
