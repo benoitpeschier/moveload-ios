@@ -35,6 +35,8 @@ struct RecordingView: View {
     @State private var showSensorPicker = false
     @State private var isImportInProgress = false
     @State private var importStatusMessage: String?
+    @State private var diagnostics: SensorDiagnostics?
+    @State private var isReadingDiagnostics = false
 
     var body: some View {
         List {
@@ -42,6 +44,10 @@ struct RecordingView: View {
                 connectionRow
                 firmwareRow
                 batteryRow
+            }
+
+            if case .connected = connectionState {
+                diagnosticsSection
             }
 
             if case .connected = connectionState {
@@ -466,6 +472,115 @@ struct RecordingView: View {
                 Text(firmwareLabel(name)).foregroundStyle(.secondary)
             }
             .font(.caption)
+        }
+    }
+
+    /// What the firmware believes, and what it last decided.
+    ///
+    /// The journal is the part that matters: reading a live flag while
+    /// connected cannot answer a question about a morning when nothing was
+    /// connected — and `phoneConnected` is true by construction while this is
+    /// on screen. The entries were filed as the decisions were taken.
+    @ViewBuilder
+    private var diagnosticsSection: some View {
+        Section("Diagnostic capteur") {
+            if let diagnostics {
+                LabeledContent("Contact sangle", value: contactLabel(diagnostics.connector))
+                LabeledContent("Mouvement", value: contactLabel(diagnostics.movement))
+                LabeledContent("Enregistrement",
+                               value: diagnostics.isLogging
+                                   ? String(localized: "en cours")
+                                   : String(localized: "arrêté"))
+                if let blocking = blockingState(diagnostics) {
+                    Label(blocking, systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption).foregroundStyle(.orange)
+                }
+                if diagnostics.logbookFull {
+                    Text("Mémoire pleine : le capteur a cessé d'enregistrer.")
+                        .font(.caption).foregroundStyle(.orange)
+                }
+
+                if diagnostics.journal.isEmpty {
+                    Text("Aucune décision enregistrée depuis le démarrage du capteur.")
+                        .font(.caption).foregroundStyle(.secondary)
+                } else {
+                    ForEach(diagnostics.journal.reversed()) { note in
+                        HStack(alignment: .firstTextBaseline) {
+                            Text(label(for: note.code)).font(.caption)
+                            Spacer()
+                            Text(age(note.secondsAgo))
+                                .font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                        }
+                    }
+                }
+            }
+
+            Button {
+                Task { await readDiagnostics() }
+            } label: {
+                if isReadingDiagnostics {
+                    ProgressView()
+                } else {
+                    Text(diagnostics == nil ? "Lire l'état du capteur" : "Relire")
+                }
+            }
+            .disabled(isReadingDiagnostics)
+
+            Text("Le journal remonte au dernier redémarrage du capteur, le plus récent en haut. Un téléphone connecté empêche le démarrage automatique, volontairement : c'est pourquoi c'est le journal qu'il faut lire, pas l'état courant.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    /// The reason arming cannot happen right now, if there is one.
+    private func blockingState(_ d: SensorDiagnostics) -> String? {
+        if d.transitionPending { return String(localized: "Le capteur attend la fin d'un démarrage ou d'un arrêt.") }
+        if d.externalStopHonoured { return String(localized: "Arrêt manuel respecté : pas de redémarrage automatique pour l'instant.") }
+        if d.isPaused { return String(localized: "En pause entre deux tentatives de détection du pouls.") }
+        return nil
+    }
+
+    private func label(for code: SensorDiagnostics.Code) -> String {
+        switch code {
+        case .strapOn:                String(localized: "Sangle en contact")
+        case .strapOff:               String(localized: "Contact perdu")
+        case .armingBegan:            String(localized: "Recherche du pouls lancée")
+        case .pulseFound:             String(localized: "Pouls trouvé")
+        case .armingTimedOut:         String(localized: "Pouls non trouvé, pause")
+        case .blockedByPhone:         String(localized: "Refusé : téléphone connecté")
+        case .blockedByExternalStop:  String(localized: "Refusé : arrêt manuel respecté")
+        case .blockedByPause:         String(localized: "Refusé : en pause")
+        case .blockedByBusy:          String(localized: "Refusé : démarrage ou arrêt en cours")
+        case .recordingStarted:       String(localized: "Enregistrement démarré")
+        case .recordingStopped:       String(localized: "Enregistrement arrêté")
+        case .externalStop:           String(localized: "Arrêté par l'app")
+        }
+    }
+
+    /// Ages, not clock times: the sensor's clock resets to 2015 on every power
+    /// loss, and "il y a 3 h" is what places a morning anyway.
+    private func age(_ seconds: Int) -> String {
+        if seconds >= 65_535 { return String(localized: "il y a plus de 18 h") }
+        if seconds < 60 { return String(localized: "il y a \(seconds) s") }
+        if seconds < 3600 { return String(localized: "il y a \(seconds / 60) min") }
+        return String(localized: "il y a \(seconds / 3600) h \((seconds % 3600) / 60) min")
+    }
+
+    private func contactLabel(_ state: UInt8) -> String {
+        switch state {
+        case 0: String(localized: "non")
+        case 1: String(localized: "oui")
+        default: String(localized: "inconnu")
+        }
+    }
+
+    private func readDiagnostics() async {
+        guard let movesense = appEnvironment.sensorService as? MovesenseSensorService else { return }
+        isReadingDiagnostics = true
+        defer { isReadingDiagnostics = false }
+        do {
+            diagnostics = try await movesense.readDiagnostics()
+        } catch {
+            errorMessage = error.localizedDescription
         }
     }
 

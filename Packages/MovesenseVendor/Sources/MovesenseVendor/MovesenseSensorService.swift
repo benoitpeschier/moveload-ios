@@ -221,6 +221,27 @@ public final class MovesenseSensorService: NSObject, SensorService {
         }
     }
 
+    /// What the sensor itself thinks, when the automatic recording does
+    /// nothing and there is no LED to read.
+    ///
+    /// Every diagnosis so far has been a guess reconstructed after the fact
+    /// from an empty logbook. These four values are the ones the firmware's
+    /// decision actually rests on, and three of them are plain whiteboard
+    /// resources — no firmware change was needed to ask.
+    ///
+    /// Note while reading it: a connected phone blocks arming by design, so
+    /// this says whether the sensor *sees* the strap, not whether it would
+    /// have started while you were holding the phone.
+    public func readDiagnostics() async throws -> SensorDiagnostics {
+        async let state = gsp.getMoveLoadState()
+        async let full = gsp.isLogbookFull()
+        guard let diagnostics = SensorDiagnostics(payload: try await state,
+                                                  logbookFull: try await full)
+        else { throw SensorError.transferFailed(
+            String(localized: "Réponse d'état illisible : firmware trop ancien ?", bundle: .module)) }
+        return diagnostics
+    }
+
     public func disconnect() async {
         state = .disconnecting
         await gsp.disconnect()
@@ -454,5 +475,86 @@ extension MovesenseSensorService: CBCentralManagerDelegate {
 
         let sensor = DiscoveredSensor(id: peripheral.identifier.uuidString, name: peripheral.name ?? "Movesense", rssi: RSSI.intValue)
         scanContinuation?.yield(sensor)
+    }
+}
+
+/// What the auto-start firmware believes, and what it last decided.
+///
+/// Every failed morning so far has been reconstructed after the fact from an
+/// empty logbook and an unlit LED. These are the values the decision actually
+/// rests on, read from the module that takes it.
+public struct SensorDiagnostics: Sendable {
+    /// 0 off, 1 contact, 2 unknown — the sensor's own connector state.
+    public let connector: UInt8
+    public let movement: UInt8
+    public let isArming: Bool
+    /// Waiting out the pause between two attempts to find a pulse.
+    public let isPaused: Bool
+    public let externalStopHonoured: Bool
+    /// A start or stop still in flight. Stuck here, everything below it is
+    /// silenced — and from the outside that looks like a sensor seeing nothing.
+    public let transitionPending: Bool
+    public let isLogging: Bool
+    /// True whenever this app is connected, so it says nothing about the
+    /// mornings it was not — read the journal for those.
+    public let phoneConnected: Bool
+    public let heartRateSubscribed: Bool
+    public let logbookFull: Bool
+    /// Oldest first.
+    public let journal: [Note]
+
+    public struct Note: Sendable, Identifiable {
+        public let id = UUID()
+        public let secondsAgo: Int
+        public let code: Code
+    }
+
+    /// Must match the Note enum in Firmware/moveload_auto_app/MoveLoadAutoApp.h.
+    public enum Code: UInt8, Sendable {
+        case strapOn = 1
+        case strapOff
+        case armingBegan
+        case pulseFound
+        case armingTimedOut
+        case blockedByPhone
+        case blockedByExternalStop
+        case blockedByPause
+        case blockedByBusy
+        case recordingStarted
+        case recordingStopped
+        case externalStop
+    }
+
+    public var strapOn: Bool { connector == 1 }
+
+    /// See `describeState` in the firmware for the layout. An unknown format
+    /// version is refused rather than half-read: the one thing worse than no
+    /// diagnosis is a confident wrong one.
+    init?(payload: Data, logbookFull: Bool) {
+        let bytes = [UInt8](payload)
+        guard bytes.count >= 5, bytes[0] == 1 else { return nil }
+        connector = bytes[1]
+        movement = bytes[2]
+        let flags = bytes[3]
+        isArming = flags & 1 != 0
+        isPaused = flags & 2 != 0
+        externalStopHonoured = flags & 4 != 0
+        transitionPending = flags & 8 != 0
+        isLogging = flags & 16 != 0
+        phoneConnected = flags & 32 != 0
+        heartRateSubscribed = flags & 64 != 0
+        self.logbookFull = logbookFull
+
+        var notes: [Note] = []
+        var at = 5
+        for _ in 0..<Int(bytes[4]) {
+            guard at + 2 < bytes.count else { break }
+            let seconds = Int(bytes[at]) | Int(bytes[at + 1]) << 8
+            if let code = Code(rawValue: bytes[at + 2]) {
+                notes.append(Note(secondsAgo: seconds, code: code))
+            }
+            at += 3
+        }
+        journal = notes
     }
 }

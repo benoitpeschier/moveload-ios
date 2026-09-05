@@ -205,6 +205,23 @@
         }
       }
     },
+    "Réponse d'état illisible : firmware trop ancien ?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unreadable state response: firmware too old?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réponse d'état illisible : firmware trop ancien ?"
+          }
+        }
+      }
+    },
     "Scan large (%llds) : aucun périphérique BLE détecté à proximité.": {
       "extractionState": "manual",
       "localizations": {

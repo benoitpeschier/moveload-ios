@@ -1,6 +1,7 @@
 #include "movesense.h"
 
 #include "GATTSensorDataClient.h"
+#include "MoveLoadAutoApp.h"
 #include "MoveLoadFirmwareInfo.h"
 #include "common/core/debug.h"
 #include "oswrapper/thread.h"
@@ -407,6 +408,20 @@ void GATTSensorDataClient::handleIncomingCommand(const wb::Array<uint8> &command
             {
                 mPendingGet = PendingGet::LogbookEntries;
                 asyncGet(WB_RES::LOCAL::MEM_LOGBOOK_ENTRIES(), AsyncRequestOptions::ForceAsync);
+            }
+            else if (strcmp(path, "/MoveLoad/State") == 0)
+            {
+                // Answered here and now, from the auto-start app's own memory.
+                // Deliberately not a whiteboard round-trip: what is asked for
+                // is precisely that module's private view — the flags its
+                // decisions rest on, and the journal of what it decided. A
+                // resource would have reported the sensor's state, which is
+                // what we could already see.
+                mPendingGetReference = kNoReference;
+                mPendingGet = PendingGet::None;
+                uint8_t state[128];
+                const size_t written = MoveLoadAutoApp::describeCurrentState(state, sizeof(state));
+                sendCommandBytes(reference, state, written);
             }
             else
             {

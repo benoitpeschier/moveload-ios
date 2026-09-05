@@ -66,4 +66,11 @@
 //          de contact renouvelait le piège — or une sangle prise, mouillée
 //          puis portée perd le contact plusieurs fois avant d'atteindre une
 //          poitrine. Le contact retrouvé arme désormais aussitôt
-#define MOVELOAD_APP_VERSION "1.12.0"
+//   1.13.0 un journal des décisions, lisible par l'app sur /MoveLoad/State :
+//          les seize dernières décisions d'armement avec leur âge, plus l'état
+//          courant des drapeaux dont elles dépendent. Trois pannes de suite
+//          ont eu la même forme — une machine à états où l'on ne peut plus
+//          entrer — et chacune a coûté une journée de terrain, parce que de
+//          l'extérieur elles se ressemblent toutes : pas de LED, pas de
+//          séance, rien à lire
+#define MOVELOAD_APP_VERSION "1.13.0"

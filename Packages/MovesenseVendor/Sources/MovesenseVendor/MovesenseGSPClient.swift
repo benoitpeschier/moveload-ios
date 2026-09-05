@@ -186,6 +186,20 @@ public actor MovesenseGSPClient {
         return first != 0
     }
 
+    /// The auto-start firmware's own view of itself: the flags its decisions
+    /// rest on, and a journal of the last sixteen it took.
+    ///
+    /// Answered by our firmware directly rather than proxied to a whiteboard
+    /// resource — which is the point. A resource would report what the *sensor*
+    /// is doing, and that was never the unknown: the unknown is what the module
+    /// deciding on it believed at the time.
+    ///
+    /// Available from firmware 1.13.0. Earlier images answer 404, which
+    /// surfaces as an error rather than as an empty journal.
+    public func getMoveLoadState() async throws -> Data {
+        try await get("/MoveLoad/State")
+    }
+
     /// Remaining charge, 0–100 %.
     ///
     /// The sensor answers 503 while it cannot take the measurement, which the

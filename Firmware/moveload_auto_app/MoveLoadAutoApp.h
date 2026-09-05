@@ -2,6 +2,7 @@
 
 #include <whiteboard/LaunchableModule.h>
 #include <whiteboard/ResourceClient.h>
+#include <whiteboard/integration/bsp/timestamp.h>
 
 /// Records a session without anyone touching anything: putting the strap on
 /// starts the DataLogger, leaving the sensor still and off the body stops it.
@@ -21,6 +22,35 @@ public:
 
     MoveLoadAutoApp();
     ~MoveLoadAutoApp();
+
+    /// One decision, kept so that a morning which recorded nothing can say
+    /// why instead of being reconstructed afterwards from an empty logbook.
+    ///
+    /// Three faults in a row have had the same shape — a state machine that
+    /// could no longer be entered — and each cost a day of field testing to
+    /// find, because from the outside every one of them looks identical: no
+    /// LED, no session, no clue.
+    enum Note : uint8_t
+    {
+        NOTE_STRAP_ON = 1,
+        NOTE_STRAP_OFF,
+        NOTE_ARMING_BEGAN,
+        NOTE_PULSE_FOUND,
+        NOTE_ARMING_TIMED_OUT,
+        NOTE_BLOCKED_BY_PHONE,
+        NOTE_BLOCKED_BY_EXTERNAL_STOP,
+        NOTE_BLOCKED_BY_PAUSE,
+        NOTE_BLOCKED_BY_BUSY,
+        NOTE_RECORDING_STARTED,
+        NOTE_RECORDING_STOPPED,
+        NOTE_EXTERNAL_STOP,
+    };
+
+    /// Writes the current state and the journal into `out`, for the GSP GET on
+    /// /MoveLoad/State. Returns the number of bytes written, always ≤ capacity.
+    /// Answers even when no instance is running, so the phone gets an empty
+    /// journal rather than a timeout.
+    static size_t describeCurrentState(uint8_t* out, size_t capacity);
 
 private:
     virtual bool initModule() OVERRIDE;
@@ -57,6 +87,11 @@ private:
     void startLogging();
     void stopLogging();
     void armStopTimer();
+    /// Files a decision, unless it repeats the one just filed. Contact
+    /// chatters several times a second while a strap is being settled, and an
+    /// undeduplicated journal would hold nothing but that.
+    void note(Note what);
+    size_t describeState(uint8_t* out, size_t capacity) const;
     /// Clears the external-stop inhibition and its timer together, so the two
     /// cannot disagree.
     void forgetExternalStop();
@@ -148,4 +183,20 @@ private:
     /// Bounds mExternalStopHonoured. Without it the flag outlived its purpose
     /// by a whole day — see EXTERNAL_STOP_RESPECT_MS.
     wb::TimerId mExternalStopTimer;
+
+    struct JournalEntry
+    {
+        WbTimestamp at;
+        uint8_t code;
+    };
+    /// Sixteen decisions is about a morning: the strap going on, an attempt,
+    /// its outcome, and whatever refused it. Older ones fall off the end,
+    /// which is the right end to lose — the question is always what happened
+    /// last.
+    static const size_t JOURNAL_CAPACITY = 16;
+    JournalEntry mJournal[JOURNAL_CAPACITY];
+    /// How many entries the ring holds, saturating at its capacity.
+    uint8_t mJournalCount;
+    /// Where the next entry goes.
+    uint8_t mJournalNext;
 };

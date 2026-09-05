@@ -2,6 +2,7 @@
 
 #include "MoveLoadAutoApp.h"
 #include "common/core/debug.h"
+#include <string.h>
 
 #include "mem_datalogger/resources.h"
 #include "meas_hr/resources.h"
@@ -121,6 +122,11 @@ const char* const MoveLoadAutoApp::LAUNCHABLE_NAME = "MoveLoadAuto";
 #define HR_MIN_BPM 30
 #define HR_MAX_BPM 220
 
+/// The running instance, so the GSP client can answer /MoveLoad/State without
+/// a whiteboard round-trip — the same idiom as g_gspClientActive in the other
+/// direction. There is exactly one of each module.
+MoveLoadAutoApp* g_moveLoadAutoApp = nullptr;
+
 MoveLoadAutoApp::MoveLoadAutoApp():
     ResourceClient(WBDEBUG_NAME(__FUNCTION__), WB_EXEC_CTX_APPLICATION),
     LaunchableModule(LAUNCHABLE_NAME, WB_EXEC_CTX_APPLICATION),
@@ -145,12 +151,17 @@ MoveLoadAutoApp::MoveLoadAutoApp():
     mAliveTransitionsThisTick(0),
     mWildTransitionsThisTick(0),
     mBlinksLeft(0),
-    mBlinkOn(false)
+    mBlinkOn(false),
+    mJournalCount(0),
+    mJournalNext(0)
 {
+    memset(mJournal, 0, sizeof(mJournal));
+    g_moveLoadAutoApp = this;
 }
 
 MoveLoadAutoApp::~MoveLoadAutoApp()
 {
+    g_moveLoadAutoApp = nullptr;
 }
 
 bool MoveLoadAutoApp::initModule()
@@ -262,6 +273,7 @@ void MoveLoadAutoApp::onGetResult(whiteboard::RequestId requestId,
                     // perfectly good pulse, and re-arming would undo the tap
                     // they just made.
                     DEBUGLOG("Recording stopped from outside — not restarting for now");
+                    note(NOTE_EXTERNAL_STOP);
                     mExternalStopHonoured = true;
                     abandonArming();
                     // Bounded, because the clearing condition can never come:
@@ -409,6 +421,7 @@ void MoveLoadAutoApp::onNotify(wb::ResourceId resourceId,
                     && !GATTSensorDataClient::hasActiveClient())
                 {
                     DEBUGLOG("Pulse found (%d bpm) — the strap is on someone", bpm);
+                    note(NOTE_PULSE_FOUND);
                     mArming = false;
                     stopTimer(mArmingTimer);
                     mArmingTimer = wb::ID_INVALID_TIMER;
@@ -439,7 +452,10 @@ void MoveLoadAutoApp::evaluateRecordingState()
     if (mTransitionPending)
     {
         // A start or stop is still in flight; whatever changed will be
-        // reconsidered when its result comes back.
+        // reconsidered when its result comes back. Filed because a pending
+        // flag that never clears would silence everything below it, and from
+        // the outside that looks exactly like a sensor that saw nothing.
+        note(NOTE_BLOCKED_BY_BUSY);
         return;
     }
 
@@ -452,6 +468,7 @@ void MoveLoadAutoApp::evaluateRecordingState()
 
         if (!strapOn)
         {
+            note(NOTE_STRAP_OFF);
             // Contact gone — but an arming attempt already under way is left
             // to run.
             //
@@ -491,8 +508,11 @@ void MoveLoadAutoApp::evaluateRecordingState()
             return;
         }
 
+        note(NOTE_STRAP_ON);
+
         if (mExternalStopHonoured)
         {
+            note(NOTE_BLOCKED_BY_EXTERNAL_STOP);
             return;
         }
 
@@ -511,7 +531,19 @@ void MoveLoadAutoApp::evaluateRecordingState()
         // recording again, which is precisely what stopping it was for. During
         // a genuine session the phone is not connected; it is in the changing
         // room.
-        if (!mArming && !mArmingBackoff && !GATTSensorDataClient::hasActiveClient())
+        if (mArming)
+        {
+            // Already listening; nothing to file.
+        }
+        else if (mArmingBackoff)
+        {
+            note(NOTE_BLOCKED_BY_PAUSE);
+        }
+        else if (GATTSensorDataClient::hasActiveClient())
+        {
+            note(NOTE_BLOCKED_BY_PHONE);
+        }
+        else
         {
             beginArming();
         }
@@ -532,6 +564,7 @@ void MoveLoadAutoApp::evaluateRecordingState()
 void MoveLoadAutoApp::startLogging()
 {
     DEBUGLOG("startLogging()");
+    note(NOTE_RECORDING_STARTED);
     mTransitionPending = true;
     mArmingBackoff = false;
 
@@ -561,6 +594,7 @@ void MoveLoadAutoApp::startLogging()
 void MoveLoadAutoApp::stopLogging()
 {
     DEBUGLOG("stopLogging()");
+    note(NOTE_RECORDING_STOPPED);
     mTransitionPending = true;
     mStopRequested = true;
 
@@ -570,6 +604,84 @@ void MoveLoadAutoApp::stopLogging()
              WB_RES::DataLoggerStateValues::DATALOGGER_READY);
 
     blink(BLINKS_RECORDING_STOPPED);
+}
+
+void MoveLoadAutoApp::note(Note what)
+{
+    // Deduplicated against the last entry only. Connector state chatters
+    // several times a second while a strap is being settled on a chest, and a
+    // ring of sixteen would otherwise hold one second of that and nothing of
+    // the morning.
+    if (mJournalCount > 0)
+    {
+        const size_t lastIndex = (mJournalNext + JOURNAL_CAPACITY - 1) % JOURNAL_CAPACITY;
+        if (mJournal[lastIndex].code == static_cast<uint8_t>(what)) return;
+    }
+
+    mJournal[mJournalNext].at = WbTimestampGet();
+    mJournal[mJournalNext].code = static_cast<uint8_t>(what);
+    mJournalNext = (mJournalNext + 1) % JOURNAL_CAPACITY;
+    if (mJournalCount < JOURNAL_CAPACITY) mJournalCount++;
+}
+
+size_t MoveLoadAutoApp::describeCurrentState(uint8_t* out, size_t capacity)
+{
+    if (g_moveLoadAutoApp == nullptr)
+    {
+        // Answer anyway: an empty journal says "this firmware is not running",
+        // which is itself worth knowing, and beats a request that times out.
+        if (capacity < 2) return 0;
+        out[0] = 1;
+        out[1] = 0;
+        return 2;
+    }
+    return g_moveLoadAutoApp->describeState(out, capacity);
+}
+
+/// Layout, little-endian, version 1:
+///   0      format version
+///   1      connector state (0 off, 1 contact, 2 unknown)
+///   2      movement state
+///   3      flags: 1 arming, 2 pause, 4 external stop, 8 transition pending,
+///          16 recording, 32 phone connected over GSP, 64 heart rate subscribed
+///   4      number of journal entries that follow
+///   5..    per entry: seconds ago (uint16), code (uint8)
+///
+/// Seconds ago rather than a clock: the sensor's RTC resets to 2015 on every
+/// power loss, and what the reader needs is "three hours ago", not a date.
+size_t MoveLoadAutoApp::describeState(uint8_t* out, size_t capacity) const
+{
+    if (capacity < 5) return 0;
+    const WbTimestamp now = WbTimestampGet();
+
+    out[0] = 1;
+    out[1] = mConnectorState;
+    out[2] = mMovementState;
+    out[3] = static_cast<uint8_t>(
+        (mArming ? 1 : 0) | (mArmingBackoff ? 2 : 0) | (mExternalStopHonoured ? 4 : 0) |
+        (mTransitionPending ? 8 : 0) | (isLogging() ? 16 : 0) |
+        (GATTSensorDataClient::hasActiveClient() ? 32 : 0) |
+        (mHeartRateSubscribed ? 64 : 0));
+
+    size_t at = 5;
+    uint8_t written = 0;
+    // Oldest first, so the reader can print them in the order they happened.
+    for (uint8_t i = 0; i < mJournalCount; i++)
+    {
+        const size_t index =
+            (mJournalNext + JOURNAL_CAPACITY - mJournalCount + i) % JOURNAL_CAPACITY;
+        if (at + 3 > capacity) break;
+        int elapsedMs = WbTimestampDifferenceMs(mJournal[index].at, now);
+        if (elapsedMs < 0) elapsedMs = 0;
+        uint32_t seconds = static_cast<uint32_t>(elapsedMs) / 1000;
+        if (seconds > 0xFFFF) seconds = 0xFFFF;   // older than 18 hours
+        out[at++] = static_cast<uint8_t>(seconds & 0xFF);
+        out[at++] = static_cast<uint8_t>((seconds >> 8) & 0xFF);
+        out[at++] = mJournal[index].code;
+        written++;
+    }
+    out[4] = written;
+    return at;
 }
 
 void MoveLoadAutoApp::armStopTimer()
@@ -605,6 +717,7 @@ void MoveLoadAutoApp::forgetExternalStop()
 void MoveLoadAutoApp::beginArming()
 {
     DEBUGLOG("Contact made — waiting for a pulse before recording");
+    note(NOTE_ARMING_BEGAN);
     mArming = true;
     // Tell the wearer the strap was noticed. Until this, a sensor that had
     // seen nothing and one patiently waiting for a pulse looked exactly the
@@ -848,6 +961,7 @@ void MoveLoadAutoApp::onTimer(wb::TimerId timerId)
         }
 
         DEBUGLOG("No pulse yet — pausing before another attempt");
+        note(NOTE_ARMING_TIMED_OUT);
         blink(BLINKS_NO_PULSE_FOUND);
         mArming = false;
         mArmingBackoff = true;

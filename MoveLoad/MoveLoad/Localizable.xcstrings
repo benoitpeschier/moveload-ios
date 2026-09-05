@@ -426,6 +426,23 @@
         }
       }
     },
+    "Arrêt manuel respecté : pas de redémarrage automatique pour l'instant.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Manual stop respected: no automatic restart for now."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêt manuel respecté : pas de redémarrage automatique pour l'instant."
+          }
+        }
+      }
+    },
     "Arrêter l'enregistrement": {
       "extractionState": "manual",
       "localizations": {
@@ -456,6 +473,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Arrêter l'écoute"
+          }
+        }
+      }
+    },
+    "Arrêté par l'app": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopped by the app"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêté par l'app"
           }
         }
       }
@@ -592,6 +626,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucun fichier acc_stream.json reconnu parmi les fichiers sélectionnés."
+          }
+        }
+      }
+    },
+    "Aucune décision enregistrée depuis le démarrage du capteur.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No decision recorded since the sensor started up."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune décision enregistrée depuis le démarrage du capteur."
           }
         }
       }
@@ -1055,6 +1106,40 @@
         }
       }
     },
+    "Contact perdu": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contact lost"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contact perdu"
+          }
+        }
+      }
+    },
+    "Contact sangle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strap contact"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contact sangle"
+          }
+        }
+      }
+    },
     "Courbatures": {
       "extractionState": "manual",
       "localizations": {
@@ -1221,6 +1306,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dernier téléchargement : %@ en %@ — %@/s"
+          }
+        }
+      }
+    },
+    "Diagnostic capteur": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sensor diagnostics"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diagnostic capteur"
           }
         }
       }
@@ -1548,6 +1650,23 @@
         }
       }
     },
+    "En pause entre deux tentatives de détection du pouls.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pausing between two attempts to find a pulse."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En pause entre deux tentatives de détection du pouls."
+          }
+        }
+      }
+    },
     "Enregistrement": {
       "extractionState": "manual",
       "localizations": {
@@ -1561,6 +1680,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Enregistrement"
+          }
+        }
+      }
+    },
+    "Enregistrement arrêté": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recording stopped"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrement arrêté"
+          }
+        }
+      }
+    },
+    "Enregistrement démarré": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recording started"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrement démarré"
           }
         }
       }
@@ -2330,6 +2483,23 @@
         }
       }
     },
+    "Le capteur attend la fin d'un démarrage ou d'un arrêt.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The sensor is waiting for a start or stop to complete."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le capteur attend la fin d'un démarrage ou d'un arrêt."
+          }
+        }
+      }
+    },
     "Le capteur cessera d'enregistrer et se déconnectera. Il revient en fonctionnement normal après la mise à jour, ou en le sortant de la sangle pour le redémarrer.": {
       "extractionState": "manual",
       "localizations": {
@@ -2428,6 +2598,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le capteur signale qu'il contient d'autres enregistrements que sa liste ne peut pas afficher (elle plafonne à quatre). Ceci va les chercher directement et les importe."
+          }
+        }
+      }
+    },
+    "Le journal remonte au dernier redémarrage du capteur, le plus récent en haut. Un téléphone connecté empêche le démarrage automatique, volontairement : c'est pourquoi c'est le journal qu'il faut lire, pas l'état courant.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The journal goes back to the sensor's last restart, most recent first. A connected phone blocks the automatic start by design — which is why the journal is what to read, not the current state."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le journal remonte au dernier redémarrage du capteur, le plus récent en haut. Un téléphone connecté empêche le démarrage automatique, volontairement : c'est pourquoi c'est le journal qu'il faut lire, pas l'état courant."
           }
         }
       }
@@ -2615,6 +2802,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les tests du matin s'accumulent ici. C'est leur suite qui a du sens, pas un matin isolé."
+          }
+        }
+      }
+    },
+    "Lire l'état du capteur": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read the sensor's state"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lire l'état du capteur"
           }
         }
       }
@@ -2840,6 +3044,23 @@
         }
       }
     },
+    "Mouvement": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Movement"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mouvement"
+          }
+        }
+      }
+    },
     "Movesense Flash (Bluetooth)": {
       "extractionState": "manual",
       "localizations": {
@@ -2870,6 +3091,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Médiane des 6 derniers"
+          }
+        }
+      }
+    },
+    "Mémoire pleine : le capteur a cessé d'enregistrer.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Memory full: the sensor has stopped recording."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mémoire pleine : le capteur a cessé d'enregistrer."
           }
         }
       }
@@ -3248,6 +3486,40 @@
         }
       }
     },
+    "Pouls non trouvé, pause": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No pulse found, pausing"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pouls non trouvé, pause"
+          }
+        }
+      }
+    },
+    "Pouls trouvé": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pulse found"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pouls trouvé"
+          }
+        }
+      }
+    },
     "Progression des records": {
       "extractionState": "manual",
       "localizations": {
@@ -3503,6 +3775,23 @@
         }
       }
     },
+    "Recherche du pouls lancée": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Looking for a pulse"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recherche du pouls lancée"
+          }
+        }
+      }
+    },
     "Rechercher": {
       "extractionState": "manual",
       "localizations": {
@@ -3622,6 +3911,74 @@
         }
       }
     },
+    "Refusé : arrêt manuel respecté": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Declined: manual stop respected"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refusé : arrêt manuel respecté"
+          }
+        }
+      }
+    },
+    "Refusé : démarrage ou arrêt en cours": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Declined: a start or stop is in flight"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refusé : démarrage ou arrêt en cours"
+          }
+        }
+      }
+    },
+    "Refusé : en pause": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Declined: pausing"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refusé : en pause"
+          }
+        }
+      }
+    },
+    "Refusé : téléphone connecté": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Declined: phone connected"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refusé : téléphone connecté"
+          }
+        }
+      }
+    },
     "Relie cet appareil à la webapp coach. Le code d'équipe doit être identique sur tous les téléphones et dans l'URL de la webapp. Le plus simple est de scanner le QR code d'un appareil déjà configuré plutôt que de recopier les trois valeurs.": {
       "extractionState": "manual",
       "localizations": {
@@ -3635,6 +3992,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Relie cet appareil à la webapp coach. Le code d'équipe doit être identique sur tous les téléphones et dans l'URL de la webapp. Le plus simple est de scanner le QR code d'un appareil déjà configuré plutôt que de recopier les trois valeurs."
+          }
+        }
+      }
+    },
+    "Relire": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read again"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relire"
           }
         }
       }
@@ -3822,6 +4196,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Réglages"
+          }
+        }
+      }
+    },
+    "Sangle en contact": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strap in contact"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sangle en contact"
           }
         }
       }
@@ -4880,6 +5271,23 @@
         }
       }
     },
+    "arrêté": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "stopped"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "arrêté"
+          }
+        }
+      }
+    },
     "au-dessus de %@ m/s²": {
       "extractionState": "manual",
       "localizations": {
@@ -4910,6 +5318,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "bpm"
+          }
+        }
+      }
+    },
+    "en cours": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "recording"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "en cours"
+          }
+        }
+      }
+    },
+    "il y a %lld h %lld min": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld h %lld min ago"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "il y a %lld h %lld min"
+          }
+        }
+      }
+    },
+    "il y a %lld min": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min ago"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "il y a %lld min"
+          }
+        }
+      }
+    },
+    "il y a %lld s": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld s ago"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "il y a %lld s"
+          }
+        }
+      }
+    },
+    "il y a plus de 18 h": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "more than 18 h ago"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "il y a plus de 18 h"
+          }
+        }
+      }
+    },
+    "inconnu": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "unknown"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "inconnu"
           }
         }
       }
@@ -4978,6 +5488,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "ms²"
+          }
+        }
+      }
+    },
+    "non": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "no"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "non"
+          }
+        }
+      }
+    },
+    "oui": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "yes"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "oui"
           }
         }
       }
@@ -5131,6 +5675,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "À la quatrième, les suivantes n'apparaîtront plus dans cette liste. Télécharge celles qui manquent, puis efface la mémoire du capteur."
+          }
+        }
+      }
+    },
+    "À lire sangle en place. Un téléphone connecté empêche le démarrage automatique, volontairement : ceci dit ce que le capteur perçoit, pas ce qu'il ferait sans toi.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read it with the strap on. A connected phone blocks the automatic start by design: this says what the sensor perceives, not what it would do without you."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À lire sangle en place. Un téléphone connecté empêche le démarrage automatique, volontairement : ceci dit ce que le capteur perçoit, pas ce qu'il ferait sans toi."
           }
         }
       }
