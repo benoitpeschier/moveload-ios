@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import AnalysisEngine
 import MovesenseVendor
 import PersistenceKit
 
@@ -12,6 +11,7 @@ import PersistenceKit
 /// later they go unanswered.
 struct HRVTestView: View {
     @Environment(AppEnvironment.self) private var appEnvironment
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var recorder: HRVTestRecorder?
     @State private var answers: [Int] = []
@@ -19,32 +19,45 @@ struct HRVTestView: View {
     @State private var errorMessage: String?
     @Query(sort: \HRVTest.date) private var allTests: [HRVTest]
 
-    /// McLean et al. (2010), in its original order. Named in the interface
-    /// rather than called "the five questions": a named instrument invites the
-    /// athlete to answer it as one, and the provenance stops someone rewording
-    /// the items later.
-    private static let wellnessItems = [
-        "Fatigue", "Qualité du sommeil", "Courbatures", "Stress", "Humeur",
-    ]
-
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                switch recorder?.phase ?? .idle {
-                case .idle:            introduction
-                case .connecting:      waiting
-                case .supine:          timerCard(title: "Allongé", instruction: "Reste immobile, respire normalement.")
-                case .standing:        timerCard(title: "Debout", instruction: "Debout, immobile.")
-                case .finished:        results
-                case .failed(let why): failure(why)
-                }
+                content
             }
             .padding()
+            // Content narrower than the screen is centred by the ScrollView,
+            // which carries the large title with it and clips its left edge —
+            // the missing "H" of HRV during the timer was the visible half of
+            // that. Every phase now fills the width and stays put.
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .navigationTitle("HRV")
         // Refreshed when the tab is opened rather than at launch: this is the
         // only screen the thresholds affect, and it is opened once a morning.
         .task { await appEnvironment.refreshHRVThresholds() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .background { recorder?.noteBackgrounded() }
+        }
+        // Held on the environment so that backgrounding the app does not hand
+        // the sensor back mid-test — see MoveLoadApp.
+        .onChange(of: recorder?.phase) { _, _ in
+            appEnvironment.hrvTestInProgress = recorder?.isRunning ?? false
+        }
+    }
+
+    @ViewBuilder private var content: some View {
+        if let savedTest {
+            saved(savedTest)
+        } else {
+            switch recorder?.phase ?? .idle {
+            case .idle:            introduction
+            case .connecting:      waiting
+            case .supine:          timerCard(title: "Allongé", instruction: "Reste immobile, respire normalement.")
+            case .standing:        timerCard(title: "Debout", instruction: "Debout, immobile.")
+            case .finished:        questionnaire
+            case .failed(let why): failure(why)
+            }
+        }
     }
 
     // MARK: - Phases
@@ -96,13 +109,34 @@ struct HRVTestView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
+            // The one thing this screen has to say that the countdown cannot.
+            // A stream that stops looks exactly like a stream that continues:
+            // the timer runs to the end either way, and the loss only becomes
+            // visible ten minutes later, as a series too short to read.
+            if let silence = recorder?.secondsWithoutSignal {
+                Label {
+                    Text("Aucun battement depuis \(Int(silence)) s — vérifie la sangle et son contact avec la peau.")
+                        .font(.callout)
+                } icon: {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                }
+                .foregroundStyle(.orange)
+            }
+
             Button("Annuler", role: .destructive) {
                 Task { await recorder?.cancel(); recorder = nil }
             }
         }
     }
 
-    private var results: some View {
+    /// The questionnaire, and nothing else.
+    ///
+    /// The figures used to sit above it. They now come after the answers are
+    /// in: an athlete who has just read "rMSSD 58 ms, série trop courte"
+    /// answers the five questions against that number instead of against how
+    /// they feel, and the questionnaire is only worth having as a reading
+    /// independent of the measurement — sometimes contradicting it.
+    private var questionnaire: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("Test terminé").font(.title2.bold())
 
@@ -119,16 +153,7 @@ struct HRVTestView: View {
                 .foregroundStyle(.secondary)
             }
 
-            verdict
-
-            if let supine = analyse(recorder?.supineRR ?? []) {
-                measures("Allongé", supine)
-            }
-            if let standing = analyse(recorder?.standingRR ?? []) {
-                measures("Debout", standing)
-            }
-
-            Divider()
+            interruptionNotice
 
             Text("Questionnaire Wellness")
                 .font(.headline)
@@ -136,7 +161,7 @@ struct HRVTestView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
-            ForEach(Array(Self.wellnessItems.enumerated()), id: \.offset) { index, item in
+            ForEach(Array(HRVWellness.items.enumerated()), id: \.offset) { index, item in
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item).font(.subheadline)
                     Picker(item, selection: binding(for: index)) {
@@ -154,82 +179,41 @@ struct HRVTestView: View {
         }
     }
 
-    /// The fatigue reading, or its absence.
+    /// Why a test may have a hole in it, while the athlete can still act on it.
     ///
-    /// It describes and does not prescribe: it names the physiological picture
-    /// and the deltas behind it, never what session to do. That depends on the
-    /// week's plan, the water and how the athlete feels, none of which the app
-    /// knows.
-    @ViewBuilder private var verdict: some View {
-        if let settings = appEnvironment.athlete.settings,
-           let recorder,
-           !allTests.isEmpty {
-            // Deliberately without the athlete: this object exists only to
-            // carry the intervals into the verdict, it is never inserted, and
-            // hanging it off a managed relationship is how SwiftData is
-            // persuaded to insert something nobody asked it to — once per body
-            // evaluation, which is often.
-            let provisional = HRVTest(date: Date())
-            let outcome: HRVVerdict.Outcome? = {
-                provisional.supineRRms = recorder.supineRR
-                provisional.standingRRms = recorder.standingRR
-                return HRVVerdict.evaluate(current: provisional, earlier: allTests, settings: settings)
-            }()
-
-            if let outcome {
-                VStack(alignment: .leading, spacing: 6) {
-                    if let pattern = outcome.pattern {
-                        Text(pattern.rawValue).font(.headline).foregroundStyle(.orange)
-                        Text(pattern.reading).font(.callout)
-                    } else {
-                        Text("Pas de motif de fatigue").font(.headline)
-                    }
-                    Text("Référence : \(outcome.referenceLabel)")
-                        .font(.caption).foregroundStyle(.secondary)
-                    Text(String(format: "HF couché %+.0f %% · LF couché %+.0f %% · HF debout %+.0f %% · LF debout %+.0f %%",
-                                outcome.deltas.hfSupine, outcome.deltas.lfSupine,
-                                outcome.deltas.hfStanding, outcome.deltas.lfStanding))
-                        .font(.caption).foregroundStyle(.secondary).monospacedDigit()
-                    if outcome.deltas.restsOnSmallBase {
-                        Text("Écarts calculés sur une base faible : un grand pourcentage y est surtout de l'arithmétique.")
-                            .font(.caption).foregroundStyle(.orange)
-                    }
-                }
-                .padding(12)
-                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
-            }
+    /// Both causes produce the same thing — a series far shorter than the
+    /// position it was taken over — and the figures alone cannot tell them
+    /// apart, so the recorder reports which one it saw.
+    @ViewBuilder private var interruptionNotice: some View {
+        if recorder?.wasBackgrounded == true {
+            notice("L'app est passée en arrière-plan pendant le test : aucun battement n'est enregistré tant qu'elle n'est pas à l'écran. Laisse l'écran allumé et l'app ouverte, elle empêche la mise en veille.")
+        } else if let gap = recorder?.longestSignalGap, gap >= HRVTestRecorder.signalGapSeconds {
+            notice("Le signal cardiaque s'est interrompu \(Int(gap)) s pendant le test. Le résultat sera partiel.")
         }
     }
 
-    private func measures(_ title: String, _ result: HeartRateVariability.Result) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.headline)
-            row("FC moyenne", String(format: "%.0f bpm", result.meanHRbpm))
-            // Shown because it is what decides the reliability flag below —
-            // the engine measures a position by the sum of its intervals, and
-            // it needs 210 s of them after trimming.
-            row("Durée analysée", String(format: "%.0f s · %lld battements", result.durationSeconds, result.beatCount))
-            row("rMSSD", String(format: "%.0f ms", result.rmssdMs))
-            row("Puissance totale", String(format: "%.0f ms²", result.totalPower))
-            row("LF / HF", String(format: "%.2f", result.lfOverHf))
-            if !result.isFrequencyDomainReliable {
-                Text("Série trop courte pour que le spectre soit fiable.")
-                    .font(.caption).foregroundStyle(.orange)
-            }
-            if result.correctedFraction > 0 {
-                Text(String(format: "%.0f %% des battements corrigés", result.correctedFraction * 100))
-                    .font(.caption).foregroundStyle(.secondary)
-            }
+    private func notice(_ text: LocalizedStringKey) -> some View {
+        Label {
+            Text(text).font(.callout)
+        } icon: {
+            Image(systemName: "exclamationmark.triangle.fill")
         }
+        .foregroundStyle(.orange)
     }
 
-    private func row(_ label: String, _ value: String) -> some View {
-        HStack {
-            Text(label).foregroundStyle(.secondary)
-            Spacer()
-            Text(value).monospacedDigit()
+    /// The figures, once the answers are in and the test is on disk.
+    private func saved(_ test: HRVTest) -> some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Test enregistré").font(.title2.bold())
+
+            HRVTestSummary(
+                test: test,
+                earlier: allTests.filter { $0.date < test.date },
+                settings: appEnvironment.athlete.settings)
+
+            Button("Terminé") { savedTest = nil }
+                .buttonStyle(.bordered)
         }
-        .font(.callout)
     }
 
     private func failure(_ why: String) -> some View {
@@ -261,10 +245,6 @@ struct HRVTestView: View {
         )
     }
 
-    private func analyse(_ intervals: [Int]) -> HeartRateVariability.Result? {
-        HeartRateVariability.analyse(rrIntervalsMs: intervals.map(Double.init))
-    }
-
     private func startTest() async {
         errorMessage = nil
         guard let movesense = appEnvironment.sensorService as? MovesenseSensorService else {
@@ -273,6 +253,7 @@ struct HRVTestView: View {
         }
         let created = HRVTestRecorder(sensor: movesense)
         recorder = created
+        appEnvironment.hrvTestInProgress = true
         await created.start()
     }
 

@@ -1,6 +1,23 @@
 {
   "sourceLanguage": "fr",
   "strings": {
+    "%@ %% des battements corrigés": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %% of beats corrected"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %% des battements corrigés"
+          }
+        }
+      }
+    },
     "%@ : %@ m/s²": {
       "extractionState": "manual",
       "localizations": {
@@ -31,6 +48,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ m/s²"
+          }
+        }
+      }
+    },
+    "%@ s · %lld battements": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ s · %lld beats"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ s · %lld battements"
           }
         }
       }
@@ -460,6 +494,23 @@
         }
       }
     },
+    "Aucun battement depuis %lld s — vérifie la sangle et son contact avec la peau.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No beat for %lld s — check the strap and its contact with the skin."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun battement depuis %lld s — vérifie la sangle et son contact avec la peau."
+          }
+        }
+      }
+    },
     "Aucun capteur appairé": {
       "extractionState": "manual",
       "localizations": {
@@ -745,6 +796,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ce code contient le code d'équipe : quiconque le photographie peut accéder aux données de l'équipe."
+          }
+        }
+      }
+    },
+    "Ce test est incomplet : sans les deux positions, le motif ne peut pas être calculé.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This test is incomplete: without both positions the pattern cannot be computed."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce test est incomplet : sans les deux positions, le motif ne peut pas être calculé."
           }
         }
       }
@@ -2092,6 +2160,23 @@
         }
       }
     },
+    "L'app est passée en arrière-plan pendant le test : aucun battement n'est enregistré tant qu'elle n'est pas à l'écran. Laisse l'écran allumé et l'app ouverte, elle empêche la mise en veille.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app was sent to the background during the test: no beat is recorded while it is off screen. Leave the screen on and the app open — it keeps the phone awake by itself."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'app est passée en arrière-plan pendant le test : aucun battement n'est enregistré tant qu'elle n'est pas à l'écran. Laisse l'écran allumé et l'app ouverte, elle empêche la mise en veille."
+          }
+        }
+      }
+    },
     "L'app ne se connecte qu'à ce capteur et refuse d'importer une séance venue d'un autre. Ne l'oublie que si tu changes de capteur : les séances déjà importées ne sont pas touchées.": {
       "extractionState": "manual",
       "localizations": {
@@ -2377,6 +2462,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le premier capteur auquel tu te connecteras deviendra le tien. L'app ne parlera qu'à celui-là et refusera d'importer une séance venue d'un autre."
+          }
+        }
+      }
+    },
+    "Le signal cardiaque s'est interrompu %lld s pendant le test. Le résultat sera partiel.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The heart signal stopped for %lld s during the test. The result will be partial."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le signal cardiaque s'est interrompu %lld s pendant le test. Le résultat sera partiel."
           }
         }
       }
@@ -2704,6 +2806,23 @@
         }
       }
     },
+    "Motif": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pattern"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Motif"
+          }
+        }
+      }
+    },
     "Motif du jour": {
       "extractionState": "manual",
       "localizations": {
@@ -2938,6 +3057,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pas de données cardio pour cette séance"
+          }
+        }
+      }
+    },
+    "Pas de données exploitables pour cette position.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No usable data for this position."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas de données exploitables pour cette position."
           }
         }
       }
@@ -4268,6 +4404,23 @@
         }
       }
     },
+    "Terminé": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminé"
+          }
+        }
+      }
+    },
     "Test du matin": {
       "extractionState": "manual",
       "localizations": {
@@ -4281,6 +4434,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Test du matin"
+          }
+        }
+      }
+    },
+    "Test enregistré": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test saved"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test enregistré"
           }
         }
       }
@@ -4417,6 +4587,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Touche un jour pour l'ouvrir."
+          }
+        }
+      }
+    },
+    "Touche un test pour voir ses valeurs, appui long pour le supprimer.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap a test to see its figures, long-press to delete it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touche un test pour voir ses valeurs, appui long pour le supprimer."
           }
         }
       }

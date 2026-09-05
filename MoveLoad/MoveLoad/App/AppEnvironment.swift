@@ -34,6 +34,14 @@ final class AppEnvironment {
     /// Settings shows this so there is one place to look.
     private(set) var lastBackgroundSyncError: String?
 
+    /// True while an orthostatic test is running.
+    ///
+    /// Read by MoveLoadApp, which hands the sensor back whenever the app leaves
+    /// the screen — the one thing that must not happen in the middle of a
+    /// ten-minute measurement. Set by HRVTestView from the recorder's phase, so
+    /// it cannot outlive the test that raised it.
+    var hrvTestInProgress = false
+
     var modelContext: ModelContext { modelContainer.mainContext }
 
     init(sensorService: SensorService = MovesenseSensorService(), syncService: SyncService = FirestoreSyncService(), inMemory: Bool = false) {

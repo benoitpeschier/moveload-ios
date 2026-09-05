@@ -32,6 +32,17 @@ enum HRVVerdict {
         let referenceLabel: String
     }
 
+    /// Whether the test can be read at all, before any question of a
+    /// reference. Both positions are needed: the whole method is the *change*
+    /// between them, so one of them missing is not a weaker reading, it is no
+    /// reading. Kept apart from `evaluate` so a screen can say which of the two
+    /// reasons it has nothing to show — "there is no history yet" and "this
+    /// morning is incomplete" look identical from a nil.
+    static func isComplete(_ test: HRVTest) -> Bool {
+        HeartRateVariability.analyse(rrIntervalsMs: test.supineRRms.map(Double.init)) != nil
+            && HeartRateVariability.analyse(rrIntervalsMs: test.standingRRms.map(Double.init)) != nil
+    }
+
     static func thresholds(from settings: AthleteSettings) -> FatiguePatterns.Thresholds {
         var t = FatiguePatterns.Thresholds()
         t.energyCollapseHFSupine = settings.hrvEnergyCollapseHFSupine

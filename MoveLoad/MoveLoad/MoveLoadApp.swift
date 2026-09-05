@@ -42,12 +42,17 @@ struct MoveLoadApp: App {
                 // phone still connected therefore never starts a session, and
                 // says nothing about why.
                 //
-                // Unconditional on purpose. A transfer cannot outlive
-                // suspension anyway without a background mode, so there is
-                // nothing here to protect — and a rule with an exception is a
-                // rule that will have the exception hold the link one day.
+                // One exception, and it was written here as "unconditional on
+                // purpose": the HRV test. A transfer cannot outlive suspension,
+                // which is what made the rule look safe — but a ten-minute
+                // measurement can, and the athlete lying still with the screen
+                // off is the normal way to take it. Hanging up there does not
+                // merely fail to help, it guarantees the loss: the link is gone
+                // when the app comes back, so the second position collects
+                // nothing at all. The exception cannot strand the link, because
+                // the test hands the sensor back itself when it ends.
                 .onChange(of: scenePhase) { _, phase in
-                    guard phase == .background else { return }
+                    guard phase == .background, !appEnvironment.hrvTestInProgress else { return }
                     Task { await appEnvironment.sensorService.disconnect() }
                 }
         }

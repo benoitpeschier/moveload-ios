@@ -34,6 +34,45 @@ final class HRVTestRecorder {
     /// rather than announce a disconnection that is still in flight.
     private(set) var didDisconnect = false
 
+    /// When the last R-R interval arrived.
+    ///
+    /// Kept so a stream that stops can be *seen* while the test is still
+    /// running. On 2026-09-05 the supine series held two minutes of a
+    /// five-minute position and the standing one was empty, and nothing on
+    /// screen had said so at any point: the countdown ran to the end exactly
+    /// as it does on a good morning.
+    private(set) var lastSampleAt: Date?
+
+    /// The longest silence between two beats over the whole test.
+    ///
+    /// Reported at the end because a short series has two very different
+    /// causes — the strap losing the athlete, or the app being sent away — and
+    /// the figures alone cannot tell them apart.
+    private(set) var longestSignalGap: TimeInterval = 0
+
+    /// Whether the app was sent to the background while the test was running.
+    ///
+    /// There is no Bluetooth background mode here, so a locked screen suspends
+    /// the app and not one beat is collected while it is away. The wall clock
+    /// keeps going, so the test still "ends" on time, with a hole in it.
+    private(set) var wasBackgrounded = false
+
+    /// Silence long enough to be worth showing. Two beats at 40 bpm are three
+    /// seconds apart, so this is well clear of an ordinary gap.
+    static let signalGapSeconds: TimeInterval = 15
+
+    /// How long the beats have been missing, once that is long enough to mean
+    /// something. Nil while the stream is healthy.
+    var secondsWithoutSignal: TimeInterval? {
+        guard phase == .supine || phase == .standing, let lastSampleAt else { return nil }
+        let gap = Date().timeIntervalSince(lastSampleAt)
+        return gap >= Self.signalGapSeconds ? gap : nil
+    }
+
+    var isRunning: Bool {
+        phase == .connecting || phase == .supine || phase == .standing
+    }
+
     /// Five minutes a position. The analyser trims 30 s from each end, which is
     /// what leaves four clean minutes — see HeartRateVariability.
     static let positionSeconds: TimeInterval = 300
@@ -66,6 +105,9 @@ final class HRVTestRecorder {
         standingRR = []
         elapsed = 0
         didDisconnect = false
+        lastSampleAt = nil
+        longestSignalGap = 0
+        wasBackgrounded = false
 
         // Ten minutes lying still is exactly how long iOS waits before dimming
         // and locking, and a locked screen takes the timer and the position
@@ -113,9 +155,20 @@ final class HRVTestRecorder {
         await finish(reaching: .idle)
     }
 
+    /// Called when the app leaves the screen. A test that ran while the app was
+    /// away is a test with a hole in it, and the athlete deserves to be told
+    /// rather than left with an unexplained short series.
+    func noteBackgrounded() {
+        guard isRunning else { return }
+        wasBackgrounded = true
+    }
+
     private func tick() async {
         guard let startedAt, phase == .supine || phase == .standing else { return }
         elapsed = Date().timeIntervalSince(startedAt)
+        if let lastSampleAt {
+            longestSignalGap = max(longestSignalGap, Date().timeIntervalSince(lastSampleAt))
+        }
 
         if phase == .supine, elapsed >= Self.positionSeconds {
             phase = .standing
@@ -128,6 +181,10 @@ final class HRVTestRecorder {
 
     private func receive(_ sample: HeartRateStreamSample) {
         currentBpm = sample.bpm
+        // The intervals, not the sample: a strap that has lost contact keeps
+        // reporting an average with no R-R data behind it, and it is the
+        // intervals the test is made of.
+        if !sample.rrIntervalsMs.isEmpty { lastSampleAt = Date() }
 
         // First beat through: the position begins now.
         if phase == .connecting, !sample.rrIntervalsMs.isEmpty {

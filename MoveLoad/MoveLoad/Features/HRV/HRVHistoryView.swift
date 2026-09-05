@@ -200,6 +200,9 @@ struct HRVHistoryView: View {
                     .padding(.top, 6)
                 }
                 .font(.subheadline)
+            } else if let current = tests.first, !HRVVerdict.isComplete(current) {
+                Text("Ce test est incomplet : sans les deux positions, le motif ne peut pas être calculé.")
+                    .font(.callout).foregroundStyle(.secondary)
             } else {
                 Text("Il faut au moins deux tests pour situer le matin par rapport aux précédents.")
                     .font(.callout).foregroundStyle(.secondary)
@@ -218,19 +221,24 @@ struct HRVHistoryView: View {
     private var list: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Tests").font(.headline)
-            Text("Appui long sur un test pour le supprimer.")
+            Text("Touche un test pour voir ses valeurs, appui long pour le supprimer.")
                 .font(.caption).foregroundStyle(.secondary)
             ForEach(tests) { test in
-                row(test)
-                    // A context menu rather than a swipe: this is a VStack, not
-                    // a List, and swipe actions do not exist outside one.
-                    .contextMenu {
-                        Button(role: .destructive) {
-                            testPendingDelete = test
-                        } label: {
-                            Label("Supprimer", systemImage: "trash")
-                        }
+                NavigationLink {
+                    HRVTestDetailView(test: test)
+                } label: {
+                    row(test)
+                }
+                .buttonStyle(.plain)
+                // A context menu rather than a swipe: this is a VStack, not
+                // a List, and swipe actions do not exist outside one.
+                .contextMenu {
+                    Button(role: .destructive) {
+                        testPendingDelete = test
+                    } label: {
+                        Label("Supprimer", systemImage: "trash")
                     }
+                }
                 Divider()
             }
         }
@@ -253,7 +261,11 @@ struct HRVHistoryView: View {
                         .font(.caption).foregroundStyle(.secondary).monospacedDigit()
                 }
             }
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
         }
         .font(.callout)
+        .contentShape(Rectangle())
     }
 }
