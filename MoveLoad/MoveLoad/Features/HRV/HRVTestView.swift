@@ -34,7 +34,10 @@ struct HRVTestView: View {
         .navigationTitle("HRV")
         // Refreshed when the tab is opened rather than at launch: this is the
         // only screen the thresholds affect, and it is opened once a morning.
-        .task { await appEnvironment.refreshHRVThresholds() }
+        .task {
+            await appEnvironment.refreshHRVThresholds()
+            await appEnvironment.refreshCoachNotes()
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase == .background { recorder?.noteBackgrounded() }
         }

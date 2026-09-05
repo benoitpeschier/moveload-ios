@@ -41,6 +41,29 @@ struct HRVTestSummary: View {
                     answers
                 }
             }
+
+            coachNote
+        }
+    }
+
+    /// What the coach wrote, last because it is read last: the athlete looks
+    /// at their own morning first, and the remark is what someone made of it.
+    ///
+    /// Absent rather than empty when there is none — a headed box saying
+    /// nothing invites the athlete to wonder what they were supposed to be
+    /// told, and most mornings carry no remark at all.
+    @ViewBuilder private var coachNote: some View {
+        if !test.coachNote.isEmpty {
+            VStack(alignment: .leading, spacing: 6) {
+                Label("Remarques", systemImage: "text.bubble")
+                    .font(.headline)
+                Text(test.coachNote)
+                    .font(.callout)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(12)
+            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
         }
     }
 

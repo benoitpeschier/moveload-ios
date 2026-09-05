@@ -188,13 +188,28 @@ public struct HRVTestSyncPayload: Codable, Sendable {
     /// Flagged so the coach is not shown a spectrum the engine itself distrusts.
     public let isReliable: Bool
 
+    /// The beats themselves, both positions.
+    ///
+    /// Sent for the same reason the phone keeps them: every figure above can
+    /// be recomputed from these, and none of them can be turned back into a
+    /// heartbeat. It is what lets the dashboard draw the rate over the ten
+    /// minutes — the orthostatic step is a *shape*, and no summary of it
+    /// shows whether the rise was immediate, gradual, or never settled.
+    /// About six hundred integers, a few kilobytes.
+    ///
+    /// Not covered by the rule on the Wellness answers: these are the
+    /// measurement, not what the athlete said about themselves.
+    public let supineRRms: [Int]
+    public let standingRRms: [Int]
+
     public init(
         id: String, athleteId: String, date: Date,
         supineMeanHR: Double, supineRMSSD: Double, supineTotalPower: Double, supineLFOverHF: Double,
         supineLF: Double, supineHF: Double,
         standingMeanHR: Double, standingRMSSD: Double, standingTotalPower: Double, standingLFOverHF: Double,
         standingLF: Double, standingHF: Double,
-        wellnessScore: Int?, isReliable: Bool
+        wellnessScore: Int?, isReliable: Bool,
+        supineRRms: [Int], standingRRms: [Int]
     ) {
         self.id = id
         self.athleteId = athleteId
@@ -213,5 +228,7 @@ public struct HRVTestSyncPayload: Codable, Sendable {
         self.standingHF = standingHF
         self.wellnessScore = wellnessScore
         self.isReliable = isReliable
+        self.supineRRms = supineRRms
+        self.standingRRms = standingRRms
     }
 }

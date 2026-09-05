@@ -314,6 +314,13 @@ public final class HRVTest {
     /// measurement.
     public var wellnessAnswers: [Int] = []
 
+    /// What the coach wrote about this morning, fetched from the dashboard.
+    ///
+    /// Written by the coach and only ever read here — the phone never pushes
+    /// it back, which is what keeps a single owner and no conflict to resolve.
+    /// Empty until the coach has said something, which is most mornings.
+    public var coachNote: String = ""
+
     public init(athlete: Athlete? = nil, date: Date = Date()) {
         self.id = UUID()
         self.athlete = athlete

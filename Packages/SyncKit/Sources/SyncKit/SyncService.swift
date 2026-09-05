@@ -23,6 +23,7 @@ public protocol SyncService: Sendable {
     /// have set none. The coach owns them — the phone reads and never writes
     /// them — so that both screens read the same test the same way.
     func fetchHRVThresholds(athleteId: String) async throws -> [String: Double]?
+    func fetchCoachNotes(athleteId: String) async throws -> [String: String]?
 
     // MARK: - Account
 
@@ -100,7 +101,23 @@ public final class FirestoreSyncService: SyncService {
                 // The score, never the five answers — see HRVTestSyncPayload.
                 "wellnessScore": test.wellnessScore.map(FirestoreValue.integer) ?? .null,
                 "isReliable": .boolean(test.isReliable),
+                "supineRR": .array(test.supineRRms.map(FirestoreValue.integer)),
+                "standingRR": .array(test.standingRRms.map(FirestoreValue.integer)),
             ]
+        )
+    }
+
+    /// The coach's remarks, one per test, read by the athlete's phone.
+    ///
+    /// One document with a field per test id rather than a collection: reading
+    /// them all is then a single request, and the REST client needs no listing
+    /// it does not already have. Same ownership as `config/hrvThresholds` — the
+    /// coach writes, the phone only ever reads, so there is no write conflict
+    /// to resolve.
+    public func fetchCoachNotes(athleteId: String) async throws -> [String: String]? {
+        let connection = try await connect()
+        return try await connection.client.fetchStrings(
+            pathComponents: ["athletes", athleteId, "config", "coachNotes"]
         )
     }
 

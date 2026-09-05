@@ -76,6 +76,33 @@ public struct FirestoreClient: Sendable {
         return numbers
     }
 
+    /// Every string field of a document, or nil when there is no document.
+    ///
+    /// The string twin of `fetchNumbers`, for the coach's remarks: one
+    /// document holding one field per test rather than a collection, so
+    /// reading them all is a single request and needs no listing.
+    public func fetchStrings(pathComponents: [String]) async throws -> [String: String]? {
+        var request = URLRequest(url: documentURL(pathComponents: pathComponents))
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+
+        let (data, response) = try await session.data(for: request)
+        if let http = response as? HTTPURLResponse, http.statusCode == 404 { return nil }
+        try SyncError.validate(response, data: data)
+
+        guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let fields = root["fields"] as? [String: Any]
+        else { return [:] }
+
+        var strings: [String: String] = [:]
+        for (key, wrapped) in fields {
+            if let value = wrapped as? [String: Any], let text = value["stringValue"] as? String {
+                strings[key] = text
+            }
+        }
+        return strings
+    }
+
     /// One array-of-strings field, or an empty array when the document, the
     /// field or the array is absent. Used for `teamIds`, which has to be read
     /// before it is written: a phone knows the one team it is configured for,

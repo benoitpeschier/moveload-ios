@@ -259,6 +259,19 @@ final class AppEnvironment {
         for session in try allSessions() {
             try await syncService.pushSession(sessionSyncPayload(for: session))
         }
+        // Morning tests too. They were pushed once each, when saved, so tests
+        // taken before a field existed never carried it — which is how every
+        // test already on the dashboard has no beats behind its figures, and
+        // no curve the coach can open.
+        for test in (try? allHRVTests()) ?? [] {
+            if let payload = hrvSyncPayload(for: test) {
+                try await syncService.pushHRVTest(payload)
+            }
+        }
+    }
+
+    func allHRVTests() throws -> [HRVTest] {
+        try modelContext.fetch(FetchDescriptor<HRVTest>(sortBy: [SortDescriptor(\.date)]))
     }
 
     private func athleteSyncPayload() -> AthleteSyncPayload {
@@ -428,14 +441,40 @@ final class AppEnvironment {
         try? modelContext.save()
     }
 
+    /// The coach's remarks on past tests, pulled onto the phone.
+    ///
+    /// Silent on failure, like the thresholds: an athlete offline in a
+    /// changing room keeps whatever they already have, which is right.
+    /// Applied only to tests that have one, so a coach who deletes a remark
+    /// clears it here too, and a test nobody has written about stays empty.
+    func refreshCoachNotes() async {
+        guard let notes = try? await syncService.fetchCoachNotes(
+            athleteId: athlete.id.uuidString) else { return }
+        guard let tests = try? allHRVTests() else { return }
+        var changed = false
+        for test in tests {
+            let note = notes[test.id.uuidString] ?? ""
+            if test.coachNote != note {
+                test.coachNote = note
+                changed = true
+            }
+        }
+        if changed { try? modelContext.save() }
+    }
+
     /// Sends a morning test to the coach. Best-effort like the session push:
     /// the measurement is already safe on the phone whatever the network does.
     func syncHRVTestInBackground(_ test: HRVTest) {
+        guard let payload = hrvSyncPayload(for: test) else { return }
+        Task { await pushInBackground { try await self.syncService.pushHRVTest(payload) } }
+    }
+
+    private func hrvSyncPayload(for test: HRVTest) -> HRVTestSyncPayload? {
         guard let supine = HeartRateVariability.analyse(rrIntervalsMs: test.supineRRms.map(Double.init)),
               let standing = HeartRateVariability.analyse(rrIntervalsMs: test.standingRRms.map(Double.init))
-        else { return }
+        else { return nil }
 
-        let payload = HRVTestSyncPayload(
+        return HRVTestSyncPayload(
             id: test.id.uuidString,
             athleteId: athlete.id.uuidString,
             date: test.date,
@@ -452,9 +491,10 @@ final class AppEnvironment {
             standingLF: standing.lf,
             standingHF: standing.hf,
             wellnessScore: test.wellnessScore,
-            isReliable: supine.isFrequencyDomainReliable && standing.isFrequencyDomainReliable
+            isReliable: supine.isFrequencyDomainReliable && standing.isFrequencyDomainReliable,
+            supineRRms: test.supineRRms,
+            standingRRms: test.standingRRms
         )
-        Task { await pushInBackground { try await self.syncService.pushHRVTest(payload) } }
     }
 
     /// Deletes a morning test, retracting it from the coach's dashboard first.

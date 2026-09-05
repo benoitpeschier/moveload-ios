@@ -3639,6 +3639,23 @@
         }
       }
     },
+    "Remarques": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remarks"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remarques"
+          }
+        }
+      }
+    },
     "Remplace la pile (CR2025) avant la prochaine sortie.": {
       "extractionState": "manual",
       "localizations": {
