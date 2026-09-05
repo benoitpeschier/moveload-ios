@@ -628,6 +628,17 @@ void MoveLoadAutoApp::stopLogging()
     blink(BLINKS_RECORDING_STOPPED);
 }
 
+/// Notes that record a decision *not* to change anything. They repeat as long
+/// as their cause lasts, which is what makes them worth collapsing.
+static bool isNoChangeNote(uint8_t code)
+{
+    return code == MoveLoadAutoApp::NOTE_BLOCKED_BY_PHONE
+        || code == MoveLoadAutoApp::NOTE_BLOCKED_BY_EXTERNAL_STOP
+        || code == MoveLoadAutoApp::NOTE_BLOCKED_BY_PAUSE
+        || code == MoveLoadAutoApp::NOTE_BLOCKED_BY_BUSY
+        || code == MoveLoadAutoApp::NOTE_ALREADY_ARMING;
+}
+
 void MoveLoadAutoApp::note(Note what)
 {
     const WbTimestamp now = WbTimestampGet();
@@ -639,6 +650,26 @@ void MoveLoadAutoApp::note(Note what)
 
         // The same thing twice running is not two decisions.
         if (last.code == static_cast<uint8_t>(what)) return;
+
+        // Nor is the same refusal thirty times. evaluateRecordingState runs on
+        // every movement change as well as every contact change, so on a train
+        // the pair "contact seen / refused for the same reason" arrives every
+        // few seconds: thirty-two entries covered one minute, and the recording
+        // that had actually started half an hour earlier had long fallen off
+        // the end. Drop the interleaved contact note and leave the refusal
+        // where it began — an entry marks when a state started, and the next
+        // different entry is what ends it.
+        if (isNoChangeNote(static_cast<uint8_t>(what)) && mJournalCount >= 2
+            && last.code == NOTE_STRAP_ON)
+        {
+            const size_t beforeIndex = (mJournalNext + JOURNAL_CAPACITY - 2) % JOURNAL_CAPACITY;
+            if (mJournal[beforeIndex].code == static_cast<uint8_t>(what))
+            {
+                mJournalNext = lastIndex;
+                mJournalCount--;
+                return;
+            }
+        }
 
         // A strap being settled on a chest reports contact made and lost
         // several times a second, and on/off alternating defeats the test

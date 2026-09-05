@@ -85,4 +85,10 @@
 //          ultérieur tombait dans la branche qui ne fait rien. Deux heures
 //          ainsi, lues directement dans le journal. Cette branche dépose
 //          désormais une ligne : son silence avait rendu la lecture indirecte
-#define MOVELOAD_APP_VERSION "1.15.0"
+//   1.16.0 un refus répété ne remplit plus le journal. evaluateRecordingState
+//          est rappelé à chaque changement de mouvement autant que de contact,
+//          si bien qu'en train la paire « contact vu / refusé pour la même
+//          raison » revenait toutes les cinq secondes : trente-deux entrées ne
+//          couvraient plus qu'une minute, et la séance réellement démarrée une
+//          demi-heure plus tôt était tombée de l'anneau
+#define MOVELOAD_APP_VERSION "1.16.0"
