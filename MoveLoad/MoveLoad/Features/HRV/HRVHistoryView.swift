@@ -106,10 +106,16 @@ struct HRVHistoryView: View {
                     ("HF", { $0.supine.hf }),
                 ])
             }
+            // Same order as lying, and split for the same reason: the rate
+            // belongs on its own axis. LF standing runs in the hundreds or
+            // thousands of ms², a heart rate in the tens, and sharing one axis
+            // flattened the rate onto the baseline. LF and HF share theirs,
+            // being the same unit — and reading them side by side is the point.
             section("Debout") {
-                chart("LF et FC", series: [
-                    ("LF (ms²)", { $0.standing?.lf ?? 0 }),
-                    ("FC (bpm)", { $0.standing?.meanHRbpm ?? 0 }),
+                chart("FC (bpm)", series: [("FC", { $0.standing?.meanHRbpm })])
+                chart("LF et HF (ms²)", series: [
+                    ("LF", { $0.standing?.lf }),
+                    ("HF", { $0.standing?.hf }),
                 ])
             }
         }
@@ -128,22 +134,31 @@ struct HRVHistoryView: View {
     /// The default date axis reaches for hours as soon as two tests fall close
     /// together, and "06:40" on the x-axis of a series taken one morning per
     /// day says nothing anyone needs.
+    /// A nil value is a morning that has no such measure — a position the
+    /// engine could not read. It is skipped, not drawn as zero: a zero is a
+    /// reading, it drags the axis down to it and draws the line into it, and
+    /// the truncated test of 5 September would appear as a heart that stopped.
     private func chart(_ title: LocalizedStringKey,
-                       series: [(String, (Point) -> Double)]) -> some View {
+                       series: [(String, (Point) -> Double?)]) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title).font(.subheadline).foregroundStyle(.secondary)
             Chart {
                 ForEach(series, id: \.0) { name, value in
                     ForEach(points) { point in
-                        LineMark(x: .value("Jour", point.date, unit: .day),
-                                 y: .value("Valeur", value(point)))
-                            .foregroundStyle(by: .value("Mesure", name))
-                        PointMark(x: .value("Jour", point.date, unit: .day),
-                                  y: .value("Valeur", value(point)))
-                            .foregroundStyle(by: .value("Mesure", name))
+                        if let measure = value(point) {
+                            LineMark(x: .value("Jour", point.date, unit: .day),
+                                     y: .value("Valeur", measure))
+                                .foregroundStyle(by: .value("Mesure", name))
+                            PointMark(x: .value("Jour", point.date, unit: .day),
+                                      y: .value("Valeur", measure))
+                                .foregroundStyle(by: .value("Mesure", name))
+                        }
                     }
                 }
             }
+            // One series names itself in its own title; a legend under it
+            // would only repeat the heading.
+            .chartLegend(series.count > 1 ? .visible : .hidden)
             .chartXAxis {
                 AxisMarks(values: .automatic(desiredCount: 4)) { value in
                     AxisGridLine()
