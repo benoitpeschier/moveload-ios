@@ -138,6 +138,49 @@ final class FirestoreFetchNumbersTests: XCTestCase {
     }
 }
 
+/// The coach's remarks travel back the other way, and they were written by
+/// analogy with the thresholds rather than against a real response. The one
+/// piece of this feature nothing else exercises.
+final class FirestoreFetchStringsTests: XCTestCase {
+
+    private func strings(from json: String, status: Int = 200) async throws -> [String: String]? {
+        StubProtocol.status = status
+        StubProtocol.body = Data(json.utf8)
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [StubProtocol.self]
+        let client = FirestoreClient(projectID: "p", idToken: "t", session: URLSession(configuration: config))
+        return try await client.fetchStrings(pathComponents: ["a", "b"])
+    }
+
+    func testAFieldPerTestIsRead() async throws {
+        let result = try await strings(
+            from: #"{"fields":{"AAA-1":{"stringValue":"Bonne série."},"BBB-2":{"stringValue":"Repos."}}}"#)
+        XCTAssertEqual(result?["AAA-1"], "Bonne série.")
+        XCTAssertEqual(result?["BBB-2"], "Repos.")
+    }
+
+    /// The ordinary case, and the one that must not be an error: most athletes
+    /// have no remarks at all, so the document simply does not exist.
+    func testAMissingDocumentIsNil() async throws {
+        let result = try await strings(from: "{}", status: 404)
+        XCTAssertNil(result)
+    }
+
+    /// A document that exists but holds nothing is not the same as no document
+    /// — it means the coach cleared their last remark.
+    func testAnEmptyDocumentIsAnEmptyMap() async throws {
+        let result = try await strings(from: "{}")
+        XCTAssertEqual(result, [:])
+    }
+
+    /// Whatever else ends up in that document, only strings are remarks.
+    func testNonStringFieldsAreIgnored() async throws {
+        let result = try await strings(
+            from: #"{"fields":{"note":{"stringValue":"ok"},"count":{"integerValue":"3"}}}"#)
+        XCTAssertEqual(result, ["note": "ok"])
+    }
+}
+
 /// Serves a canned response so the read can be tested without a project.
 final class StubProtocol: URLProtocol, @unchecked Sendable {
     nonisolated(unsafe) static var status = 200
