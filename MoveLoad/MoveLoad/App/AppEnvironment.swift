@@ -264,9 +264,7 @@ final class AppEnvironment {
         // test already on the dashboard has no beats behind its figures, and
         // no curve the coach can open.
         for test in (try? allHRVTests()) ?? [] {
-            if let payload = hrvSyncPayload(for: test) {
-                try await syncService.pushHRVTest(payload)
-            }
+            try await syncService.pushHRVTest(hrvSyncPayload(for: test))
         }
     }
 
@@ -465,33 +463,33 @@ final class AppEnvironment {
     /// Sends a morning test to the coach. Best-effort like the session push:
     /// the measurement is already safe on the phone whatever the network does.
     func syncHRVTestInBackground(_ test: HRVTest) {
-        guard let payload = hrvSyncPayload(for: test) else { return }
+        let payload = hrvSyncPayload(for: test)
         Task { await pushInBackground { try await self.syncService.pushHRVTest(payload) } }
     }
 
-    private func hrvSyncPayload(for test: HRVTest) -> HRVTestSyncPayload? {
-        guard let supine = HeartRateVariability.analyse(rrIntervalsMs: test.supineRRms.map(Double.init)),
-              let standing = HeartRateVariability.analyse(rrIntervalsMs: test.standingRRms.map(Double.init))
-        else { return nil }
-
+    /// Never nil any more.
+    ///
+    /// It used to require both positions to analyse, so a morning where the
+    /// stream died halfway produced no payload and the test never left the
+    /// phone — the coach saw nothing at all, which reads as "she did not test"
+    /// and is the opposite of what happened. A position that cannot be read
+    /// now simply travels absent.
+    private func hrvSyncPayload(for test: HRVTest) -> HRVTestSyncPayload {
+        func metrics(_ intervals: [Int]) -> HRVPositionMetrics? {
+            guard let r = HeartRateVariability.analyse(rrIntervalsMs: intervals.map(Double.init))
+            else { return nil }
+            return HRVPositionMetrics(
+                meanHR: r.meanHRbpm, rmssd: r.rmssdMs, totalPower: r.totalPower,
+                lfOverHF: r.lfOverHf, lf: r.lf, hf: r.hf,
+                isReliable: r.isFrequencyDomainReliable)
+        }
         return HRVTestSyncPayload(
             id: test.id.uuidString,
             athleteId: athlete.id.uuidString,
             date: test.date,
-            supineMeanHR: supine.meanHRbpm,
-            supineRMSSD: supine.rmssdMs,
-            supineTotalPower: supine.totalPower,
-            supineLFOverHF: supine.lfOverHf,
-            supineLF: supine.lf,
-            supineHF: supine.hf,
-            standingMeanHR: standing.meanHRbpm,
-            standingRMSSD: standing.rmssdMs,
-            standingTotalPower: standing.totalPower,
-            standingLFOverHF: standing.lfOverHf,
-            standingLF: standing.lf,
-            standingHF: standing.hf,
+            supine: metrics(test.supineRRms),
+            standing: metrics(test.standingRRms),
             wellnessScore: test.wellnessScore,
-            isReliable: supine.isFrequencyDomainReliable && standing.isFrequencyDomainReliable,
             supineRRms: test.supineRRms,
             standingRRms: test.standingRRms
         )

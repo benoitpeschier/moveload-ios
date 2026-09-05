@@ -156,6 +156,32 @@ public struct SessionSyncPayload: Sendable, Equatable {
 }
 
 
+/// One position's figures. Optional on the payload, because a position that
+/// could not be analysed has none — and requiring both is what silently kept
+/// a whole test off the dashboard.
+public struct HRVPositionMetrics: Codable, Sendable {
+    public let meanHR: Double
+    public let rmssd: Double
+    public let totalPower: Double
+    public let lfOverHF: Double
+    /// Kept because the fatigue-pattern rules are expressed on LF and HF
+    /// individually, not on their ratio — the ratio cannot be taken apart.
+    public let lf: Double
+    public let hf: Double
+    public let isReliable: Bool
+
+    public init(meanHR: Double, rmssd: Double, totalPower: Double,
+                lfOverHF: Double, lf: Double, hf: Double, isReliable: Bool) {
+        self.meanHR = meanHR
+        self.rmssd = rmssd
+        self.totalPower = totalPower
+        self.lfOverHF = lfOverHF
+        self.lf = lf
+        self.hf = hf
+        self.isReliable = isReliable
+    }
+}
+
 /// One morning test, as the coach sees it.
 ///
 /// **The five Wellness answers are deliberately absent.** Only the score
@@ -168,25 +194,16 @@ public struct HRVTestSyncPayload: Codable, Sendable {
     public let athleteId: String
     public let date: Date
 
-    public let supineMeanHR: Double
-    public let supineRMSSD: Double
-    public let supineTotalPower: Double
-    public let supineLFOverHF: Double
-    /// Kept because the fatigue-pattern rules are expressed on LF and HF
-    /// individually, not on their ratio — the ratio cannot be taken apart.
-    public let supineLF: Double
-    public let supineHF: Double
-
-    public let standingMeanHR: Double
-    public let standingRMSSD: Double
-    public let standingTotalPower: Double
-    public let standingLFOverHF: Double
-    public let standingLF: Double
-    public let standingHF: Double
+    /// Nil when that position produced nothing the engine could read.
+    ///
+    /// A morning where the strap or the stream failed halfway is not the same
+    /// as a morning with no test, and the coach is the person who most needs
+    /// to tell them apart — it is the athlete's own screen that can afford to
+    /// stay quiet, not the dashboard.
+    public let supine: HRVPositionMetrics?
+    public let standing: HRVPositionMetrics?
 
     public let wellnessScore: Int?
-    /// Flagged so the coach is not shown a spectrum the engine itself distrusts.
-    public let isReliable: Bool
 
     /// The beats themselves, both positions.
     ///
@@ -204,31 +221,18 @@ public struct HRVTestSyncPayload: Codable, Sendable {
 
     public init(
         id: String, athleteId: String, date: Date,
-        supineMeanHR: Double, supineRMSSD: Double, supineTotalPower: Double, supineLFOverHF: Double,
-        supineLF: Double, supineHF: Double,
-        standingMeanHR: Double, standingRMSSD: Double, standingTotalPower: Double, standingLFOverHF: Double,
-        standingLF: Double, standingHF: Double,
-        wellnessScore: Int?, isReliable: Bool,
+        supine: HRVPositionMetrics?, standing: HRVPositionMetrics?,
+        wellnessScore: Int?,
         supineRRms: [Int], standingRRms: [Int]
     ) {
         self.id = id
         self.athleteId = athleteId
         self.date = date
-        self.supineMeanHR = supineMeanHR
-        self.supineRMSSD = supineRMSSD
-        self.supineTotalPower = supineTotalPower
-        self.supineLFOverHF = supineLFOverHF
-        self.supineLF = supineLF
-        self.supineHF = supineHF
-        self.standingMeanHR = standingMeanHR
-        self.standingRMSSD = standingRMSSD
-        self.standingTotalPower = standingTotalPower
-        self.standingLFOverHF = standingLFOverHF
-        self.standingLF = standingLF
-        self.standingHF = standingHF
+        self.supine = supine
+        self.standing = standing
         self.wellnessScore = wellnessScore
-        self.isReliable = isReliable
         self.supineRRms = supineRRms
         self.standingRRms = standingRRms
     }
 }
+

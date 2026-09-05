@@ -149,13 +149,13 @@ extension SessionSyncPayload {
 
 extension HRVTestSyncPayload {
     static func fixture(athleteId: String, id: String) -> HRVTestSyncPayload {
-        HRVTestSyncPayload(
-            id: id, athleteId: athleteId, date: Date(timeIntervalSince1970: 1_756_000_000),
-            supineMeanHR: 52, supineRMSSD: 61, supineTotalPower: 3400,
-            supineLFOverHF: 1.1, supineLF: 1200, supineHF: 1100,
-            standingMeanHR: 78, standingRMSSD: 22, standingTotalPower: 1500,
-            standingLFOverHF: 4.2, standingLF: 900, standingHF: 210,
-            wellnessScore: 7, isReliable: true
-        )
+        let position = HRVPositionMetrics(
+            meanHR: 52, rmssd: 61, totalPower: 3400,
+            lfOverHF: 0.8, lf: 900, hf: 1100, isReliable: true)
+        return HRVTestSyncPayload(
+            id: id, athleteId: athleteId, date: Date(timeIntervalSince1970: 1_700_000_000),
+            supine: position, standing: position,
+            wellnessScore: 80,
+            supineRRms: [1000, 1010, 990], standingRRms: [800, 810, 790])
     }
 }

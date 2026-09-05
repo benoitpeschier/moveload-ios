@@ -81,29 +81,37 @@ public final class FirestoreSyncService: SyncService {
 
     public func pushHRVTest(_ test: HRVTestSyncPayload) async throws {
         let connection = try await connect()
+
+        // A position that could not be analysed contributes no fields at all,
+        // rather than zeros. Zeros are a reading — they would flow into the
+        // dashboard's medians and its cascade as if the morning had measured
+        // nothing happening, which is not what happened. Absence is the only
+        // honest encoding, and it is what lets the dashboard tell an
+        // incomplete test from a missing one.
+        var fields: [String: FirestoreValue] = [
+            "athleteId": .string(test.athleteId),
+            "date": .timestamp(test.date),
+            // The score, never the five answers — see HRVTestSyncPayload.
+            "wellnessScore": test.wellnessScore.map(FirestoreValue.integer) ?? .null,
+            "isReliable": .boolean((test.supine?.isReliable ?? false) && (test.standing?.isReliable ?? false)),
+            "supineRR": .array(test.supineRRms.map(FirestoreValue.integer)),
+            "standingRR": .array(test.standingRRms.map(FirestoreValue.integer)),
+        ]
+        func add(_ prefix: String, _ m: HRVPositionMetrics?) {
+            guard let m else { return }
+            fields["\(prefix)MeanHR"] = .double(m.meanHR)
+            fields["\(prefix)RMSSD"] = .double(m.rmssd)
+            fields["\(prefix)TotalPower"] = .double(m.totalPower)
+            fields["\(prefix)LFOverHF"] = .double(m.lfOverHF)
+            fields["\(prefix)LF"] = .double(m.lf)
+            fields["\(prefix)HF"] = .double(m.hf)
+        }
+        add("supine", test.supine)
+        add("standing", test.standing)
+
         try await connection.client.upsertDocument(
             pathComponents: ["athletes", test.athleteId, "hrv", test.id],
-            fields: [
-                "athleteId": .string(test.athleteId),
-                "date": .timestamp(test.date),
-                "supineMeanHR": .double(test.supineMeanHR),
-                "supineRMSSD": .double(test.supineRMSSD),
-                "supineTotalPower": .double(test.supineTotalPower),
-                "supineLFOverHF": .double(test.supineLFOverHF),
-                "supineLF": .double(test.supineLF),
-                "supineHF": .double(test.supineHF),
-                "standingMeanHR": .double(test.standingMeanHR),
-                "standingRMSSD": .double(test.standingRMSSD),
-                "standingTotalPower": .double(test.standingTotalPower),
-                "standingLFOverHF": .double(test.standingLFOverHF),
-                "standingLF": .double(test.standingLF),
-                "standingHF": .double(test.standingHF),
-                // The score, never the five answers — see HRVTestSyncPayload.
-                "wellnessScore": test.wellnessScore.map(FirestoreValue.integer) ?? .null,
-                "isReliable": .boolean(test.isReliable),
-                "supineRR": .array(test.supineRRms.map(FirestoreValue.integer)),
-                "standingRR": .array(test.standingRRms.map(FirestoreValue.integer)),
-            ]
+            fields: fields
         )
     }
 
