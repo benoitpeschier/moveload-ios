@@ -3775,6 +3775,23 @@
         }
       }
     },
+    "Recherche du pouls déjà en cours": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Already looking for a pulse"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recherche du pouls déjà en cours"
+          }
+        }
+      }
+    },
     "Recherche du pouls lancée": {
       "extractionState": "manual",
       "localizations": {

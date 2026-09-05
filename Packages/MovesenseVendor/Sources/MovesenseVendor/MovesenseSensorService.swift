@@ -523,6 +523,7 @@ public struct SensorDiagnostics: Sendable {
         case recordingStarted
         case recordingStopped
         case externalStop
+        case alreadyArming
     }
 
     public var strapOn: Bool { connector == 1 }

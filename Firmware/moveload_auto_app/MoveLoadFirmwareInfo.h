@@ -78,4 +78,11 @@
 //          réelle a montré que la mise en place d'une sangle consommait dix
 //          des seize entrées : un matin raté serait arrivé avec un anneau
 //          plein de quelqu'un en train de s'équiper
-#define MOVELOAD_APP_VERSION "1.14.0"
+//   1.15.0 la perte de contact n'arrête plus le minuteur d'une tentative
+//          d'armement en cours, seulement celui de la pause. Le même
+//          identifiant portait les deux, et 1.12.0 les arrêtait tous deux :
+//          mArming restait vrai sans rien pour l'en sortir, et tout contact
+//          ultérieur tombait dans la branche qui ne fait rien. Deux heures
+//          ainsi, lues directement dans le journal. Cette branche dépose
+//          désormais une ligne : son silence avait rendu la lecture indirecte
+#define MOVELOAD_APP_VERSION "1.15.0"

@@ -44,6 +44,8 @@ public:
         NOTE_RECORDING_STARTED,
         NOTE_RECORDING_STOPPED,
         NOTE_EXTERNAL_STOP,
+        // Appended, never inserted: the app maps these by value.
+        NOTE_ALREADY_ARMING,
     };
 
     /// Writes the current state and the journal into `out`, for the GSP GET on

@@ -553,6 +553,7 @@ struct RecordingView: View {
         case .recordingStarted:       String(localized: "Enregistrement démarré")
         case .recordingStopped:       String(localized: "Enregistrement arrêté")
         case .externalStop:           String(localized: "Arrêté par l'app")
+        case .alreadyArming:          String(localized: "Recherche du pouls déjà en cours")
         }
     }
 

@@ -503,11 +503,23 @@ void MoveLoadAutoApp::evaluateRecordingState()
             // Stopping it here also makes contact-after-loss arm at once
             // rather than serve out a pause whose reason — a strap left damp
             // in a bag — has visibly stopped applying.
-            mArmingBackoff = false;
-            if (mArmingTimer != wb::ID_INVALID_TIMER)
+            //
+            // **Only when it is the pause.** That timer id carries two
+            // meanings, and 1.12.0 stopped it in both: an attempt already
+            // under way lost the five minutes that were supposed to end it, so
+            // mArming stayed true with nothing left to clear it, and every
+            // later contact fell into the branch that does nothing. Two hours
+            // of it, read straight off the journal on 2026-09-05 — the comment
+            // three lines above says the attempt is left to run, and the code
+            // below it was cutting the attempt's own lifeline.
+            if (mArmingBackoff)
             {
-                stopTimer(mArmingTimer);
-                mArmingTimer = wb::ID_INVALID_TIMER;
+                mArmingBackoff = false;
+                if (mArmingTimer != wb::ID_INVALID_TIMER)
+                {
+                    stopTimer(mArmingTimer);
+                    mArmingTimer = wb::ID_INVALID_TIMER;
+                }
             }
             forgetExternalStop();
             return;
@@ -538,7 +550,12 @@ void MoveLoadAutoApp::evaluateRecordingState()
         // room.
         if (mArming)
         {
-            // Already listening; nothing to file.
+            // Filed, though nothing changes here. Its silence is what made the
+            // fault above take a detour to read: the journal showed contact
+            // and then nothing at all, and "nothing at all" had to be turned
+            // back into "the only branch that writes nothing". A state that is
+            // holding everything up should say so itself.
+            note(NOTE_ALREADY_ARMING);
         }
         else if (mArmingBackoff)
         {
