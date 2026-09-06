@@ -71,6 +71,9 @@ public actor MovesenseGSPClient {
     /// COMMAND_RESPONSE.
     private var pendingResponse: CheckedContinuation<Data, Error>?
     private var pendingResponseTimeoutTask: Task<Void, Never>?
+    /// Which command the pending continuation belongs to. A timeout that
+    /// arrives late must not kill a command that is not the one it was set for.
+    private var pendingResponseReference: UInt8?
 
     /// Live subscriptions, by the reference they were opened with.
     ///
@@ -441,6 +444,7 @@ public actor MovesenseGSPClient {
 
         return try await withCheckedThrowingContinuation { continuation in
             self.pendingResponse = continuation
+            self.pendingResponseReference = reference
             let delegate = self.delegate
             Task { await delegate.writeCommand(commandBytes, to: writeCharacteristic, on: peripheral) }
             // A sensor that accepts the connection and exposes GSP can still
@@ -449,7 +453,16 @@ public actor MovesenseGSPClient {
             // very first command after connecting.
             pendingResponseTimeoutTask = Task { [weak self] in
                 try? await Task.sleep(nanoseconds: UInt64(Self.commandTimeout * 1_000_000_000))
-                await self?.failPendingResponse(command: "\(command)")
+                // Cancelling this task does not stop it. Task.sleep returns
+                // *immediately* when cancelled and `try?` swallows the
+                // CancellationError, so without both guards below the timeout
+                // of a command that answered perfectly well went on to kill
+                // whatever command was in flight by the time it hopped back
+                // onto the actor — and blamed it on the wrong command. That is
+                // the intermittent "le capteur n'a pas répondu à putUtcTime"
+                // seen on a connection where putUtcTime had in fact answered.
+                guard !Task.isCancelled else { return }
+                await self?.failPendingResponse(command: "\(command)", reference: reference)
             }
         }
     }
@@ -458,9 +471,10 @@ public actor MovesenseGSPClient {
     /// is not covered by this — it streams through its own accumulator.
     private static let commandTimeout: TimeInterval = 15
 
-    private func failPendingResponse(command: String) {
-        guard let continuation = pendingResponse else { return }
+    private func failPendingResponse(command: String, reference: UInt8) {
+        guard pendingResponseReference == reference, let continuation = pendingResponse else { return }
         pendingResponse = nil
+        pendingResponseReference = nil
         continuation.resume(throwing: GSPError.timeout(
             String(localized: "le capteur n'a pas répondu à \(command). Il est connecté mais ne parle pas — coupe le Bluetooth et rallume-le, ou redémarre le capteur en le sortant de la sangle.", bundle: .module)))
     }
@@ -512,6 +526,7 @@ public actor MovesenseGSPClient {
         pendingResponseTimeoutTask?.cancel()
         if let pending = pendingResponse {
             pendingResponse = nil
+            pendingResponseReference = nil
             pending.resume(throwing: GSPError.connectionFailed(String(localized: "déconnecté", bundle: .module)))
         }
         onDisconnect?()
@@ -525,6 +540,7 @@ public actor MovesenseGSPClient {
             pendingResponseTimeoutTask?.cancel()
             if let pending = pendingResponse {
                 pendingResponse = nil
+                pendingResponseReference = nil
                 pending.resume(returning: data)
             }
         case .data, .dataPart2:
