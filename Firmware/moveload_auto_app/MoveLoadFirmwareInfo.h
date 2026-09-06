@@ -91,4 +91,16 @@
 //          raison » revenait toutes les cinq secondes : trente-deux entrées ne
 //          couvraient plus qu'une minute, et la séance réellement démarrée une
 //          demi-heure plus tôt était tombée de l'anneau
-#define MOVELOAD_APP_VERSION "1.16.0"
+//   1.17.0 les compteurs qui décident « est-ce un cœur ? » sont remis à zéro
+//          au début de chaque tentative. Ils s'appellent ThisTick mais seul le
+//          chien de garde les efface, et il ne tourne que pendant un
+//          enregistrement : pendant l'armement ils s'accumulaient depuis le
+//          démarrage. La porte exigeant plus de plausibles que d'aberrants,
+//          une sangle mouillée puis promenée en poche prenait une avance que
+//          le vrai pouls ne rattrapait jamais — et seul un enregistrement les
+//          efface, qu'il faut armer pour obtenir. Le 6 septembre : sangle
+//          mouillée à 11h30, portée à 12h, quatre-vingt-dix minutes de
+//          tentatives sur un pouls parfaitement valide. L'état lu par l'app
+//          expose désormais ces deux compteurs, la dernière FC vue et l'âge du
+//          dernier battement
+#define MOVELOAD_APP_VERSION "1.17.0"

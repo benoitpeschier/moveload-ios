@@ -188,6 +188,23 @@
         }
       }
     },
+    "%lld plausibles · %lld aberrants": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld plausible · %lld wild"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld plausibles · %lld aberrants"
+          }
+        }
+      }
+    },
     "%lld s": {
       "extractionState": "manual",
       "localizations": {
@@ -677,6 +694,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucune séance ce jour-là."
+          }
+        }
+      }
+    },
+    "Battements analysés": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beats analysed"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Battements analysés"
           }
         }
       }
@@ -1272,6 +1306,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Debout, immobile."
+          }
+        }
+      }
+    },
+    "Dernier battement": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last beat"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dernier battement"
           }
         }
       }
@@ -5322,6 +5373,23 @@
         }
       }
     },
+    "aucun depuis le démarrage": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "none since start-up"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "aucun depuis le démarrage"
+          }
+        }
+      }
+    },
     "bpm": {
       "extractionState": "manual",
       "localizations": {
@@ -5403,6 +5471,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "il y a %lld s"
+          }
+        }
+      }
+    },
+    "il y a %lld s · %lld bpm": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld s ago · %lld bpm"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "il y a %lld s · %lld bpm"
           }
         }
       }

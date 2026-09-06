@@ -491,6 +491,11 @@ struct RecordingView: View {
                                value: diagnostics.isLogging
                                    ? String(localized: "en cours")
                                    : String(localized: "arrêté"))
+                if diagnostics.isArming || diagnostics.aliveTransitions > 0 || diagnostics.wildTransitions > 0 {
+                    LabeledContent("Battements analysés",
+                                   value: String(localized: "\(diagnostics.aliveTransitions) plausibles · \(diagnostics.wildTransitions) aberrants"))
+                    LabeledContent("Dernier battement", value: lastBeatLabel(diagnostics))
+                }
                 if let blocking = blockingState(diagnostics) {
                     Label(blocking, systemImage: "exclamationmark.triangle.fill")
                         .font(.caption).foregroundStyle(.orange)
@@ -529,6 +534,18 @@ struct RecordingView: View {
             Text("Le journal remonte au dernier redémarrage du capteur, le plus récent en haut. Un téléphone connecté empêche le démarrage automatique, volontairement : c'est pourquoi c'est le journal qu'il faut lire, pas l'état courant.")
                 .font(.caption).foregroundStyle(.secondary)
         }
+    }
+
+    /// Separates a pulse judged unconvincing from no pulse arriving at all —
+    /// the journal says "pouls non trouvé" for both.
+    private func lastBeatLabel(_ d: SensorDiagnostics) -> String {
+        guard let seconds = d.secondsSinceLastBeat else {
+            return String(localized: "aucun depuis le démarrage")
+        }
+        if d.lastHeartRate > 0 {
+            return String(localized: "il y a \(seconds) s · \(d.lastHeartRate) bpm")
+        }
+        return String(localized: "il y a \(seconds) s")
     }
 
     /// The reason arming cannot happen right now, if there is one.

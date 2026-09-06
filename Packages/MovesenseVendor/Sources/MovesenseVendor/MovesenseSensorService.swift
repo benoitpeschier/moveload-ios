@@ -500,6 +500,18 @@ public struct SensorDiagnostics: Sendable {
     public let phoneConnected: Bool
     public let heartRateSubscribed: Bool
     public let logbookFull: Bool
+
+    /// What decides "is this a heart?" in the current attempt: interval
+    /// changes that look like a heartbeat, against those that do not. The
+    /// firmware needs five of the first and more of them than of the second.
+    public let aliveTransitions: Int
+    public let wildTransitions: Int
+    /// The last average the sensor computed, 0 if it has seen none.
+    public let lastHeartRate: Int
+    /// Nil when no beat has ever arrived — which is a different failure from
+    /// beats arriving and being judged unconvincing.
+    public let secondsSinceLastBeat: Int?
+
     /// Oldest first.
     public let journal: [Note]
 
@@ -533,7 +545,7 @@ public struct SensorDiagnostics: Sendable {
     /// diagnosis is a confident wrong one.
     init?(payload: Data, logbookFull: Bool) {
         let bytes = [UInt8](payload)
-        guard bytes.count >= 5, bytes[0] == 1 else { return nil }
+        guard bytes.count >= 9, bytes[0] == 2 else { return nil }
         connector = bytes[1]
         movement = bytes[2]
         let flags = bytes[3]
@@ -545,10 +557,14 @@ public struct SensorDiagnostics: Sendable {
         phoneConnected = flags & 32 != 0
         heartRateSubscribed = flags & 64 != 0
         self.logbookFull = logbookFull
+        aliveTransitions = Int(bytes[4])
+        wildTransitions = Int(bytes[5])
+        lastHeartRate = Int(bytes[6])
+        secondsSinceLastBeat = bytes[7] == 255 ? nil : Int(bytes[7])
 
         var notes: [Note] = []
-        var at = 5
-        for _ in 0..<Int(bytes[4]) {
+        var at = 9
+        for _ in 0..<Int(bytes[8]) {
             guard at + 2 < bytes.count else { break }
             let seconds = Int(bytes[at]) | Int(bytes[at + 1]) << 8
             if let code = Code(rawValue: bytes[at + 2]) {

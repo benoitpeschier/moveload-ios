@@ -153,6 +153,8 @@ MoveLoadAutoApp::MoveLoadAutoApp():
     mWatchdogTimer(wb::ID_INVALID_TIMER),
     mIndicationTimer(wb::ID_INVALID_TIMER),
     mLastRRms(0),
+    mLastHrAt(0),
+    mLastHrBpm(0),
     mAliveTransitionsThisTick(0),
     mWildTransitionsThisTick(0),
     mBlinksLeft(0),
@@ -405,6 +407,13 @@ void MoveLoadAutoApp::onNotify(wb::ResourceId resourceId,
             {
                 mHeartRateSeen = true;
             }
+
+            // Kept for the diagnostic: "no pulse found" has two very different
+            // causes — beats arriving and being judged not heart-like, or no
+            // beats arriving at all — and the journal alone cannot tell them
+            // apart.
+            mLastHrAt = WbTimestampGet();
+            mLastHrBpm = plausible;
 
             if (mArming)
             {
@@ -701,31 +710,40 @@ size_t MoveLoadAutoApp::describeCurrentState(uint8_t* out, size_t capacity)
     {
         // Answer anyway: an empty journal says "this firmware is not running",
         // which is itself worth knowing, and beats a request that times out.
-        if (capacity < 2) return 0;
-        out[0] = 1;
-        out[1] = 0;
-        return 2;
+        if (capacity < 9) return 0;
+        memset(out, 0, 9);
+        out[0] = 2;
+        out[7] = 255;
+        return 9;
     }
     return g_moveLoadAutoApp->describeState(out, capacity);
 }
 
-/// Layout, little-endian, version 1:
+/// Layout, little-endian, version 2:
 ///   0      format version
 ///   1      connector state (0 off, 1 contact, 2 unknown)
 ///   2      movement state
 ///   3      flags: 1 arming, 2 pause, 4 external stop, 8 transition pending,
 ///          16 recording, 32 phone connected over GSP, 64 heart rate subscribed
-///   4      number of journal entries that follow
-///   5..    per entry: seconds ago (uint16), code (uint8)
+///   4      heart-like interval changes counted in this attempt (saturating)
+///   5      wild ones, the same way — the gate asks for more alive than wild
+///   6      last average heart rate seen, 0 if none
+///   7      seconds since the last beat arrived, 255 for none or over 254
+///   8      number of journal entries that follow
+///   9..    per entry: seconds ago (uint16), code (uint8)
+///
+/// Four and five are what decide "is this a heart?", and seven separates a
+/// pulse judged unconvincing from no data at all — which the journal, saying
+/// only "pouls non trouvé", cannot.
 ///
 /// Seconds ago rather than a clock: the sensor's RTC resets to 2015 on every
 /// power loss, and what the reader needs is "three hours ago", not a date.
 size_t MoveLoadAutoApp::describeState(uint8_t* out, size_t capacity) const
 {
-    if (capacity < 5) return 0;
+    if (capacity < 9) return 0;
     const WbTimestamp now = WbTimestampGet();
 
-    out[0] = 1;
+    out[0] = 2;
     out[1] = mConnectorState;
     out[2] = mMovementState;
     out[3] = static_cast<uint8_t>(
@@ -733,8 +751,22 @@ size_t MoveLoadAutoApp::describeState(uint8_t* out, size_t capacity) const
         (mTransitionPending ? 8 : 0) | (isLogging() ? 16 : 0) |
         (GATTSensorDataClient::hasActiveClient() ? 32 : 0) |
         (mHeartRateSubscribed ? 64 : 0));
+    out[4] = mAliveTransitionsThisTick;
+    out[5] = mWildTransitionsThisTick;
+    out[6] = static_cast<uint8_t>(mLastHrBpm > 255 ? 255 : mLastHrBpm);
+    if (mLastHrAt == 0)
+    {
+        out[7] = 255;
+    }
+    else
+    {
+        int sinceMs = WbTimestampDifferenceMs(mLastHrAt, now);
+        if (sinceMs < 0) sinceMs = 0;
+        const uint32_t sinceSeconds = static_cast<uint32_t>(sinceMs) / 1000;
+        out[7] = static_cast<uint8_t>(sinceSeconds > 254 ? 255 : sinceSeconds);
+    }
 
-    size_t at = 5;
+    size_t at = 9;
     uint8_t written = 0;
     // Oldest first, so the reader can print them in the order they happened.
     for (uint8_t i = 0; i < mJournalCount; i++)
@@ -751,7 +783,7 @@ size_t MoveLoadAutoApp::describeState(uint8_t* out, size_t capacity) const
         out[at++] = mJournal[index].code;
         written++;
     }
-    out[4] = written;
+    out[8] = written;
     return at;
 }
 
@@ -789,6 +821,21 @@ void MoveLoadAutoApp::beginArming()
 {
     DEBUGLOG("Contact made — waiting for a pulse before recording");
     note(NOTE_ARMING_BEGAN);
+
+    // Each attempt judges on its own evidence. These two are named ThisTick
+    // because they are cleared by the watchdog — which only runs *during a
+    // recording*. Through an arming attempt they had been accumulating since
+    // boot, and the gate asks for alive > wild: a strap wetted and then
+    // carried in a pocket files enough nonsense intervals that the wild count
+    // takes a lead the real heartbeat can never make up. Arming then fails for
+    // ever, since the only thing that clears them is a recording, which needs
+    // arming to succeed. Seen 2026-09-06: strap wetted at 11:30, worn from
+    // 12:00, and ninety minutes of attempts on a perfectly good pulse.
+    mAliveTransitionsThisTick = 0;
+    mWildTransitionsThisTick = 0;
+    mLastRRms = 0;
+    mHeartRateSeen = false;
+
     mArming = true;
     // Tell the wearer the strap was noticed. Until this, a sensor that had
     // seen nothing and one patiently waiting for a pulse looked exactly the

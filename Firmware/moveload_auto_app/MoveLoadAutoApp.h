@@ -159,6 +159,11 @@ private:
     bool mArming;
     /// Whether /Meas/HR is currently subscribed on our behalf.
     bool mHeartRateSubscribed;
+    /// When a heart rate sample last arrived, and what it said. Kept for the
+    /// diagnostic alone: "no pulse found" means either beats judged
+    /// unconvincing or no beats at all, and those need different answers.
+    WbTimestamp mLastHrAt;
+    uint16_t mLastHrBpm;
     /// A pulse arrived since the last watchdog tick.
     bool mHeartRateSeen;
     /// Consecutive watchdog ticks with no pulse at all.
