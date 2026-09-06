@@ -831,6 +831,14 @@ void MoveLoadAutoApp::beginArming()
     // ever, since the only thing that clears them is a recording, which needs
     // arming to succeed. Seen 2026-09-06: strap wetted at 11:30, worn from
     // 12:00, and ninety minutes of attempts on a perfectly good pulse.
+    //
+    // And it was absolute, not merely hard to overcome: both counters saturate
+    // at 255, and the gate asks for strictly more alive than wild. Once wild
+    // reaches 255 — half an hour of a damp strap in a pocket does it easily —
+    // alive caps at 255 as well, and 255 > 255 is false. No heartbeat could
+    // ever open that gate again. The evening before, three minutes passed
+    // between wetting the strap and wearing it, nowhere near saturation, and
+    // the pulse was found in seconds: one mechanism explains both days.
     mAliveTransitionsThisTick = 0;
     mWildTransitionsThisTick = 0;
     mLastRRms = 0;
